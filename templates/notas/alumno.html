@@ -1,0 +1,115 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Mis notas (alumno), un bloque por módulo: color del módulo, profesor y estado, avance en anillo, nota final destacada, lo calificado hace poco y, al abrir «Ver todos los trabajos», la tabla completa. #}
+{% block contenido %}
+{% if unico %}{% pestanas_modulo unico 'notas' 'alumno' %}{% endif %}
+{% if not cursos %}
+  {% url 'academico:modulos' as url_modulos %}
+  {% vacio 'notas' 'Todavía no estás en ningún módulo' 'Cuando entres a tu módulo con el código de tu profesor, aquí verás tus notas.' 'Entrar a un módulo' url_modulos %}
+{% endif %}
+
+<div class="lista-notas">
+{% for c in cursos %}
+  {% color_curso c.modulo.especialidad as color %}
+  {% with cu=c.modulo d=c.datos prom=c.promedio %}
+  <section class="nota-bloque" style="--color:{{ color }}" aria-label="Notas de {{ cu.nombre }}">
+    <div class="nota-cabeza">
+      <div class="nota-info">
+        <div class="curso-bb-esp">{{ cu.especialidad }}</div>
+        <h2 class="curso-bb-titulo"><a href="{% url 'academico:modulo' cu.id %}">{{ cu.nombre }}</a></h2>
+        <div class="curso-bb-meta">
+          <span>Prof. {{ cu.docente.nombre_completo }}</span>
+          <span class="chip {% if d.finalizado %}chip-gris{% else %}chip-ok{% endif %}">{% if d.finalizado %}Finalizado{% else %}Abierto{% endif %}</span>
+        </div>
+      </div>
+      <div class="nota-indicadores">
+        <div class="anillo-caja">
+          <div class="anillo" role="img" aria-label="{% if d.avance is not None %}{{ d.avance }}% de tus tareas hechas{% else %}Todavía no hay tareas{% endif %}" style="--p:{{ d.avance|default:0 }}"><span>{% if d.avance is not None %}{{ d.avance }}%{% else %}—{% endif %}</span></div>
+          <span class="texto-2 small fw-bold">tareas hechas</span>
+        </div>
+        <div class="nota-final">
+          <span class="texto-2 small fw-bold">Nota final</span>
+          {% if prom is not None %}
+            <span class="badge-grade {% if c.aprueba %}aprueba{% else %}desaprueba{% endif %}">{{ prom|nota_fmt }} <small>/ 20</small></span>
+            <span class="chip {% if c.aprueba %}chip-ok{% else %}chip-mal{% endif %}">{% if d.finalizado %}{% if c.aprueba %}Aprobaste{% else %}No aprobaste{% endif %}{% else %}{% if c.aprueba %}Vas aprobando{% else %}Necesitas mejorar{% endif %}{% endif %}</span>
+          {% else %}
+            <span class="badge-grade neutro" aria-label="Todavía sin nota">--</span>
+            <span class="chip chip-gris">Sin nota todavía</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="nota-asistencia">
+      <div class="small fw-bold d-flex justify-content-between gap-2"><span>Asistencia</span><span>{% if c.asistencia %}{{ c.asistencia.pct }}% · {{ c.asistencia.vino }} de {{ c.asistencia.total }} clases{% else %}Sin clases registradas aún{% endif %}</span></div>
+      <div class="barra-p mt-1" aria-hidden="true"><span style="width:{% if c.asistencia %}{{ c.asistencia.pct }}{% else %}0{% endif %}%;background:{% if c.asistencia and c.asistencia.pct < 70 %}var(--mal){% else %}var(--ok){% endif %}"></span></div>
+    </div>
+
+    <div class="nota-reciente">
+      <h3 class="h6 fw-bold mb-2">{% icono 'estrella' 18 %} Calificado recientemente</h3>
+      {% if not c.recientes %}
+        <p class="texto-2 mb-0">Tu trabajo calificado recientemente aparecerá aquí.</p>
+      {% else %}
+        <ul class="lista-filas">
+          {% for f in c.recientes %}
+            <li>
+              <a class="fila" href="{{ f.enlace }}" style="min-height:52px">
+                <span class="cuerpo"><span class="fw-bold">{{ f.titulo }}</span><span class="detalle">{{ f.tipo }} · {{ f.fecha|fecha_corta }}</span></span>
+                {% if f.nota is not None %}
+                  <b class="fs-5 {% if f.bajo %}text-danger{% endif %}">{{ f.nota|nota_fmt }}</b>
+                {% else %}
+                  <span class="chip chip-info">{{ f.texto }}</span>
+                {% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <details class="nota-todo" {% if unico %}open{% endif %}>
+      <summary><span>{% icono 'notas' 20 %} Ver todos los trabajos y criterios ({{ c.filas|length }})</span> {% icono 'abajo' 18 %}</summary>
+      {% if prom is not None %}
+        <div class="d-flex flex-wrap gap-1 p-3 pb-0">
+          {% for texto, peso, valor in c.chips_partes %}
+            <span class="chip chip-gris">{{ texto }} ({{ peso }}%): {% if valor is not None %}{{ valor|nota_fmt }}{% else %}—{% endif %}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if not c.filas %}
+        <div class="p-3 d-flex gap-2 align-items-center texto-2">{% icono 'reloj' 20 %} Tu profesor todavía no dejó tareas ni tests en este módulo.</div>
+      {% else %}
+        <table class="tabla-notas tabla-boletin">
+          <caption class="visually-hidden">Actividades y notas de {{ cu.nombre }}</caption>
+          <thead><tr><th scope="col">Actividad</th><th scope="col">Fecha</th><th scope="col">Tipo</th><th scope="col" class="num">Nota</th></tr></thead>
+          <tbody>
+            {% for f in c.filas %}
+              <tr>
+                <th scope="row">
+                  <a href="{{ f.enlace }}">{{ f.titulo }}</a>
+                  {% if f.comentario %}<div class="small texto-2 fw-normal">{% icono 'mensaje' 14 %} {{ f.comentario }}</div>{% endif %}
+                </th>
+                <td data-titulo="Fecha">{{ f.fecha|fecha_corta }}</td>
+                <td data-titulo="Tipo">{{ f.tipo }}</td>
+                <td class="num" data-titulo="Nota">
+                  {% if f.nota is not None %}
+                    <b class="fs-5 {% if f.bajo %}text-danger{% endif %}">{{ f.nota|nota_fmt }}</b>
+                    {% if f.estado == 'no_entrego' %}<div><span class="chip chip-mal">No entregó</span></div>{% endif %}
+                  {% elif f.chip_estado %}
+                    <span class="chip {{ f.chip_estado.0 }}">{{ f.chip_estado.1 }}</span>
+                  {% else %}
+                    <span class="chip chip-info">{{ f.texto }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+      <p class="ayuda p-3 mb-0">Se aprueba con {{ c.minima|nota_fmt }}. Si no entregas a tiempo, cuenta como 0. Dentro de cada trabajo ves lo que el profesor revisará.</p>
+    </details>
+  </section>
+  {% endwith %}
+{% endfor %}
+</div>
+{% endblock %}

@@ -34,7 +34,7 @@ def menu_de(usuario):
         filas = [
             ("inicio", "nucleo:inicio", "Inicio", "inicio", c("inicio")),
             ("cursos", "academico:modulos", "Mis módulos", "cursos", 0),
-            ("notas", "academico:mis_notas", "Mis notas", "notas", 0),
+            ("notas", "evaluacion:mis_notas", "Mis notas", "notas", 0),
             ("mensajes", "mensajes:index", "Mensajes", "mensaje", c("mensajes")),
             ("cuenta", "cuentas:cuenta", "Mi cuenta", "cuenta", 0),
         ]
@@ -42,7 +42,7 @@ def menu_de(usuario):
         filas = [
             ("inicio", "nucleo:inicio", "Inicio", "inicio", 0),
             ("cursos", "academico:modulos", "Mis módulos", "cursos", 0),
-            ("calificar", "academico:por_calificar", "Por calificar", "calificar", c("calificar")),
+            ("calificar", "tareas:por_calificar", "Por calificar", "calificar", c("calificar")),
             ("mensajes", "mensajes:index", "Mensajes", "mensaje", c("mensajes")),
             ("cuenta", "cuentas:cuenta", "Mi cuenta", "cuenta", 0),
         ]

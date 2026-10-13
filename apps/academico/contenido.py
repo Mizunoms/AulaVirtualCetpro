@@ -116,16 +116,51 @@ def asistencia_hoy(modulo):
     return {"tomada_hoy": False, "registrados_hoy": 0}
 
 
-def resumen_alumno(modulo, alumno):
+def resumen_alumno(modulo, alumno, con_promedio=True):
+    """Nota final y asistencia del alumno en el módulo (el promedio es más pesado de calcular: pedirlo solo si hace falta)."""
     for f in RESUMEN_ALUMNO:
-        return f(modulo, alumno)
+        return f(modulo, alumno, con_promedio)
     return {"promedio": None, "asistencia": None}
+
+
+# función(modulo) → (calificadas, pendientes de calificar) de tareas y tests del módulo
+CALIFICACION_DEL_MODULO = []
+
+
+def calificacion_del_modulo(modulo):
+    calificadas = pendientes = 0
+    for f in CALIFICACION_DEL_MODULO:
+        c, p = f(modulo)
+        calificadas += c
+        pendientes += p
+    return calificadas, pendientes
 
 
 def asistencia_por_alumno(modulo):
     for f in ASISTENCIA_POR_ALUMNO:
         return f(modulo)
     return {}
+
+
+# función(modulo) → list[dict] de las actividades con nota (tareas y exámenes): clave, id, titulo, fecha_limite,
+# tipo_calificacion, tipo («tarea» o «examen»), modo, clase, etiqueta, url
+ACTIVIDADES_CON_NOTA = []
+# función(modulo) → {alumno_id: {clave: {"nota", "aprobado", "entrego", "comentario"}}}
+ESTADOS_DE_ACTIVIDADES = []
+
+
+def actividades_con_nota(modulo):
+    actividades = [a for f in ACTIVIDADES_CON_NOTA for a in f(modulo)]
+    actividades.sort(key=lambda a: a["fecha_limite"])
+    return actividades
+
+
+def estados_de_actividades(modulo):
+    estados = {}
+    for f in ESTADOS_DE_ACTIVIDADES:
+        for alumno_id, claves in f(modulo).items():
+            estados.setdefault(alumno_id, {}).update(claves)
+    return estados
 
 
 # función(modulo, usuario, acceso) → list[ItemClase] de los formularios del módulo (para «Tareas y exámenes»)

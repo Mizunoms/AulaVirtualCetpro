@@ -128,6 +128,13 @@ def whatsapp_url(telefono):
 # ---------- Texto ----------
 
 
+def csv_fila(fila):
+    """Fila de un CSV a salvo de fórmulas: si una celda empieza con = + - @ (o tabulador / salto de línea), Excel la leería como
+    una fórmula (por ejemplo un nombre puesto por un alumno). Se le antepone un apóstrofo para que se vea como texto."""
+    textos = [str(v) for v in fila]
+    return [("'" + t) if t and t[0] in "=+-@\t\r" else t for t in textos]
+
+
 def clave_segura(largo=10):
     """Contraseña temporal segura: letras minúsculas y números sin confusiones (sin 0, o, 1, l, i).
     La persona la cambia al entrar."""

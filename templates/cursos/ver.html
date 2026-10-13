@@ -216,7 +216,7 @@
           {% else %}
             <a class="btn btn-borde" href="{% url 'academico:editar' modulo.id %}#whatsapp_grupo">{% icono 'whatsapp' 20 %} Agregar el grupo de WhatsApp</a>
           {% endif %}
-          <a class="btn {% if asistencia_hoy %}btn-borde{% else %}btn-cetpro{% endif %} btn-lg" href="{% enlace 'asistencia:modulo' modulo.id %}">{% icono 'calendario' 22 %} Tomar asistencia de la sesión</a>
+          <a class="btn {% if asistencia_hoy %}btn-borde{% else %}btn-cetpro{% endif %} btn-lg" href="{% enlace 'evaluacion:asistencia' modulo.id %}">{% icono 'calendario' 22 %} Tomar asistencia de la sesión</a>
           <a class="btn {% if sin_calificar %}btn-acento{% else %}btn-borde{% endif %} btn-lg" href="{% enlace 'tareas:por_calificar' %}?modulo={{ modulo.id }}">{% icono 'calificar' 22 %} Calificar entregas ({% if sin_calificar %}{{ sin_calificar|plural:"pendiente,pendientes" }}{% else %}todo al día{% endif %})</a>
         </div>
         <div class="texto-2 small mt-2">Asistencia de hoy: {% if asistencia_hoy %}ya está tomada{% else %}falta tomarla{% endif %}.</div>
@@ -225,7 +225,7 @@
       <nav class="tarjeta" aria-label="Gestión académica">
         <h2 class="h6 fw-bold p-3 pb-0 mb-0">{% icono 'notas' 20 %} Gestión académica</h2>
         <ul class="lista-filas accesos-lista">
-          <li><a class="fila" href="{% enlace 'academico:notas_modulo' modulo.id %}"><span class="ico-caja ico-verde">{% icono 'notas' 20 %}</span><span class="cuerpo"><span class="fw-bold">Registro de notas</span><span class="detalle">Sábana auxiliar · Excel e impresión</span></span></a></li>
+          <li><a class="fila" href="{% enlace 'evaluacion:notas_modulo' modulo.id %}"><span class="ico-caja ico-verde">{% icono 'notas' 20 %}</span><span class="cuerpo"><span class="fw-bold">Registro de notas</span><span class="detalle">Sábana auxiliar · Excel e impresión</span></span></a></li>
           <li><a class="fila" href="{% enlace 'tareas:modulo' modulo.id %}"><span class="ico-caja ico-ambar">{% icono 'tarea' 20 %}</span><span class="cuerpo"><span class="fw-bold">Todas las tareas</span><span class="detalle">{% if sin_calificar %}{{ sin_calificar }} por calificar{% else %}Todo calificado{% endif %}</span></span></a></li>
           <li><a class="fila" href="{% enlace 'mensajes:todos' modulo.id %}"><span class="ico-caja ico-rojo">{% icono 'enviar' 20 %}</span><span class="cuerpo"><span class="fw-bold">Mensaje a todos</span></span></a></li>
         </ul>
@@ -306,8 +306,8 @@
           {% if not es_alumno %}
             <li><a class="fila" href="{% enlace 'tareas:modulo' modulo.id %}"><span class="ico-caja ico-ambar">{% icono 'tarea' 20 %}</span><span class="cuerpo"><span class="fw-bold">Todas las tareas</span><span class="detalle">{% if sin_calificar %}{{ sin_calificar }} por calificar{% else %}Todo calificado{% endif %}</span></span>{% if sin_calificar %}<span class="contador position-static">{{ sin_calificar }}</span>{% endif %}</a></li>
           {% endif %}
-          <li><a class="fila" href="{% enlace 'academico:notas_modulo' modulo.id %}"><span class="ico-caja ico-verde">{% icono 'notas' 20 %}</span><span class="cuerpo"><span class="fw-bold">{% if es_alumno %}Mis notas{% else %}Notas y reportes{% endif %}</span><span class="detalle">{% if es_alumno %}Tu boletín del módulo{% else %}Nota final, Excel e impresión{% endif %}</span></span></a></li>
-          <li><a class="fila" href="{% enlace 'asistencia:modulo' modulo.id %}"><span class="ico-caja ico-gris">{% icono 'calendario' 20 %}</span><span class="cuerpo"><span class="fw-bold">{% if es_alumno %}Registro de asistencia{% else %}Asistencia{% endif %}</span><span class="detalle">{% if es_alumno %}Clase por clase{% elif asistencia_hoy %}Hoy: ya tomada{% else %}Hoy: falta tomarla{% endif %}</span></span></a></li>
+          <li><a class="fila" href="{% enlace 'evaluacion:notas_modulo' modulo.id %}"><span class="ico-caja ico-verde">{% icono 'notas' 20 %}</span><span class="cuerpo"><span class="fw-bold">{% if es_alumno %}Mis notas{% else %}Notas y reportes{% endif %}</span><span class="detalle">{% if es_alumno %}Tu boletín del módulo{% else %}Nota final, Excel e impresión{% endif %}</span></span></a></li>
+          <li><a class="fila" href="{% enlace 'evaluacion:asistencia' modulo.id %}"><span class="ico-caja ico-gris">{% icono 'calendario' 20 %}</span><span class="cuerpo"><span class="fw-bold">{% if es_alumno %}Registro de asistencia{% else %}Asistencia{% endif %}</span><span class="detalle">{% if es_alumno %}Clase por clase{% elif asistencia_hoy %}Hoy: ya tomada{% else %}Hoy: falta tomarla{% endif %}</span></span></a></li>
           {% if aj.reglamento_url %}
             <li><a class="fila" href="{{ aj.reglamento_url }}" target="_blank" rel="noopener"><span class="ico-caja ico-rojo">{% icono 'examen' 20 %}</span><span class="cuerpo"><span class="fw-bold">Normas del taller</span><span class="detalle">Se abre en otra pestaña</span></span></a></li>
           {% endif %}

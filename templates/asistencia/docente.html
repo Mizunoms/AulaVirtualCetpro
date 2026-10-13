@@ -1,0 +1,72 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<form method="get" action="{% url 'evaluacion:asistencia' modulo.id %}" class="tarjeta p d-flex flex-wrap align-items-end gap-2">
+  <div class="flex-grow-1">
+    <label class="form-label" for="fecha-ver">Día de la clase</label>
+    <input class="form-control" type="date" id="fecha-ver" name="fecha" value="{{ fecha }}" max="{{ hoy }}">
+  </div>
+  <button type="submit" class="btn btn-borde" name="ver" value="1">Ver ese día</button>
+</form>
+
+{% if not alumnos %}
+  {% url 'academico:alumnos' modulo.id as url_alumnos %}
+  {% vacio 'usuarios' 'Este módulo todavía no tiene alumnos' 'Comparte el código del módulo para que se inscriban.' 'Ver el código' url_alumnos %}
+{% elif solo_lectura %}
+  <ul class="tarjeta lista-filas">
+    {% for a in alumnos %}
+      <li class="fila" style="min-height:56px">
+        <span class="cuerpo fw-bold">{{ a.apellidos }}, {{ a.nombres }}</span>
+        <span class="chip {% if a.estado_dia == 'falta' %}chip-mal{% elif a.estado_dia == 'tarde' %}chip-aviso{% elif a.estado_dia %}chip-ok{% else %}chip-gris{% endif %}">{% if a.estado_dia %}{% for valor, texto in estados %}{% if valor == a.estado_dia %}{{ texto }}{% endif %}{% endfor %}{% else %}Sin registro{% endif %}</span>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {% if sesion %}
+    <div class="mensaje mensaje-ok">{% icono 'check' 24 %}<span>La asistencia de este día ya está guardada. Puedes cambiarla.</span></div>
+  {% else %}
+    <div class="tarjeta p fs-6">Todos empiezan como <b>Vino</b>. Solo toca a quien <b>faltó</b>, llegó <b>tarde</b> o <b>justificó</b>.</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'evaluacion:asistencia' modulo.id %}" class="d-flex flex-column gap-3" style="max-width:720px">
+    {% csrf_token %}
+    <input type="hidden" name="fecha" value="{{ fecha }}">
+    <input type="hidden" name="desde" value="{{ desde }}">
+    <div class="tarjeta">
+      {% for a in alumnos %}
+        <fieldset class="asis-fila">
+          <legend class="asis-nombre">{{ a.apellidos }}, {{ a.nombres }}</legend>
+          <div class="asis-opciones">
+            {% for valor, texto in estados %}
+              <input type="radio" name="estado[{{ a.id }}]" id="as-{{ a.id }}-{{ valor }}" value="{{ valor }}" {% if a.estado_inicial == valor %}checked{% endif %}>
+              <label for="as-{{ a.id }}-{{ valor }}">{{ texto }}</label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+    <div>
+      <label class="form-label" for="tema">Tema de la clase (opcional)</label>
+      <input class="form-control" id="tema" name="tema" maxlength="200" value="{{ tema }}" placeholder="Ej.: Práctica de corte degrafilado">
+    </div>
+    <button type="submit" class="btn btn-cetpro btn-lg">Guardar asistencia</button>
+  </form>
+{% endif %}
+
+{% if anteriores %}
+  <h2 class="seccion-titulo">Clases anteriores</h2>
+  <ul class="tarjeta lista-filas">
+    {% for s in anteriores %}
+      <li>
+        <a class="fila" href="{% url 'evaluacion:asistencia' modulo.id %}?fecha={{ s.fecha|date:'Y-m-d' }}" style="min-height:60px">
+          <span class="cuerpo">
+            <span class="fw-bold">{{ s.fecha|fecha_larga|capfirst }}</span>
+            <span class="detalle">{% if s.tema %}{{ s.tema }} · {% endif %}{% if s.faltaron %}Faltaron {{ s.faltaron }}{% else %}Vinieron todos{% endif %}</span>
+          </span>
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

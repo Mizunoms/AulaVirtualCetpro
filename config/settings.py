@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.nucleo",
     "apps.academico",
     "apps.tareas",
+    "apps.evaluacion",
 ]
 
 MIDDLEWARE = [

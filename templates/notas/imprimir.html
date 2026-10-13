@@ -1,0 +1,59 @@
+{% load static aula %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notas · {{ modulo.nombre }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #0B1B35; margin: 24px; font-size: 12pt; }
+    header { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #C8231B; padding-bottom: 8px; margin-bottom: 12px; }
+    header img { width: 56px; height: 56px; }
+    h1 { font-size: 16pt; margin: 0; }
+    .datos { font-size: 10pt; color: #333; }
+    table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+    th, td { border: 1px solid #555; padding: 4px 6px; }
+    th { background: #EEF2F9; }
+    td.n { text-align: center; }
+    .bajo { color: #991B1B; font-weight: bold; }
+    .acciones { margin: 12px 0; }
+    .acciones button { font-size: 14pt; padding: 10px 18px; }
+    @media print { .acciones { display: none; } body { margin: 0; } }
+  </style>
+</head>
+<body>
+<div class="acciones"><button type="button" data-imprimir>Imprimir o guardar como PDF</button></div>
+<header>
+  <img src="{{ logo_url }}" alt="Logo {{ aj.centro_nombre }}">
+  <div>
+    <h1>{{ aj.centro_nombre }} — Registro de notas</h1>
+    <div class="datos">{{ modulo.nombre }} · {{ modulo.especialidad }}{% if modulo.modulo %} · {{ modulo.modulo }}{% endif %} · Periodo {{ modulo.periodo }} · Turno {{ modulo.turno }}</div>
+    <div class="datos">Docente: {{ modulo.docente.nombre_completo }} · Fecha: {{ hoy|date:"d/m/Y" }}</div>
+  </div>
+</header>
+<table>
+  <thead>
+    <tr>
+      <th>N°</th><th>Apellidos y nombres</th><th>DNI</th>
+      {% for act in libro.actividades %}<th>{{ act.etiqueta }}{{ act.titulo }}</th>{% endfor %}
+      <th>Nota final</th><th>Asist. %</th><th>Situación</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in libro.alumnos %}
+      <tr>
+        <td class="n">{{ forloop.counter }}</td>
+        <td>{{ a.apellidos }}, {{ a.nombres }}</td>
+        <td class="n">{{ a.dni|default:"" }}</td>
+        {% for c in a.celdas %}
+          <td class="n {% if c.bajo %}bajo{% endif %}">{% if c.num %}{{ c.valor|nota_fmt }}{% else %}{{ c.valor }}{% endif %}</td>
+        {% endfor %}
+        <td class="n {% if a.bajo %}bajo{% endif %}">{% if a.promedio is not None %}{{ a.promedio|nota_fmt }}{% else %}—{% endif %}</td>
+        <td class="n">{% if a.asistencia %}{{ a.asistencia.pct }}{% else %}—{% endif %}</td>
+        <td class="n">{% firstof a.situacion "—" %}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

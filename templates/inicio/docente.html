@@ -41,7 +41,7 @@
               </div>
               <div class="acciones-card">
                 <a class="btn btn-borde" href="{% url 'academico:alumnos' c.id %}">{% icono 'usuarios' 20 %} Lista de alumnos</a>
-                <a class="btn btn-borde" href="{% enlace 'academico:notas_modulo' c.id %}">{% icono 'notas' 20 %} Registro de notas</a>
+                <a class="btn btn-borde" href="{% enlace 'evaluacion:notas_modulo' c.id %}">{% icono 'notas' 20 %} Registro de notas</a>
               </div>
             </div>
           </article>
@@ -85,7 +85,7 @@
           {% if c.total_alumnos == 0 %}
             <a class="btn btn-borde w-100" href="{% url 'academico:alumnos' c.id %}">{% icono 'usuarios' 20 %} Todavía no hay alumnos</a>
           {% else %}
-            <a class="btn {% if c.asist.completa %}btn-borde{% else %}btn-cetpro btn-lg{% endif %} w-100" href="{% enlace 'asistencia:modulo' c.id %}?desde=inicio">
+            <a class="btn {% if c.asist.completa %}btn-borde{% else %}btn-cetpro btn-lg{% endif %} w-100" href="{% enlace 'evaluacion:asistencia' c.id %}?desde=inicio">
               {% if c.asist.completa %}{% icono 'check' 22 %} Ver o corregir la asistencia{% else %}{% icono 'calendario' 22 %} Registrar asistencia de hoy{% endif %}
             </a>
           {% endif %}

@@ -165,6 +165,36 @@ def notas_nuevas(alumno, limite=3):
     ]  # fmt: skip
 
 
+def actividades_con_nota(modulo):
+    """Las tareas del módulo como actividades del libro de notas."""
+    return [
+        {
+            "clave": f"t{t.pk}", "id": t.pk, "titulo": t.titulo, "fecha_limite": t.fecha_limite, "tipo_calificacion": t.tipo_calificacion,
+            "tipo": "tarea", "modo": "", "clase": t.clase, "etiqueta": "", "url": reverse("tareas:ver", args=[t.pk]),
+        }
+        for t in Tarea.objects.filter(clase__modulo=modulo).select_related("clase")
+    ]  # fmt: skip
+
+
+def estados_de_actividades(modulo):
+    estados = {}
+    for e in Entrega.objects.filter(tarea__clase__modulo=modulo, tarea__eliminado__isnull=True):
+        estados.setdefault(e.alumno_id, {})[f"t{e.tarea_id}"] = {
+            "nota": float(e.nota) if e.nota is not None else None,
+            "aprobado": e.aprobado,
+            "entrego": True,
+            "comentario": e.comentario_docente or None,
+        }
+    return estados
+
+
+def calificacion_del_modulo(modulo):
+    """(trabajos calificados, trabajos esperando nota) del módulo."""
+    entregas = Entrega.objects.filter(tarea__clase__modulo=modulo)
+    pendientes = entregas.filter(nota__isnull=True, aprobado__isnull=True).count()
+    return entregas.count() - pendientes, pendientes
+
+
 def copiar_contenido(origen, nueva, mover):
     """Copia los materiales y las tareas de una clase a la clase nueva (con archivos propios y fechas corridas)."""
     for m in Material.objects.filter(clase=origen).order_by("id"):
@@ -190,6 +220,9 @@ def conectar():
     papelera.registrar("tarea", "Tarea", "camara", "ico-ambar", Tarea)
     papelera.registrar("material", "Material", "carpeta", "ico-gris", Material)
     contenido.PROVEEDORES.append(proveedor)
+    contenido.CALIFICACION_DEL_MODULO.append(calificacion_del_modulo)
+    contenido.ACTIVIDADES_CON_NOTA.append(actividades_con_nota)
+    contenido.ESTADOS_DE_ACTIVIDADES.append(estados_de_actividades)
     contenido.PENDIENTES_DE_ALUMNO.append(pendientes_de_alumno)
     contenido.POR_CALIFICAR.append(por_calificar)
     contenido.ESPERANDO_NOTA.append(esperando_nota)

@@ -167,7 +167,7 @@
           <ul class="lista-filas">
             {% for n in notas_nuevas %}
               <li>
-                <a class="fila" href="{% enlace 'academico:mis_notas' %}" style="min-height:56px">
+                <a class="fila" href="{% enlace 'evaluacion:mis_notas' %}" style="min-height:56px">
                   <span class="cuerpo"><span class="fw-bold">{{ n.titulo }}</span><span class="detalle">{{ n.modulo_nombre }}</span></span>
                   <span class="fs-5 fw-bold">{{ n.nota_texto }}</span>
                 </a>

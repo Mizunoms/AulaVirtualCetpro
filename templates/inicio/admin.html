@@ -51,7 +51,7 @@
   <section class="tarjeta p reporte" aria-label="Exportar registro consolidado">
     <h3 class="h6 fw-bold mb-2">{% icono 'bajar' 20 %} Registro consolidado</h3>
     <p class="texto-2 small">Excel con todos los alumnos de los módulos activos: asistencia y nota final. Para la dirección o la UGEL.</p>
-    <form method="get" action="{% enlace 'academico:consolidado' %}" class="d-flex flex-column gap-2">
+    <form method="get" action="{% enlace 'evaluacion:consolidado' %}" class="d-flex flex-column gap-2">
       <label class="visually-hidden" for="periodo-export">Periodo</label>
       <select class="form-select" id="periodo-export" name="periodo">
         <option value="">Todos los módulos activos</option>
@@ -71,7 +71,7 @@
       <tbody>
         {% for m in notas_modulos|slice:":8" %}
           <tr>
-            <td data-titulo="Módulo"><a class="fw-bold" href="{% enlace 'academico:notas_modulo' m.id %}">{{ m.nombre }}</a><div class="small texto-2">{{ m.especialidad }}</div></td>
+            <td data-titulo="Módulo"><a class="fw-bold" href="{% enlace 'evaluacion:notas_modulo' m.id %}">{{ m.nombre }}</a><div class="small texto-2">{{ m.especialidad }}</div></td>
             <td data-titulo="Docente">{{ m.docente }}</td>
             <td data-titulo="Calificadas">{{ m.calificadas }}</td>
             <td data-titulo="Pendientes">{% if m.pendientes %}<span class="chip chip-aviso">{{ m.pendientes }}</span>{% else %}<span class="chip chip-ok">0</span>{% endif %}</td>

@@ -93,7 +93,7 @@
         <div class="acciones-card">
           <a class="btn btn-borde" href="{% url 'academico:admin_alumnos' c.id %}">{% icono 'usuarios' 18 %} Ver alumnos</a>
           <a class="btn btn-borde" href="{% url 'academico:admin_editar' c.id %}#horario">{% icono 'reloj' 18 %} Horario</a>
-          <a class="btn btn-borde" href="{% enlace 'academico:notas_modulo' c.id %}">{% icono 'notas' 18 %} Registro de notas</a>
+          <a class="btn btn-borde" href="{% enlace 'evaluacion:notas_modulo' c.id %}">{% icono 'notas' 18 %} Registro de notas</a>
           <details class="menu-opciones">
             <summary class="btn btn-borde">{% icono 'ajustes' 18 %} Opciones</summary>
             <div class="menu-opciones-lista">

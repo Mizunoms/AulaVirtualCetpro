@@ -107,7 +107,7 @@ def datos_de_modulo_alumno(modulo, alumno):
     """Avance, asistencia y clase de ahora de un módulo, para las tarjetas del alumno."""
     items = contenido.items_del_modulo(modulo, alumno, "alumno")
     clases = list(modulo.clases.filter(visible=True))
-    resumen = contenido.resumen_alumno(modulo, alumno)
+    resumen = contenido.resumen_alumno(modulo, alumno, con_promedio=False)
     return {
         **contenido.avance_alumno(items),
         "finalizado": Clase.terminadas(clases),

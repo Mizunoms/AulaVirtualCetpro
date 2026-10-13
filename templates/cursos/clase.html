@@ -35,7 +35,7 @@
   <div class="d-grid d-sm-flex gap-2">
     <a class="btn btn-cetpro btn-lg flex-fill" href="#subir">{% icono 'subir' 22 %} Subir material</a>
     <a class="btn btn-cetpro btn-lg flex-fill" href="#crear">{% icono 'mas' 22 %} Crear tarea</a>
-    <a class="btn btn-borde btn-lg flex-fill" href="{% enlace 'asistencia:modulo' modulo.id %}?tema={{ clase.titulo|urlencode }}">{% icono 'calendario' 22 %} Tomar asistencia</a>
+    <a class="btn btn-borde btn-lg flex-fill" href="{% enlace 'evaluacion:asistencia' modulo.id %}?tema={{ clase.titulo|urlencode }}">{% icono 'calendario' 22 %} Tomar asistencia</a>
   </div>
 {% endif %}
 

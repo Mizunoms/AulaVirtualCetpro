@@ -1,0 +1,65 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% pestanas_modulo modulo 'notas' acceso %}
+<div class="d-grid d-sm-flex gap-2">
+  <a class="btn btn-whatsapp" href="{% url 'evaluacion:notas_excel' modulo.id %}">{% icono 'bajar' 20 %} Descargar para Excel</a>
+  <a class="btn btn-borde" href="{% url 'evaluacion:notas_imprimir' modulo.id %}" target="_blank" rel="noopener">{% icono 'imprimir' 20 %} Imprimir o guardar PDF</a>
+</div>
+
+{% if not libro.alumnos %}
+  {% url 'academico:alumnos' modulo.id as url_alumnos %}
+  {% vacio 'usuarios' 'Este módulo todavía no tiene alumnos' 'Cuando tus alumnos se inscriban con el código, aquí verás sus notas.' 'Ver el código del módulo' url_alumnos %}
+{% else %}
+  <div class="tarjeta tabla-scroll">
+    <table class="tabla-notas">
+      <caption class="visually-hidden">Notas del módulo {{ modulo.nombre }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Alumno</th>
+          <th scope="col" class="num">Nota final</th>
+          <th scope="col" class="num">Situación</th>
+          <th scope="col" class="num">Asistencia</th>
+          {% for act in libro.actividades %}
+            <th scope="col" class="num d-none d-lg-table-cell" title="{{ act.etiqueta }}{{ act.titulo }}">{{ act.etiqueta }}{{ act.titulo|truncatechars:18 }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in libro.alumnos %}
+          <tr>
+            <th scope="row" class="fw-bold" style="background:none;color:inherit;font-size:1rem;white-space:normal">{{ a.apellidos }}, {{ a.nombres }}</th>
+            <td class="num fw-bold {% if a.bajo %}bajo{% endif %}">{% if a.promedio is not None %}{{ a.promedio|nota_fmt }}{% else %}—{% endif %}</td>
+            <td class="num">{% if a.promedio is None %}—{% elif a.situacion == 'Aprobado' %}<span class="chip chip-ok">Aprobado</span>{% else %}<span class="chip chip-mal">Desaprobado</span>{% endif %}</td>
+            <td class="num texto-2">{% if a.asistencia %}{{ a.asistencia.pct }}%{% else %}—{% endif %}</td>
+            {% for c in a.celdas %}
+              <td class="num d-none d-lg-table-cell {% if c.bajo %}bajo{% endif %}">{% if c.num %}{{ c.valor|nota_fmt }}{% else %}<span class="small texto-2">{{ c.valor }}</span>{% endif %}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="texto-2">En rojo: menos de {{ minima|nota_fmt }}. Si un alumno no entregó y la fecha ya pasó, cuenta como 0. En PC se ven también las notas de cada tarea y test (en tests cuenta la mejor nota).</p>
+{% endif %}
+
+<section id="pesos" class="tarjeta p d-flex flex-column gap-3">
+  <h2 class="h5 mb-0">{% icono 'notas' %} Cómo se calcula la nota final</h2>
+  <p class="texto-2 mb-0">Nota final = trabajos {{ p.peso_tareas }}% + tests {{ p.peso_tests }}% + asistencia {{ p.peso_asistencia }}%. Se aprueba con {{ minima|nota_fmt }}.
+    Si una parte todavía no tiene notas, su porcentaje se reparte entre las demás.</p>
+  {% if puede_editar %}
+    <form method="post" action="{% url 'evaluacion:notas_pesos' modulo.id %}" class="d-flex flex-column gap-3">
+      {% csrf_token %}
+      <div class="row g-2">
+        {% for clave, texto, valor in campos_pesos %}
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="{{ clave }}">{{ texto }}</label>
+            <input class="form-control" id="{{ clave }}" name="{{ clave }}" type="number" min="0" max="{% if clave == 'nota_minima' %}20{% else %}100{% endif %}" step="{% if clave == 'nota_minima' %}0.5{% else %}5{% endif %}" value="{{ old|get_item:clave|default:valor }}" required>
+          </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-borde align-self-start">Guardar</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}
