@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta">
+  <h1>Hola, {{ user.nombres }}</h1>
+  <p>Entraste como <strong>{{ user.get_rol_display }}</strong>.</p>
+  <p class="ayuda">Esta es la versión nueva del aula (Python + Django + PostgreSQL). Aquí irán tus cursos.</p>
+</section>
+{% endblock %}

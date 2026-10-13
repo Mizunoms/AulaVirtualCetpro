@@ -1,0 +1,125 @@
+/* Aula Virtual CETPRO Mangomarca — estilos base.
+   Colores con variables para que el modo oscuro y el alto contraste solo cambien las variables.
+   Botones de al menos 44 px y contraste 4.5:1 (WCAG 2.1 AA). */
+
+:root {
+  --fondo: #f4f6f9;
+  --superficie: #ffffff;
+  --texto: #1b2430;
+  --texto-suave: #4a5565;
+  --borde: #c9d1dc;
+  --primario: #1f5fbf;
+  --primario-texto: #ffffff;
+  --error-fondo: #fde8e8;
+  --error-texto: #8a1c1c;
+  --ok-fondo: #e3f5e8;
+  --ok-texto: #1b5e2f;
+}
+
+html[data-tema="oscuro"] {
+  --fondo: #11161d;
+  --superficie: #1a212b;
+  --texto: #e8edf3;
+  --texto-suave: #aab4c2;
+  --borde: #3a4556;
+  --primario: #6ea3f5;
+  --primario-texto: #0b1220;
+  --error-fondo: #4a1f1f;
+  --error-texto: #ffd0d0;
+  --ok-fondo: #1d3d28;
+  --ok-texto: #c7f0d3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+.saltar {
+  position: absolute;
+  left: -999px;
+}
+.saltar:focus {
+  left: 8px;
+  top: 8px;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+.marca {
+  color: var(--texto);
+  font-weight: 700;
+  text-decoration: none;
+}
+.marca span { font-weight: 400; color: var(--texto-suave); }
+
+.contenedor {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+.tarjeta-angosta { max-width: 420px; margin: 2rem auto; }
+.tarjeta h1 { margin-top: 0; font-size: 1.5rem; }
+
+.ayuda { color: var(--texto-suave); }
+
+.campo { margin-bottom: 1rem; }
+.campo label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+.campo input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-weight: 600;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.boton-principal { background: var(--primario); color: var(--primario-texto); border-color: var(--primario); }
+.boton-claro { background: var(--superficie); color: var(--texto); }
+.boton-ancho { width: 100%; }
+
+:focus-visible { outline: 3px solid var(--primario); outline-offset: 2px; }
+
+.avisos { margin-bottom: 1rem; }
+.aviso { margin: 0 0 0.5rem; padding: 0.75rem 1rem; border-radius: 8px; }
+.aviso-error { background: var(--error-fondo); color: var(--error-texto); }
+.aviso-success { background: var(--ok-fondo); color: var(--ok-texto); }

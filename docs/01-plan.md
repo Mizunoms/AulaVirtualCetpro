@@ -1,0 +1,50 @@
+# Plan de desarrollo
+
+Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
+
+## Fase 0 — Base del proyecto
+- [x] Repositorio nuevo, entorno virtual, Django 5.2, dependencias
+- [x] Usuario propio (DNI o correo), entrar y salir, panel técnico de Django
+- [x] Plantilla base accesible y primeras pruebas
+- [ ] Base PostgreSQL creada (`scripts/crear-base-postgres.ps1`) y `migrate` corrido
+- [ ] Primer commit
+
+## Fase 1 — Núcleo
+- [ ] Configuración del CETPRO (`ajuste()`): nombre, logo, colores, especialidades
+- [ ] Preferencias de accesibilidad (tamaño de letra, alto contraste, voz) y modo claro/oscuro
+- [ ] Menú: inferior en celular, lateral en PC
+- [ ] Permisos por rol (administrador, dirección, docente, alumno) y registro de actividad
+- [ ] Límite de intentos al entrar
+
+## Fase 2 — Académico
+- [ ] Cursos (programas) y módulos; unidades didácticas (nombre, créditos, horas)
+- [ ] Clases con fechas de apertura y cierre
+- [ ] Matrículas (1 o 2 módulos por alumno)
+- [ ] «Crear mi cuenta» (DNI + código del módulo, o DNI cargado en lista)
+- [ ] Panel del docente y del alumno (inicio)
+
+## Fase 3 — Contenido y trabajos
+- [ ] Materiales (archivo, enlace, video) con papelera
+- [ ] Tareas y entregas (foto desde el celular), calificación, política de entrega tardía
+- [ ] Servir archivos con permisos
+
+## Fase 4 — Evaluación y comunicación
+- [ ] Formularios con nota
+- [ ] Asistencia
+- [ ] Notas y evaluación del módulo (pesos, nota mínima 11)
+- [ ] Preguntas de la clase, notificaciones, mensajes alumno ↔ docente
+
+## Fase 5 — Panel del CETPRO
+- [ ] Personas (crear, editar, «Más», desactivar y **eliminar de verdad**)
+- [ ] Importar plan de estudios (Excel) y alumnos (Excel de Google Forms)
+- [ ] Claves temporales y envío por WhatsApp
+- [ ] Respaldo desde el panel
+
+## Fase 6 — Asistente IA y API
+- [ ] API REST con permisos por rol
+- [ ] Asistente IA (escrito y voz) con lista cerrada de acciones y confirmación
+
+## Fase 7 — Datos del piloto y servidor
+- [ ] Script de migración MariaDB → PostgreSQL (`scripts/migrar_desde_php.py`)
+- [ ] Pruebas de aceptación con el cliente HTTP del sistema anterior
+- [ ] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/`

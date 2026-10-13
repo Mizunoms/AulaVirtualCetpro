@@ -1,0 +1,24 @@
+# Entorno de Python y configuración local (claves)
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+.ruff_cache/
+
+# Generados al desplegar
+staticfiles/
+
+# Archivos subidos por las personas y respaldos de la base: nunca van a Git
+storage/uploads/*
+storage/respaldos/*
+!storage/uploads/.gitkeep
+!storage/respaldos/.gitkeep
+
+# Sistema operativo y editores
+Thumbs.db
+desktop.ini
+.DS_Store
+.idea/
+.vscode/
+*.log

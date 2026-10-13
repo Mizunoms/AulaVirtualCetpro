@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Entrar{% endblock %}
+
+{% block contenido %}
+<section class="tarjeta tarjeta-angosta">
+  <h1>Entrar al aula</h1>
+  <p class="ayuda">Alumnos: escribe tu DNI. Docentes: escribe tu correo.</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <p class="aviso aviso-error" role="alert">{{ form.non_field_errors.0 }}</p>
+    {% endif %}
+
+    <div class="campo">
+      <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+      {{ form.username }}
+    </div>
+
+    <div class="campo">
+      <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+      {{ form.password }}
+    </div>
+
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="boton boton-principal boton-ancho">Entrar</button>
+  </form>
+</section>
+{% endblock %}

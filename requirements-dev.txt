@@ -1,0 +1,5 @@
+# Dependencias para desarrollar y probar (no van al servidor).
+-r requirements.txt
+pytest>=8.3,<9
+pytest-django>=4.9,<5
+ruff>=0.8                      # revisa el estilo del código

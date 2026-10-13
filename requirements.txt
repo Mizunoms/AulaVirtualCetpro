@@ -1,0 +1,7 @@
+# Aula Virtual CETPRO Mangomarca — dependencias de producción.
+# Django 5.2 es la versión de soporte largo (LTS): recibe correcciones de seguridad hasta abril de 2028.
+Django>=5.2,<5.3
+psycopg[binary]>=3.2,<4        # conexión a PostgreSQL
+django-environ>=0.12,<1        # configuración por variables de entorno (archivo .env)
+whitenoise>=6.9,<7             # sirve css/js sin depender del servidor web
+waitress>=3.0,<4               # servidor de aplicación que funciona en Windows (IIS lo atiende por delante)
