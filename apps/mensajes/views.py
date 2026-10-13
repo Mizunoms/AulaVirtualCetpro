@@ -78,14 +78,23 @@ def _participantes(request, curso_id, persona_id):
     return modulo, docente_id, alumno_id, otro
 
 
+def _con_acceso(request, cv):
+    """Verifica que la persona sea de la conversación y que los dos sigan en el módulo (el alumno inscrito y el docente a cargo).
+    Devuelve (módulo, acceso). Si alguien ya salió del módulo, la conversación queda cerrada para los dos."""
+    if request.user.pk not in (cv.docente_id, cv.alumno_id):
+        raise Detener(prohibido(request))
+    modulo_, acceso = _modulo_de_mensajes(request, cv.modulo_id)
+    if cv.docente_id != modulo_.docente_id or not Matricula.objects.filter(modulo=modulo_, alumno_id=cv.alumno_id).exists():
+        raise Detener(prohibido(request))
+    return modulo_, acceso
+
+
 def _conversacion_de(request, id):
-    """La conversación, solo para sus dos participantes."""
+    """(conversación, módulo, acceso), solo para sus dos participantes mientras sigan en el módulo."""
     cv = Conversacion.objects.select_related("modulo", "docente", "alumno").filter(pk=id).first()
     if cv is None:
         raise Detener(no_encontrado(request))
-    if request.user.pk not in (cv.docente_id, cv.alumno_id):
-        raise Detener(prohibido(request))
-    return cv
+    return (cv, *_con_acceso(request, cv))
 
 
 def _en_mayuscula(texto):
@@ -162,10 +171,9 @@ def modulo(request, id):
 
 @exigir(Rol.ALUMNO, Rol.DOCENTE)
 def ver(request, id):
-    cv = _conversacion_de(request, id)
+    cv, modulo_, acceso = _conversacion_de(request, id)
     u = request.user
-    cv.marcar_leidos(u)
-    modulo_, acceso = _modulo_de_mensajes(request, cv.modulo_id)
+    cv.marcar_leidos(u)  # recién después de verificar los permisos
     otro = cv.otro(u)
     return vista(
         request,
@@ -186,7 +194,7 @@ def ver(request, id):
 
 @exigir(Rol.ALUMNO, Rol.DOCENTE)
 def responder(request, id):
-    cv = _conversacion_de(request, id)
+    cv, _modulo, _acceso = _conversacion_de(request, id)
     u = request.user
     volver = reverse("mensajes:ver", args=[cv.pk])
     texto = _texto(request)
@@ -342,8 +350,7 @@ def adjunto(request, id):
     m = Mensaje.objects.select_related("conversacion").filter(pk=id).first()
     if m is None or not m.archivo_ruta:
         return no_encontrado(request)
-    if request.user.pk not in (m.conversacion.docente_id, m.conversacion.alumno_id):
-        return prohibido(request)
+    _con_acceso(request, m.conversacion)
     en_linea = archivos.es_imagen(m.archivo_ruta) or m.archivo_nombre.lower().endswith(".pdf")
     return archivos.enviar(m.archivo_ruta, m.archivo_nombre, en_linea=en_linea)
 

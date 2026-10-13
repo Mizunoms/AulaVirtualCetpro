@@ -274,6 +274,50 @@ def test_lista_del_modulo_con_buscador_y_contador(cliente_de, docente, rosa, lui
     assert "Hola profe" in html
 
 
+def test_si_el_alumno_sale_del_modulo_la_conversacion_se_cierra(cliente_de, docente, rosa, modulo):
+    cv = Conversacion.obtener_o_crear(modulo, docente, rosa)
+    cv.enviar(rosa, "Hola profe")
+    m = cv.enviar(docente, "Hola Rosa", archivo=("2026/10/x.png", "x.png"))
+    modulo.quitar_alumno(rosa)
+    ex_alumna, prof = cliente_de(rosa), cliente_de(docente)
+    for c in (ex_alumna, prof):
+        assert c.get(reverse("mensajes:ver", args=[cv.pk])).status_code == 403
+        assert c.get(reverse("mensajes:adjunto", args=[m.pk])).status_code == 403
+        assert c.post(reverse("mensajes:ver", args=[cv.pk]), {"texto": "¿sigues ahí?"}).status_code == 403
+    assert escribir(ex_alumna, modulo, docente.pk).status_code == 403
+    assert Mensaje.objects.count() == 2
+    # ni se cuenta ni aparece en las listas
+    assert menu.contar("mensajes", docente) == 0 and menu.contar("mensajes", rosa) == 0
+    assert "Todavía no hay mensajes" in prof.get(reverse("mensajes:modulo", args=[modulo.pk])).content.decode()
+    # si la inscriben otra vez, vuelve todo
+    modulo.matricular(rosa)
+    assert menu.contar("mensajes", docente) == 1
+    assert prof.get(reverse("mensajes:ver", args=[cv.pk])).status_code == 200
+
+
+def test_ver_sin_permiso_no_marca_como_leido(cliente_de, docente, rosa, modulo):
+    cv = Conversacion.obtener_o_crear(modulo, docente, rosa)
+    cv.enviar(docente, "Mensaje para Rosa")
+    modulo.quitar_alumno(rosa)
+    assert cliente_de(rosa).get(reverse("mensajes:ver", args=[cv.pk])).status_code == 403
+    assert Mensaje.objects.get().leido is None
+
+
+def test_si_cambian_al_docente_del_modulo_la_conversacion_vieja_se_cierra(cliente_de, docente, otro_docente, rosa, modulo):
+    cv = Conversacion.obtener_o_crear(modulo, docente, rosa)
+    cv.enviar(rosa, "Hola profe")
+    Modulo.objects.filter(pk=modulo.pk).update(docente=otro_docente)
+    assert cliente_de(docente).get(reverse("mensajes:ver", args=[cv.pk])).status_code == 403  # ya no es su módulo
+    assert (
+        cliente_de(rosa).post(reverse("mensajes:ver", args=[cv.pk]), {"texto": "Hola"}).status_code == 403
+    )  # el docente es otro
+    assert cliente_de(rosa).get(reverse("mensajes:ver", args=[cv.pk])).status_code == 403
+    assert menu.contar("mensajes", docente) == 0 and menu.contar("mensajes", otro_docente) == 0
+    # con el docente nuevo se empieza una conversación nueva
+    escribir(cliente_de(rosa), modulo, otro_docente.pk, "Hola, profe nuevo")
+    assert Conversacion.objects.filter(docente=otro_docente).count() == 1 and menu.contar("mensajes", otro_docente) == 1
+
+
 def test_la_lista_pone_primero_la_conversacion_mas_reciente(cliente_de, docente, rosa, luis, modulo):
     Conversacion.obtener_o_crear(modulo, docente, rosa).enviar(rosa, "Primero")
     Conversacion.obtener_o_crear(modulo, docente, luis).enviar(luis, "Después")

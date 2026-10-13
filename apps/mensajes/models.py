@@ -30,11 +30,17 @@ class Conversacion(models.Model):
         return self.alumno if usuario.pk == self.docente_id else self.docente
 
     @classmethod
+    def vigentes(cls):
+        """Conversaciones cuyas dos personas siguen en el módulo: el docente a cargo y el alumno inscrito.
+        Si alguien sale del módulo la conversación se cierra (queda guardada; vuelve si lo inscriben otra vez)."""
+        return cls.objects.filter(docente=models.F("modulo__docente"), alumno__matriculas__modulo=models.F("modulo"))
+
+    @classmethod
     def de_usuario(cls, usuario, modulo=None):
         """Conversaciones de la persona (de un módulo, o de todos), con el último mensaje y cuántos no leyó.
         La que tiene el mensaje más reciente va primero."""
         ultimos = Mensaje.objects.filter(conversacion=OuterRef("pk")).order_by("-id")
-        consulta = cls.objects.filter(Q(docente=usuario) | Q(alumno=usuario))
+        consulta = cls.vigentes().filter(Q(docente=usuario) | Q(alumno=usuario))
         if modulo is not None:
             consulta = consulta.filter(modulo=modulo)
         consulta = (
@@ -94,11 +100,8 @@ class Mensaje(models.Model):
     @classmethod
     def sin_leer(cls, usuario):
         """Cuántos mensajes le escribieron a la persona y todavía no leyó."""
-        return (
-            cls.objects.filter(Q(conversacion__docente=usuario) | Q(conversacion__alumno=usuario), leido__isnull=True)
-            .exclude(autor=usuario)
-            .count()
-        )
+        propias = Conversacion.vigentes().filter(Q(docente=usuario) | Q(alumno=usuario))
+        return cls.objects.filter(conversacion__in=propias, leido__isnull=True).exclude(autor=usuario).count()
 
 
 def _borrar_adjunto(sender, instance, **kwargs):
