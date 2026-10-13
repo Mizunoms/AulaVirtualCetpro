@@ -1,0 +1,164 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Personas: tabla de gestión con pestañas, filtros, acciones en lote y paginación. #}
+{% block contenido %}
+<div class="d-grid d-sm-flex flex-wrap gap-2">
+  <a class="btn btn-cetpro" href="{% url 'cuentas:admin_nueva_persona' %}?rol=docente">{% icono 'mas' 22 %} Nuevo docente</a>
+  <a class="btn btn-borde" href="{% url 'cuentas:admin_nueva_persona' %}?rol=alumno">{% icono 'mas' 22 %} Nuevo alumno</a>
+  <a class="btn btn-borde" href="{% url 'cuentas:admin_importar' %}">{% icono 'subir' 22 %} Cargar lista de alumnos</a>
+</div>
+
+<nav class="pestanas pestanas-gestion" aria-label="Quiénes mostrar">
+  {% for clave, texto, cantidad, enlace_pestana in pestanas %}
+    <a href="{{ enlace_pestana }}" {% if filtros.rol == clave %}aria-current="page"{% endif %}>{{ texto }} ({{ cantidad }})</a>
+  {% endfor %}
+</nav>
+
+<form method="get" action="{{ base }}" class="tarjeta p filtros-gestion">
+  {% if filtros.rol %}<input type="hidden" name="rol" value="{{ filtros.rol }}">{% endif %}
+  <div class="flex-grow-1" style="min-width:220px">
+    <label class="form-label" for="q">Buscar por DNI, correo o nombre</label>
+    <input class="form-control" id="q" name="q" value="{{ filtros.q }}">
+  </div>
+  <div style="min-width:200px">
+    <label class="form-label" for="f-esp">Curso</label>
+    <select class="form-select" id="f-esp" name="especialidad" data-autoenviar>
+      <option value="">Todas</option>
+      {% for esp in especialidades %}<option {% if filtros.especialidad == esp %}selected{% endif %}>{{ esp }}</option>{% endfor %}
+    </select>
+  </div>
+  <div style="min-width:140px">
+    <label class="form-label" for="f-turno">Turno</label>
+    <select class="form-select" id="f-turno" name="turno" data-autoenviar>
+      <option value="">Todos</option>
+      <option value="mañana" {% if filtros.turno == 'mañana' %}selected{% endif %}>Mañana</option>
+      <option value="tarde" {% if filtros.turno == 'tarde' %}selected{% endif %}>Tarde</option>
+      <option value="noche" {% if filtros.turno == 'noche' %}selected{% endif %}>Noche</option>
+    </select>
+  </div>
+  <div style="min-width:130px">
+    <label class="form-label" for="f-por">Por página</label>
+    <select class="form-select" id="f-por" name="por" data-autoenviar>
+      {% for n in por_opciones %}<option value="{{ n }}" {% if por == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="d-flex align-items-end gap-2">
+    <button type="submit" class="btn btn-borde">{% icono 'buscar' 20 %} Buscar</button>
+    {% if filtros.q or filtros.especialidad or filtros.turno %}
+      <a class="btn btn-texto" href="{{ base }}{% if filtros.rol %}?rol={{ filtros.rol }}{% endif %}">Quitar filtros</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if not usuarios %}
+  {% vacio 'buscar' 'No se encontró a nadie' 'Revisa el DNI, el correo o el nombre, o cambia la pestaña y los filtros.' %}
+{% else %}
+  <form id="lote" method="post" action="{% url 'cuentas:admin_lote' %}" class="barra-lote tarjeta p" data-confirmar="¿Aplicar esta acción a las personas marcadas?">
+    {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ volver }}">
+    <span class="fw-bold">Con las personas marcadas:</span>
+    <label class="visually-hidden" for="accion-lote">Acción para las personas marcadas</label>
+    <select class="form-select" id="accion-lote" name="accion" style="max-width:260px">
+      <option value="">Elige una acción…</option>
+      <option value="clave">Dar contraseña nueva</option>
+      <option value="desactivar">Desactivar cuentas</option>
+      <option value="activar">Activar cuentas</option>
+      <option value="eliminar" data-sin-confirmar>Eliminar cuentas…</option>
+    </select>
+    <button type="submit" class="btn btn-cetpro">Aplicar</button>
+    <span class="texto-2 small">Marca las casillas de la tabla. «Contraseña nueva» crea una al azar para cada una y la persona la cambia al entrar. «Eliminar» te muestra antes qué se borrará.</span>
+  </form>
+
+  <div class="tarjeta tabla-gestion-caja">
+    <table class="tabla-gestion">
+      <caption class="visually-hidden">Personas del aula</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="col-marca"><input type="checkbox" data-marcar-todos="lote" aria-label="Marcar a todos los de esta página"></th>
+          <th scope="col">Usuario</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Curso / Módulo</th>
+          <th scope="col" class="col-contacto">Contacto</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for x in usuarios %}
+          {% with wa=x.telefono|whatsapp_url %}
+          <tr class="{% if not x.is_active %}inactiva{% endif %}">
+            <td class="col-marca" data-titulo="">{% if not x.es_yo %}<input type="checkbox" name="ids[]" value="{{ x.id }}" form="lote" aria-label="Marcar a {{ x.nombre_completo }}">{% endif %}</td>
+            <td data-titulo="Usuario">
+              <a class="persona" href="{% url 'cuentas:admin_editar_persona' x.id %}">
+                <span class="avatar" aria-hidden="true" style="background:var(--azul);width:40px;height:40px;font-size:.875rem">{{ x.iniciales }}</span>
+                <span class="cuerpo"><span class="fw-bold">{{ x.apellidos }}, {{ x.nombres }}</span><span class="detalle">{% if x.dni %}DNI {{ x.dni }}{% else %}{{ x.identificador }}{% endif %}</span></span>
+              </a>
+              {% if x.telefono or x.correo %}
+                <div class="contacto-en-usuario small texto-2">
+                  {% if x.telefono %}{{ x.telefono }}{% if wa %} · <a href="{{ wa }}" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a {{ x.nombres }}">WhatsApp</a>{% endif %}{% endif %}
+                  {% if x.correo %}<div class="text-break">{{ x.correo }}</div>{% endif %}
+                </div>
+              {% endif %}
+            </td>
+            <td data-titulo="Rol"><span class="chip {{ clases_rol|get_item:x.rol|default:'chip-gris' }}">{{ x.get_rol_display }}</span></td>
+            <td data-titulo="Curso / Módulo">
+              {% if not x.modulos_activos %}<span class="texto-2">—</span>{% endif %}
+              {% for m in x.modulos_primeros %}
+                <div class="small"><b>{{ m.especialidad }}</b> · {{ m.modulo|default:"Módulo" }} · {{ m.turno }}</div>
+              {% endfor %}
+              {% if x.modulos_mas %}<div class="small texto-2">y {{ x.modulos_mas }} más</div>{% endif %}
+            </td>
+            <td data-titulo="Contacto" class="col-contacto">
+              {% if x.telefono %}
+                <span class="d-inline-flex align-items-center gap-2">{{ x.telefono }}
+                  {% if wa %}<a class="btn btn-whatsapp btn-icono btn-icono-chico" href="{{ wa }}" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a {{ x.nombres }}">{% icono 'whatsapp' 18 %}</a>{% endif %}</span>
+              {% endif %}
+              {% if x.correo %}<div class="small texto-2 text-break">{{ x.correo }}</div>{% endif %}
+              {% if not x.telefono and not x.correo %}<span class="texto-2">—</span>{% endif %}
+            </td>
+            <td data-titulo="Estado">
+              {% if not x.is_active %}<span class="chip chip-gris">Inactivo</span>
+              {% elif x.pendiente %}<span class="chip chip-aviso">Sin contraseña aún</span>
+              {% elif x.debe_cambiar_clave %}<span class="chip chip-aviso">Debe cambiar su clave</span>
+              {% else %}<span class="chip chip-ok">Activo</span>{% endif %}
+            </td>
+            <td data-titulo="Acciones">
+              <div class="acciones-fila">
+                <a class="btn btn-borde" href="{% url 'cuentas:admin_editar_persona' x.id %}">{% icono 'editar' 18 %} Editar</a>
+                {% if not x.es_yo %}
+                  <details class="menu-opciones menu-fila">
+                    <summary class="btn btn-borde" aria-label="Más acciones para {{ x.nombre_completo }}">Más {% icono 'abajo' 16 %}</summary>
+                    <div class="menu-opciones-lista">
+                      {% if x.is_active %}
+                        <form method="post" action="{% url 'cuentas:admin_clave_persona' x.id %}" data-confirmar="¿Dar una contraseña nueva a {{ x.nombres }}? La anterior dejará de servir.">
+                          {% csrf_token %}<input type="hidden" name="desde" value="lista"><input type="hidden" name="volver" value="{{ volver }}">
+                          <button type="submit">{% icono 'clave' 18 %} Resetear contraseña</button>
+                        </form>
+                      {% endif %}
+                      <form method="post" action="{% url 'cuentas:admin_estado_persona' x.id %}" data-confirmar="{% if x.is_active %}¿Desactivar la cuenta de {{ x.nombres }}? Ya no podrá entrar.{% else %}¿Volver a activar la cuenta de {{ x.nombres }}?{% endif %}">
+                        {% csrf_token %}<input type="hidden" name="desde" value="lista"><input type="hidden" name="volver" value="{{ volver }}">
+                        <button type="submit">{% if x.is_active %}{% icono 'x' 18 %} Desactivar cuenta{% else %}{% icono 'check' 18 %} Activar cuenta{% endif %}</button>
+                      </form>
+                      <div class="menu-separador" role="separator"></div>
+                      <form method="post" action="{% url 'cuentas:admin_eliminar' %}">
+                        {% csrf_token %}<input type="hidden" name="ids[]" value="{{ x.id }}"><input type="hidden" name="volver" value="{{ volver }}">
+                        <button type="submit" class="peligro">{% icono 'basura' 18 %} Eliminar cuenta…</button>
+                      </form>
+                    </div>
+                  </details>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pie-tabla">
+    <span class="texto-2">Mostrando {{ desde }}–{{ hasta }} de {{ total|plural:"persona,personas" }}</span>
+    {% paginador num_pagina paginas base params %}
+  </div>
+{% endif %}
+{% endblock %}

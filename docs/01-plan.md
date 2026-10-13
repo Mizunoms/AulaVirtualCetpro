@@ -49,9 +49,10 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Mensajes alumno ↔ docente (con foto o archivo, «mensaje a todos», solo los dos participantes ven el archivo)
 
 ## Fase 5 — Panel del CETPRO
-- [ ] Personas (crear, editar, «Más», desactivar y **eliminar de verdad**)
-- [ ] Importar plan de estudios (Excel) y alumnos (Excel de Google Forms)
-- [ ] Claves temporales y envío por WhatsApp
+- [x] Personas: lista con pestañas, filtros y paginación; crear, editar, «Más», desactivar y **eliminar de verdad** (con «Entiendo» y borrado de archivos); acciones en lote
+- [ ] Importar plan de estudios (Excel)
+- [x] Cargar alumnos desde Excel, CSV o lista pegada (títulos de columna, módulos por 1, 2, «1 y 2» o código)
+- [x] Claves temporales y envío por WhatsApp (una sola vez)
 - [ ] Respaldo desde el panel
 
 ## Fase 6 — Asistente IA y API

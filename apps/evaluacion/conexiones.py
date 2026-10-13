@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from apps.academico import contenido, reportes, resumen
 from apps.academico.models import Modulo
+from apps.cuentas import resumen as resumen_cuentas
 
 from . import calificacion
 from .models import Asistencia, Estado, SesionAsistencia, porcentajes, registrados_hoy, tomada_hoy
@@ -65,3 +66,6 @@ def conectar():
         "día de asistencia", "días de asistencia", lambda m: SesionAsistencia.objects.filter(modulo=m).count()
     )
     resumen.registrar_registros_de_alumnos(lambda m: Asistencia.objects.filter(sesion__modulo=m).exists())
+    resumen_cuentas.registrar_contador(
+        20, "registro de asistencia", "registros de asistencia", lambda u: Asistencia.objects.filter(alumno=u).count()
+    )

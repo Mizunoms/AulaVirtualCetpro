@@ -145,6 +145,16 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
             self.telefono = telefono
         self.save(update_fields=["password", "activado", "telefono"])
 
+    def dar_clave(self, clave, forzar=False):
+        """Le da una contraseña nueva (la anterior deja de servir). Con `forzar`, la persona elige la suya al entrar.
+        Si era un alumno de lista que todavía no tenía contraseña, queda activado."""
+        era_pendiente = self.pendiente
+        self.set_password(clave)
+        self.debe_cambiar_clave = forzar
+        if era_pendiente:
+            self.activado = timezone.now()
+        self.save(update_fields=["password", "debe_cambiar_clave", "activado"])
+
     @property
     def es_alumno(self):
         return self.rol == Rol.ALUMNO

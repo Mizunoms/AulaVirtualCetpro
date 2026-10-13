@@ -1,0 +1,126 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Crear o editar una persona (docente, alumno, dirección o administrador). #}
+{% block contenido %}
+<div class="row g-3">
+  <div class="col-12 col-xl-7">
+    <form method="post" action="{% if persona %}{% url 'cuentas:admin_actualizar_persona' persona.id %}{% else %}{% url 'cuentas:admin_personas' %}{% endif %}" class="tarjeta p d-flex flex-column gap-3">
+      {% csrf_token %}
+      <fieldset>
+        <legend class="form-label">Tipo de cuenta</legend>
+        <div class="opciones">
+          {% for valor, texto in roles %}
+            <input type="radio" name="rol" id="rol-{{ valor }}" value="{{ valor }}" {% if rol_actual == valor %}checked{% endif %}>
+            <label for="rol-{{ valor }}">{{ texto }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div class="row g-2">
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="nombres">Nombres</label>
+          <input class="form-control" id="nombres" name="nombres" maxlength="100" required value="{{ v.nombres }}">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="apellidos">Apellidos</label>
+          <input class="form-control" id="apellidos" name="apellidos" maxlength="100" required value="{{ v.apellidos }}">
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="correo">Correo <span class="fw-normal texto-2">(docentes y administradores entran con este)</span></label>
+        <input class="form-control" id="correo" name="correo" type="text" inputmode="email" maxlength="120" autocomplete="off" value="{{ v.correo }}" placeholder="profesorpeluqueria@{{ dominio }}">
+        <div class="ayuda">Puede ser inventado, solo para el aula. Si escribes solo el nombre (ej. profesortecnico) se completa con @{{ dominio }}.</div>
+      </div>
+      <div class="row g-2">
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="dni">DNI <span class="fw-normal texto-2">(los alumnos entran con este)</span></label>
+          <input class="form-control" id="dni" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" value="{{ v.dni }}">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="telefono">Celular</label>
+          <input class="form-control" id="telefono" name="telefono" inputmode="tel" maxlength="15" value="{{ v.telefono }}">
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="fecha_nacimiento">Fecha de nacimiento <span class="fw-normal texto-2">(opcional)</span></label>
+        <input class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" type="date" value="{{ fecha_nacimiento }}">
+      </div>
+      {% if not persona and modulos_activos %}
+        <fieldset id="matricular">
+          <legend class="form-label">Inscribir en módulos <span class="fw-normal texto-2">(alumnos; uno o los dos)</span></legend>
+          <div class="d-flex flex-column gap-1">
+            {% for m, etiqueta, marcado in modulos_activos %}
+              <label class="interruptor-chico">
+                <input type="checkbox" name="modulos[]" value="{{ m.id }}" {% if marcado %}checked{% endif %}>
+                {{ etiqueta }}
+              </label>
+            {% endfor %}
+          </div>
+          <div class="ayuda">Un alumno puede estar en un solo módulo o en los dos. También puedes inscribirlo después desde el módulo.</div>
+        </fieldset>
+      {% endif %}
+      {% if not persona %}
+        <fieldset class="clave-inicial">
+          <legend class="form-label">Contraseña inicial</legend>
+          <div class="d-flex flex-wrap gap-2">
+            <label class="visually-hidden" for="clave">Contraseña inicial</label>
+            <input class="form-control" id="clave" name="clave" type="text" minlength="6" autocomplete="new-password" style="flex:1 1 220px" placeholder="Vacío = una segura al azar">
+            <button type="button" class="btn btn-borde" data-generar-clave="clave">{% icono 'clave' 20 %} Generar contraseña segura</button>
+            <button type="button" class="btn btn-borde" data-copiar-campo="clave">{% icono 'copiar' 20 %} <span>Copiar</span></button>
+          </div>
+          <div class="ayuda">Si la dejas vacía, creamos una <b>segura al azar</b> (no usamos el DNI, porque otras personas podrían conocerlo). Al terminar te mostramos las credenciales para copiarlas o enviarlas por WhatsApp.</div>
+          <label class="interruptor-chico align-self-start mt-2">
+            <input type="checkbox" name="forzar_cambio" value="1" {% if forzar_marcado %}checked{% endif %}>
+            Que la persona elija su propia contraseña la primera vez que entre (recomendado)
+          </label>
+          <div class="ayuda">Si la contraseña es al azar, el cambio siempre es obligatorio.</div>
+        </fieldset>
+      {% endif %}
+      <button type="submit" class="btn btn-cetpro btn-lg">{% if persona %}Guardar cambios{% else %}Crear cuenta{% endif %}</button>
+    </form>
+  </div>
+
+  {% if persona %}
+    <div class="col-12 col-xl-5 d-flex flex-column gap-3">
+      <div class="tarjeta p d-flex flex-column gap-2">
+        <h2 class="h5 mb-0">{% icono 'clave' %} Contraseña</h2>
+        {% if persona.pendiente %}
+          <p class="mb-0"><span class="chip chip-aviso">Aún no creó su contraseña</span></p>
+          <p class="texto-2 mb-0">Puede crearla en «Crear mi cuenta» con su DNI, o dale una aquí.</p>
+        {% else %}
+          <p class="texto-2 mb-0">Si la olvidó, dale una nueva. La anterior dejará de servir.</p>
+        {% endif %}
+        <form method="post" action="{% url 'cuentas:admin_clave_persona' persona.id %}" class="d-flex flex-column gap-2">
+          {% csrf_token %}
+          <label class="form-label mb-0" for="clave-propia">Escribe una <span class="fw-normal texto-2">(o déjalo vacío para crear una segura al azar)</span></label>
+          <div class="d-flex flex-wrap gap-2">
+            <input class="form-control" id="clave-propia" name="clave" type="text" minlength="6" autocomplete="new-password" style="flex:1 1 180px">
+            <button type="button" class="btn btn-borde" data-generar-clave="clave-propia">{% icono 'clave' 20 %} Generar</button>
+          </div>
+          <label class="interruptor-chico align-self-start">
+            <input type="checkbox" name="forzar_cambio" value="1" checked>
+            Que la cambie al entrar (recomendado)
+          </label>
+          <button type="submit" class="btn btn-borde">Dar contraseña nueva</button>
+        </form>
+      </div>
+
+      {% if cursos %}
+        <div class="tarjeta p">
+          <h2 class="h5">{% icono 'cursos' %} {% if persona.rol == 'docente' %}Sus módulos{% else %}Está en{% endif %}</h2>
+          <ul class="mb-0">{% for c in cursos %}<li><a href="{% url 'academico:modulo' c.id %}">{{ c.nombre }}</a></li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'cuentas:admin_estado_persona' persona.id %}"
+            data-confirmar="{% if persona.is_active %}¿Desactivar esta cuenta? La persona ya no podrá entrar.{% else %}¿Volver a activar esta cuenta?{% endif %}">
+        {% csrf_token %}
+        <button type="submit" name="estado" value="1" class="btn btn-borde w-100">{% if persona.is_active %}Desactivar cuenta{% else %}Activar cuenta{% endif %}</button>
+      </form>
+      <form method="post" action="{% url 'cuentas:admin_eliminar' %}">
+        {% csrf_token %}<input type="hidden" name="ids[]" value="{{ persona.id }}">
+        <button type="submit" class="btn btn-peligro w-100">{% icono 'basura' 20 %} Eliminar cuenta…</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

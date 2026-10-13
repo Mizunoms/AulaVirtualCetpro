@@ -8,9 +8,11 @@ class MensajesConfig(AppConfig):
 
     def ready(self):
         from apps.academico import resumen
+        from apps.cuentas import resumen as resumen_cuentas
         from apps.nucleo import menu
 
         from .models import Mensaje
 
         menu.registrar_contador("mensajes", Mensaje.sin_leer)  # el número del menú «Mensajes»
         resumen.registrar_contador("mensaje", "mensajes", lambda m: Mensaje.objects.filter(conversacion__modulo=m).count())
+        resumen_cuentas.registrar_contador(60, "mensaje", "mensajes", lambda u: Mensaje.objects.filter(autor=u).count())

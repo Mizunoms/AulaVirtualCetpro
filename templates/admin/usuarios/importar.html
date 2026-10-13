@@ -1,0 +1,77 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Cargar una lista de alumnos (Excel, CSV o pegada). #}
+{% block contenido %}
+{% if resultado %}
+  <div class="tarjeta p d-flex flex-column gap-2" role="status">
+    <div class="fs-5 fw-bold">{% icono 'check' %} Lista cargada</div>
+    <div>{{ resultado.nuevos|plural:"alumno nuevo,alumnos nuevos" }} · {{ resultado.inscritos|plural:"inscripción en módulo,inscripciones en módulos" }}</div>
+    {% if resultado.claves %}
+      <div class="mensaje mensaje-ok">{% icono 'whatsapp' 24 %}<span>Creé <b>{{ resultado.claves|plural:"contraseña temporal,contraseñas temporales" }}</b>. Se muestran <b>una sola vez</b>: ábrelas ahora para enviarlas por WhatsApp.</span></div>
+      <a class="btn btn-whatsapp align-self-start" href="{% url 'cuentas:admin_claves' %}">{% icono 'whatsapp' 20 %} Ver contraseñas y enviar por WhatsApp</a>
+    {% endif %}
+    {% if resultado.errores %}
+      <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>Estas filas no se cargaron:</span></div>
+      <ul class="mb-0">{% for err in resultado.errores %}<li>{{ err }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if not resultado.claves %}
+      <p class="texto-2 mb-0">Los alumnos nuevos entran a «Crear mi cuenta», escriben su DNI y reciben su contraseña.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="rejilla-ajustes">
+  <form method="post" action="{% url 'cuentas:admin_importar' %}" enctype="multipart/form-data" class="tarjeta p d-flex flex-column gap-3">
+    {% csrf_token %}
+    <h2 class="h5 mb-0">{% icono 'subir' %} Cargar la lista</h2>
+    <fieldset>
+      <legend class="form-label">¿En qué módulos se inscribe? <span class="fw-normal texto-2">(uno o los dos)</span></legend>
+      {% if not modulos %}
+        <p class="texto-2 mb-0">Todavía no hay módulos. Créalos en <a href="{% url 'academico:admin_cursos' %}">Cursos</a>.</p>
+      {% endif %}
+      {% for curso, lista in por_curso.items %}
+        <div class="fw-bold mt-2">{{ curso }}</div>
+        <div class="d-flex flex-column gap-1">
+          {% for m, etiqueta in lista %}
+            <label class="interruptor-chico">
+              <input type="checkbox" name="curso_id[]" value="{{ m.id }}">
+              {{ etiqueta }}
+            </label>
+          {% endfor %}
+        </div>
+      {% endfor %}
+      <div class="ayuda">Si la lista trae una columna «Módulo» con 1, 2 o «1 y 2», cada alumno va solo a los módulos que le tocan de entre los marcados. Si no la trae, todos van a todos los marcados.</div>
+    </fieldset>
+    <div>
+      <label class="form-label" for="archivo">Archivo de Excel (.xlsx) o CSV</label>
+      <input class="form-control" type="file" id="archivo" name="archivo" accept=".xlsx,.csv">
+    </div>
+    <div class="separador">o pega la lista</div>
+    <div>
+      <label class="form-label" for="lista">Lista (copiada de Excel)</label>
+      <textarea class="form-control" id="lista" name="lista" rows="6" placeholder="45678912	Rosa María	Paredes Quispe	987654321">{{ old.lista }}</textarea>
+    </div>
+    <div>
+      <label class="interruptor-chico">
+        <input type="checkbox" name="con_clave" value="1" checked>
+        Crear una contraseña temporal para cada alumno y mostrármela para enviarla por WhatsApp
+      </label>
+      <div class="ayuda">Cada alumno la cambia por una que recuerde la primera vez que entre. Si no marcas esto, ellos crean su contraseña en «Crear mi cuenta» con su DNI.</div>
+    </div>
+    <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'subir' 22 %} Cargar alumnos</button>
+  </form>
+
+  <div class="tarjeta p">
+    <h2 class="h5">Cómo debe ser la lista</h2>
+    <p class="mb-2">Una fila por alumno. La primera fila puede tener los títulos. También sirve el Excel de la inscripción tal cual:</p>
+    <div class="tabla-scroll">
+      <table class="tabla-notas">
+        <thead><tr><th>Apellidos paterno</th><th>Apellidos materno</th><th>Nombres</th><th>DNI</th><th>Teléfono</th><th>Fecha de nacimiento</th><th>Módulo</th></tr></thead>
+        <tbody><tr><td>Paredes</td><td>Quispe</td><td>Rosa María</td><td>45678912</td><td>987654321</td><td>25/03/1970</td><td>1 y 2</td></tr></tbody>
+      </table>
+    </div>
+    <p class="ayuda">Se leen: <b>apellidos</b> (juntos o paterno y materno por separado), <b>nombres</b>, <b>DNI</b>, <b>teléfono</b>, <b>fecha de nacimiento</b> y <b>módulo</b>. Solo DNI, nombres y apellidos son obligatorios. El teléfono sirve para enviarle sus accesos por WhatsApp.</p>
+    <p class="ayuda mb-0">Lo demás que traiga el Excel (marca temporal, edad, dirección, urbanización, estado civil, grado de instrucción…) <b>no se guarda</b>: el aula solo pide lo necesario.</p>
+  </div>
+</div>
+{% endblock %}

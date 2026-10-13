@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.academico import contenido, resumen
 from apps.academico import models as academico
+from apps.cuentas import resumen as resumen_cuentas
 from apps.nucleo import archivos
 from apps.nucleo.utils import nota_fmt
 
@@ -235,5 +236,8 @@ def conectar():
         "trabajo entregado", "trabajos entregados", lambda m: Entrega.objects.filter(tarea__clase__modulo=m).count()
     )
     resumen.registrar_registros_de_alumnos(lambda m: Entrega.objects.filter(tarea__clase__modulo=m).exists())
+    resumen_cuentas.registrar_contador(
+        10, "trabajo entregado", "trabajos entregados", lambda u: Entrega.objects.filter(alumno=u).count()
+    )
     # Una clase con materiales o tareas (incluso en la papelera) no se borra
     academico.CONTENIDO_DE_CLASE.append(lambda c: Material.todos.filter(clase=c).exists() or Tarea.todos.filter(clase=c).exists())

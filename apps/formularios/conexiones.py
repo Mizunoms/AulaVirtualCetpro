@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.academico import contenido, resumen
 from apps.academico import models as academico
+from apps.cuentas import resumen as resumen_cuentas
 from apps.nucleo.utils import nota_fmt, plural, vencimiento_texto
 
 from .models import Formulario, Intento
@@ -314,5 +315,6 @@ def conectar():
         "test rendido", "tests rendidos", lambda m: Intento.objects.filter(formulario__clase__modulo=m).count()
     )
     resumen.registrar_registros_de_alumnos(lambda m: Intento.objects.filter(formulario__clase__modulo=m).exists())
+    resumen_cuentas.registrar_contador(30, "test rendido", "tests rendidos", lambda u: Intento.objects.filter(alumno=u).count())
     # Una clase con formularios (incluso en la papelera) no se borra
     academico.CONTENIDO_DE_CLASE.append(lambda c: Formulario.todos.filter(clase=c).exists())

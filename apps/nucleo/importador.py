@@ -172,13 +172,13 @@ def desde_archivo(archivo, nombre, es_examen):
     raise ImportadorError("Sube un archivo de Excel (.xlsx), CSV, Word (.docx) o de texto (.txt).")
 
 
-def filas_tabla(archivo, nombre):
+def filas_tabla(archivo, nombre, max_filas=MAX_PREGUNTAS + 1):
     """Filas de una tabla de Excel (.xlsx) o CSV, tal cual (para cargar listas de alumnos)."""
     ext = nombre.rsplit(".", 1)[-1].lower() if "." in nombre else ""
     if ext == "xlsx":
-        return _filas_xlsx(archivo)
+        return _filas_xlsx(archivo, max_filas)
     if ext in ("csv", "txt"):
-        return _filas_csv(archivo)
+        return _filas_csv(archivo, max_filas)
     raise ImportadorError("Sube un archivo de Excel (.xlsx) o CSV.")
 
 
@@ -310,14 +310,14 @@ def _a_utf8(datos):
         return datos.decode("cp1252", errors="replace")
 
 
-def _filas_csv(archivo):
+def _filas_csv(archivo, max_filas=MAX_PREGUNTAS + 1):
     contenido = _a_utf8(archivo.read(MAX_BYTES_TEXTO)).lstrip("﻿")
     primera = contenido.split("\n", 1)[0]
     sep = ";" if primera.count(";") >= primera.count(",") else ","
     filas = []
     for fila in csv.reader(io.StringIO(contenido), delimiter=sep):
         filas.append(fila)
-        if len(filas) > MAX_PREGUNTAS + 1:
+        if len(filas) > max_filas:
             break
     return filas
 
@@ -377,7 +377,7 @@ def _ruta_primera_hoja(z):
     return "xl/worksheets/sheet1.xml"
 
 
-def _filas_xlsx(archivo):
+def _filas_xlsx(archivo, max_filas=MAX_PREGUNTAS + 1):
     """Lee la primera hoja de un .xlsx sin librerías (es un zip con XML)."""
     with _abrir_zip(archivo, "No pudimos abrir el Excel. Guárdalo otra vez como «Libro de Excel (.xlsx)».") as z:
         compartidas = []
@@ -406,7 +406,7 @@ def _filas_xlsx(archivo):
                 fila[_indice_columna(letras)] = valor
             if fila:
                 filas.append([fila.get(i, "") for i in range(max(fila) + 1)])
-            if len(filas) > MAX_PREGUNTAS + 1:
+            if len(filas) > max_filas:
                 break
         return filas
 

@@ -1,0 +1,63 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Eliminar cuentas: se muestra a quién se borrará y qué se pierde con cada una. No se borra nada hasta confirmar. #}
+{% block contenido %}
+<div class="d-flex flex-column gap-3" style="max-width:760px">
+  {% if error %}<div class="mensaje mensaje-error" role="alert">{% icono 'alerta' 24 %}<span>{{ error }}</span></div>{% endif %}
+  {% if borrables %}
+    <section class="tarjeta p d-flex flex-column gap-3" aria-labelledby="t-borrar">
+      <div class="mensaje mensaje-error" role="alert">{% icono 'alerta' 26 %}<span>Vas a eliminar {{ borrables|length|plural:"cuenta,cuentas" }}. <b>Esto no se puede deshacer.</b></span></div>
+      <h2 id="t-borrar" class="h5 fw-bold mb-0">Se eliminarán</h2>
+      <ul class="lista-eliminar">
+        {% for f in borrables %}
+          <li>
+            <span class="avatar" aria-hidden="true" style="background:var(--azul);width:40px;height:40px;font-size:.875rem">{{ f.persona.iniciales }}</span>
+            <span class="cuerpo">
+              <span class="fw-bold">{{ f.persona.nombre_completo }}</span>
+              <span class="small texto-2">{{ f.persona.get_rol_display }} · {% if f.persona.dni %}DNI {{ f.persona.dni }}{% else %}{{ f.persona.identificador }}{% endif %}</span>
+              {% if f.inscripciones_texto %}<span class="small">Se borra también: {{ f.inscripciones_texto }}.</span>{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'cuentas:admin_eliminar' %}" class="d-flex flex-column gap-3">
+        {% csrf_token %}
+        <input type="hidden" name="confirmado" value="1">
+        <input type="hidden" name="volver" value="{{ consulta }}">
+        {% for f in borrables %}<input type="hidden" name="ids[]" value="{{ f.persona.id }}">{% endfor %}
+        {% if con_datos %}
+          <label class="interruptor-chico">
+            <input type="checkbox" name="entiendo" value="1" required>
+            Entiendo que se borra todo eso y que no se puede deshacer
+          </label>
+        {% endif %}
+        <div class="d-grid d-sm-flex gap-2">
+          <button type="submit" class="btn btn-acento">{% icono 'basura' 20 %} Sí, eliminar {% if borrables|length == 1 %}esta cuenta{% else %}estas {{ borrables|length }} cuentas{% endif %}</button>
+          <a class="btn btn-borde" href="{{ url_lista }}">No, volver</a>
+        </div>
+      </form>
+    </section>
+  {% endif %}
+
+  {% if bloqueadas %}
+    <section class="tarjeta p d-flex flex-column gap-3" aria-labelledby="t-bloq">
+      <h2 id="t-bloq" class="h5 fw-bold mb-0">No se pueden eliminar todavía</h2>
+      <ul class="lista-eliminar">
+        {% for f in bloqueadas %}
+          <li>
+            <span class="avatar" aria-hidden="true" style="background:var(--azul);width:40px;height:40px;font-size:.875rem">{{ f.persona.iniciales }}</span>
+            <span class="cuerpo">
+              <span class="fw-bold">{{ f.persona.nombre_completo }} <span class="fw-normal texto-2">· {{ f.persona.get_rol_display }}</span></span>
+              <span class="small texto-2">{{ f.motivo }}</span>
+              {% for m in f.modulos %}
+                <a class="small" href="{% url 'academico:admin_editar' m.id %}">{{ m.nombre }}</a>
+              {% endfor %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if not borrables %}<a class="btn btn-borde align-self-start" href="{{ url_lista }}">Volver a Personas</a>{% endif %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
