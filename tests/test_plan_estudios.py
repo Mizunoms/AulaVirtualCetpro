@@ -449,3 +449,78 @@ def test_dos_veces_el_mismo_plan_crea_modulos_con_codigos_distintos(cliente_de, 
         c.post(reverse("academico:plan_crear"), datos(docente))
     codigos = list(Modulo.objects.values_list("codigo", flat=True))
     assert len(codigos) == 4 and len(set(codigos)) == 4
+
+
+# ===================================================================== Topes de seguridad al leer el Excel
+
+
+def _zip_con_hoja(xml, codificacion="utf-8"):
+    z = io.BytesIO()
+    with zipfile.ZipFile(z, "w") as zip_:
+        zip_.writestr(
+            "xl/workbook.xml",
+            f'<workbook xmlns="{NS}" xmlns:r="{NS_R}"><sheets><sheet name="Hoja" sheetId="1" r:id="rId1"/></sheets></workbook>',
+        )
+        zip_.writestr(
+            "xl/_rels/workbook.xml.rels",
+            f'<Relationships xmlns="{NS_PKG}"><Relationship Id="rId1" Type="x" Target="worksheets/sheet1.xml"/></Relationships>',
+        )
+        zip_.writestr("xl/worksheets/sheet1.xml", xml.encode(codificacion))
+    z.seek(0)
+    return z
+
+
+def test_cada_parte_del_libro_tiene_un_tope():
+    from apps.nucleo.importador import LibroXlsx
+
+    archivo = io.BytesIO(libro({"Hoja": {1: {0: "x"}}}))
+    with LibroXlsx(archivo, max_bytes=50) as lib, pytest.raises(ImportadorError, match="demasiado grande"):
+        lib.hojas()
+
+
+def test_el_libro_completo_tiene_un_tope_total():
+    from apps.nucleo.importador import LibroXlsx
+
+    archivo = io.BytesIO(libro({"Hoja": {1: {0: "x"}}}))
+    with LibroXlsx(archivo, max_bytes=10_000, max_total=100) as lib, pytest.raises(ImportadorError, match="demasiado grande"):
+        lib.hojas()  # cada parte es chica, pero juntas pasan del tope (una zip bomba con muchas partes)
+
+
+def test_una_hoja_no_puede_tener_demasiadas_filas():
+    from apps.nucleo.importador import LibroXlsx
+
+    filas = {n: {0: f"fila {n}"} for n in range(1, 31)}
+    with LibroXlsx(io.BytesIO(libro({"Hoja": filas}))) as lib:
+        ruta = lib.hojas()["Hoja"]
+        assert len(lib.filas(ruta)) == 30
+        with pytest.raises(ImportadorError, match="demasiadas filas"):
+            lib.filas(ruta, max_filas=10)
+
+
+def test_la_hoja_con_dtd_se_rechaza_al_leerla_por_partes():
+    from apps.nucleo.importador import LibroXlsx
+
+    ataque = f'<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "aaaa">]><worksheet xmlns="{NS}"><sheetData/></worksheet>'
+    for codificacion in ("utf-8", "utf-16"):
+        xml = (
+            ataque
+            if codificacion == "utf-8"
+            else ataque.replace('<?xml version="1.0"?>', '<?xml version="1.0" encoding="UTF-16"?>')
+        )
+        with LibroXlsx(_zip_con_hoja(xml, codificacion)) as lib, pytest.raises(ImportadorError, match="no es válido"):
+            lib.filas(lib.hojas()["Hoja"])
+
+
+def test_hoja_rota_o_que_no_esta():
+    from apps.nucleo.importador import LibroXlsx
+
+    with LibroXlsx(_zip_con_hoja("<worksheet><sheetData><row>")) as lib, pytest.raises(ImportadorError, match="dañado"):
+        lib.filas(lib.hojas()["Hoja"])
+    with LibroXlsx(_zip_con_hoja("<a/>")) as lib, pytest.raises(ImportadorError, match="dañado o incompleto"):
+        lib.filas("xl/worksheets/no-existe.xml")
+
+
+def test_el_plan_con_una_hoja_enorme_se_rechaza(monkeypatch):
+    monkeypatch.setattr(plan_estudios, "MAX_BYTES_XML", 300)  # un tope chico para no armar un archivo gigante
+    with pytest.raises(ImportadorError, match="demasiado grande"):
+        plan_estudios.leer(io.BytesIO(libro({"Organización modular": organizacion()})))

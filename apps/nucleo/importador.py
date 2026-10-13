@@ -29,6 +29,8 @@ from defusedxml.common import DefusedXmlException
 MAX_PREGUNTAS = 100
 MAX_BYTES_XML = 5 * 1024 * 1024
 MAX_BYTES_TEXTO = 2_000_000
+MAX_FILAS_HOJA = 5000  # filas que se leen de una hoja con LibroXlsx (la «Organización modular» tiene unas cien)
+MAX_TEXTOS = 200_000  # textos compartidos de un libro
 
 _NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 _NS_REL = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
@@ -424,13 +426,49 @@ def _texto_docx(archivo):
     return html.unescape(re.sub(r"<[^>]+>", "", xml))
 
 
+def _eventos(flujo):
+    """Recorre un XML subido por una persona por partes (sin armar todo el árbol). Con defusedxml: sin DTD ni entidades."""
+    try:
+        yield from ET.iterparse(flujo, forbid_dtd=True)
+    except DefusedXmlException as ex:
+        raise ImportadorError("El archivo no es válido.") from ex
+    except ParseError as ex:
+        raise ImportadorError("El archivo está dañado.") from ex
+
+
+def _fila_de(row, compartidas):
+    """Una fila de la hoja: {número de columna (desde 0): texto}, sin las celdas vacías, con error o lógicas."""
+    fila = {}
+    for c in row.findall(f"{_NS}c"):
+        tipo = c.get("t") or ""
+        if tipo in ("e", "b"):
+            continue
+        v = c.find(f"{_NS}v")
+        if tipo == "s":
+            pos = int(v.text) if v is not None and (v.text or "").isdigit() else -1
+            valor = compartidas[pos] if 0 <= pos < len(compartidas) else ""
+        elif tipo == "inlineStr":
+            inline = c.find(f"{_NS}is")
+            valor = _texto_nodo(inline) if inline is not None else ""
+        else:
+            valor = (v.text or "") if v is not None else ""
+        if valor.strip() != "":
+            fila[_indice_columna(re.sub(r"\d+", "", c.get("r") or "A") or "A")] = valor
+    return dict(sorted(fila.items()))
+
+
 class LibroXlsx:
     """Un libro de Excel (.xlsx) abierto para leer varias hojas por su nombre (el plan de estudios del Ministerio, por ejemplo).
-    Sin librerías: es un zip con XML. Uso:  `with LibroXlsx(archivo) as libro: libro.filas(libro.hojas()["Nombre"])`"""
+    Sin librerías: es un zip con XML. Uso:  `with LibroXlsx(archivo) as libro: libro.filas(libro.hojas()["Nombre"])`
 
-    def __init__(self, archivo, max_bytes=MAX_BYTES_XML):
+    Tiene topes para que un archivo malicioso no gaste toda la memoria: cada parte del zip no puede pasar de `max_bytes` y todas
+    juntas no pueden pasar de `max_total` (una zip bomba), las hojas se leen por partes y tienen un máximo de filas."""
+
+    def __init__(self, archivo, max_bytes=MAX_BYTES_XML, max_total=None):
         self._z = _abrir_zip(archivo, "No pudimos abrir el Excel. Guárdalo otra vez como «Libro de Excel (.xlsx)».")
         self._max = max_bytes
+        self._max_total = max_total or 3 * max_bytes
+        self._leido = 0
         self._compartidas = None
 
     def __enter__(self):
@@ -439,14 +477,20 @@ class LibroXlsx:
     def __exit__(self, *_):
         self._z.close()
 
-    def _leer(self, nombre):
+    def _info(self, nombre):
+        """Los datos de una parte del zip (o None si no está), revisando los topes de tamaño."""
         try:
             info = self._z.getinfo(nombre)
         except KeyError:
             return None
-        if info.file_size > self._max:
+        self._leido += info.file_size
+        if info.file_size > self._max or self._leido > self._max_total:
             raise ImportadorError("El archivo es demasiado grande para leerlo.")
-        return self._z.read(nombre)
+        return info
+
+    def _leer(self, nombre):
+        info = self._info(nombre)
+        return None if info is None else self._z.read(info)
 
     def hojas(self):
         """{nombre de la hoja: ruta dentro del zip}, en el orden del libro."""
@@ -467,37 +511,36 @@ class LibroXlsx:
 
     def _textos(self):
         if self._compartidas is None:
-            xml = self._leer("xl/sharedStrings.xml")
-            self._compartidas = [_texto_nodo(si) for si in _xml(xml).findall(f"{_NS}si")] if xml is not None else []
+            info = self._info("xl/sharedStrings.xml")
+            textos = []
+            if info is not None:
+                with self._z.open(info) as flujo:
+                    for _evento, el in _eventos(flujo):
+                        if el.tag == f"{_NS}si":
+                            textos.append(_texto_nodo(el))
+                            el.clear()
+                            if len(textos) > MAX_TEXTOS:
+                                raise ImportadorError("El archivo es demasiado grande para leerlo.")
+            self._compartidas = textos
         return self._compartidas
 
-    def filas(self, ruta):
+    def filas(self, ruta, max_filas=MAX_FILAS_HOJA):
         """Las filas de una hoja: {número de fila: {número de columna (desde 0): texto}}. No incluye las celdas vacías,
         con error ni lógicas."""
-        xml = self._leer(ruta)
-        if xml is None:
+        info = self._info(ruta)
+        if info is None:
             raise ImportadorError("El Excel está dañado o incompleto.")
         compartidas = self._textos()
-        datos = _xml(xml).find(f"{_NS}sheetData")
-        filas = {}
-        for row in datos.findall(f"{_NS}row") if datos is not None else []:
-            fila = {}
-            for c in row.findall(f"{_NS}c"):
-                tipo = c.get("t") or ""
-                if tipo in ("e", "b"):
+        filas, vistas = {}, 0
+        with self._z.open(info) as flujo:
+            for _evento, el in _eventos(flujo):
+                if el.tag != f"{_NS}row":
                     continue
-                v = c.find(f"{_NS}v")
-                if tipo == "s":
-                    pos = int(v.text) if v is not None and (v.text or "").isdigit() else -1
-                    valor = compartidas[pos] if 0 <= pos < len(compartidas) else ""
-                elif tipo == "inlineStr":
-                    inline = c.find(f"{_NS}is")
-                    valor = _texto_nodo(inline) if inline is not None else ""
-                else:
-                    valor = (v.text or "") if v is not None else ""
-                if valor.strip() == "":
-                    continue
-                fila[_indice_columna(re.sub(r"\d+", "", c.get("r") or "A") or "A")] = valor
-            if fila:
-                filas[int(row.get("r") or len(filas) + 1)] = dict(sorted(fila.items()))
+                vistas += 1
+                if vistas > max_filas:
+                    raise ImportadorError("La hoja tiene demasiadas filas para leerla.")
+                fila = _fila_de(el, compartidas)
+                if fila:
+                    filas[int(el.get("r") or vistas)] = fila
+                el.clear()  # lo ya leído no se guarda en memoria
         return filas

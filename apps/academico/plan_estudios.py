@@ -10,7 +10,7 @@ from apps.nucleo.importador import ImportadorError, LibroXlsx
 from .models import UnidadDidactica
 
 MAX_MODULOS = 6
-MAX_BYTES_XML = 30_000_000
+MAX_BYTES_XML = 10_000_000  # tope por parte del zip; el libro entero, 3 veces esto
 HORAS_CREDITO_TEORICO = 16
 HORAS_CREDITO_PRACTICO = 32
 FILAS_DE_TITULOS = 40  # los títulos de la tabla están en las primeras filas
