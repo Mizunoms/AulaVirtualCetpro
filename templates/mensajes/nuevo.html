@@ -1,0 +1,50 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% with elegido=old.para|default:para_id %}
+<form method="post" action="{% url 'mensajes:nuevo' %}" enctype="multipart/form-data" class="tarjeta p nuevo-mensaje d-flex flex-column gap-3">
+  {% csrf_token %}
+  <input type="hidden" name="curso" value="{{ modulo.id }}">
+
+  <div class="curso-bb-meta">
+    <span class="chip chip-info">{% icono 'cursos' 16 %} {{ modulo.nombre }}</span>
+  </div>
+
+  {% if not miembros %}
+    <p class="texto-2 mb-0">Este módulo todavía no tiene alumnos a quienes escribir. Cuando se inscriban con el código, aparecerán aquí.</p>
+  {% else %}
+    <div>
+      <label class="form-label" for="para">Para:</label>
+      <select class="form-select" id="para" name="para" required>
+        {% if es_docente %}
+          <option value="">Elige a un alumno…</option>
+          <option value="todos" {% if elegido == 'todos' %}selected{% endif %}>Todos los alumnos ({{ miembros|length }}) — cada uno lo recibe en privado</option>
+        {% endif %}
+        {% for m in miembros %}
+          <option value="{{ m.id }}" {% if elegido == m.id|stringformat:"s" or not es_docente and miembros|length == 1 %}selected{% endif %}>{{ m.nombre }} ({{ m.rol }})</option>
+        {% endfor %}
+      </select>
+      {% if es_docente and miembros|length > 8 %}<div class="ayuda">Con el teclado puedes escribir las primeras letras del apellido para encontrar al alumno.</div>{% endif %}
+    </div>
+
+    <div>
+      <label class="form-label" for="texto">Mensaje</label>
+      <textarea class="form-control" id="texto" name="texto" rows="7" maxlength="3000" placeholder="Escribe aquí tu mensaje…">{{ old.texto }}</textarea>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <label class="btn btn-borde position-relative mb-0">
+        {% icono 'camara' 20 %} Adjuntar foto o archivo
+        <input type="file" name="archivo" accept="image/*,.pdf,.doc,.docx" data-previa="" data-nombre="nombre-adjunto" class="position-absolute opacity-0" style="width:1px;height:1px">
+      </label>
+      <span id="nombre-adjunto" class="small fw-bold" aria-live="polite"></span>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'enviar' 22 %} Enviar</button>
+      <a class="btn btn-borde btn-lg" href="{% url 'mensajes:modulo' modulo.id %}">Cancelar</a>
+    </div>
+  {% endif %}
+</form>
+{% endwith %}
+{% endblock %}

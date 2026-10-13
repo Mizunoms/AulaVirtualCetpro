@@ -41,10 +41,11 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Copiar el módulo para el siguiente periodo y papelera del módulo
 
 ## Fase 4 — Evaluación y comunicación
-- [ ] Formularios con nota
-- [ ] Asistencia
-- [ ] Notas y evaluación del módulo (pesos, nota mínima 11)
-- [ ] Preguntas de la clase, notificaciones, mensajes alumno ↔ docente
+- [ ] Formularios con nota (editor, responder con tiempo, resultados, importar Excel)
+- [x] Asistencia (tomar lista del día, historial, % por alumno)
+- [x] Notas y evaluación del módulo (pesos 50/30/20, nota mínima 11), «Mis notas», Excel e impresión, consolidado
+- [x] Preguntas de la clase y notificaciones
+- [x] Mensajes alumno ↔ docente (con foto o archivo, «mensaje a todos», solo los dos participantes ven el archivo)
 
 ## Fase 5 — Panel del CETPRO
 - [ ] Personas (crear, editar, «Más», desactivar y **eliminar de verdad**)

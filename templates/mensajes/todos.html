@@ -1,0 +1,19 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% if not alumnos %}
+  {% vacio 'usuarios' 'Este módulo todavía no tiene alumnos' 'Comparte el código del módulo para que se inscriban.' %}
+{% else %}
+  <div class="tarjeta p">
+    <div class="fw-bold">Le llega a {{ alumnos|length|plural:"alumno,alumnos" }}, a cada uno en privado:</div>
+    <div class="texto-2 small mt-1">{% for a in alumnos %}{{ a.nombre_completo }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+    <div class="ayuda">Cada alumno puede responderte solo a ti. Si prefieres que todos lo vean en el módulo, usa <b>Escribir aviso</b>.</div>
+  </div>
+  <form method="post" action="{% url 'mensajes:todos' modulo.id %}" class="tarjeta p d-flex flex-column gap-2">
+    {% csrf_token %}
+    <label class="form-label mb-0" for="texto">Tu mensaje</label>
+    <textarea class="form-control" id="texto" name="texto" rows="4" maxlength="3000" required placeholder="Ej.: Recuerden traer sus materiales mañana.">{{ old.texto }}</textarea>
+    <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'enviar' 20 %} Enviar a todos</button>
+  </form>
+{% endif %}
+{% endblock %}

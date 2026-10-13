@@ -1,0 +1,37 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% if not modulos %}
+  {% if es_alumno %}
+    {% enlace 'academico:modulos' as url_vacio %}
+    {% vacio 'mensaje' 'Todavía no estás en ningún módulo' 'Cuando entres a tu módulo con el código de tu profesor, podrás escribirle aquí.' 'Entrar a un módulo' url_vacio %}
+  {% else %}
+    {% enlace 'academico:nuevo' as url_vacio %}
+    {% vacio 'mensaje' 'Todavía no tienes módulos' 'Cuando crees un módulo y tus alumnos se inscriban, podrás escribirles aquí.' 'Crear un módulo' url_vacio %}
+  {% endif %}
+{% endif %}
+
+<div class="lista-modulos">
+  {% for m in modulos %}
+    {% with r=m.resumen %}
+    <article class="curso-bb" style="--color:{% color_curso m.especialidad %}">
+      <div class="curso-mensajes-fila">
+        <div class="curso-bb-cabeza">
+          <div class="curso-bb-esp">{% if m.codigo %}{{ m.codigo_fmt }} · {% endif %}{{ m.especialidad }}</div>
+          <h2 class="curso-bb-titulo"><a href="{% url 'mensajes:modulo' m.id %}">{{ m.nombre }}</a></h2>
+          <div class="curso-bb-meta">
+            <span>{% if es_alumno %}Prof. {{ m.docente.nombre_completo }}{% else %}{{ m.total_alumnos|plural:"alumno,alumnos" }}{% endif %}</span>
+            {% if r.ultimo %}<span>Último mensaje: {{ r.ultimo|hace_tiempo }}</span>{% else %}<span>Sin mensajes todavía</span>{% endif %}
+            {% if r.sin_leer %}<span class="chip chip-aviso">{{ r.sin_leer|plural:"mensaje nuevo,mensajes nuevos" }}</span>{% endif %}
+          </div>
+        </div>
+        <div class="curso-mensajes-acciones">
+          <a class="btn btn-cetpro" href="{% url 'mensajes:nuevo' %}?curso={{ m.id }}">{% icono 'mas' 20 %} Nuevo mensaje</a>
+          {% if r.hilos %}<a class="btn btn-borde" href="{% url 'mensajes:modulo' m.id %}">Ver mensajes</a>{% endif %}
+        </div>
+      </div>
+    </article>
+    {% endwith %}
+  {% endfor %}
+</div>
+{% endblock %}

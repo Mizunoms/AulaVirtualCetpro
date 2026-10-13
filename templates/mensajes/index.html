@@ -1,0 +1,103 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% comment %}
+  Mensajes de un módulo. PC: a la izquierda la lista (con buscador y «Nuevo mensaje»); a la derecha la conversación abierta.
+  Celular: se ve una cosa a la vez (la lista, o la conversación con «Volver»).
+{% endcomment %}
+{% block contenido %}
+{% pestanas_modulo modulo 'mensajes' acceso %}
+<div class="mensajeria {% if activa %}con-chat{% endif %}">
+  <aside class="mensajeria-lista tarjeta" aria-label="Mensajes de {{ modulo.nombre }}">
+    <div class="p-3 border-bottom d-flex flex-column gap-2">
+      <a class="btn btn-cetpro w-100" href="{{ url_nuevo }}">{% icono 'mas' 20 %} Nuevo mensaje</a>
+      <label class="visually-hidden" for="buscar-chat">Buscar</label>
+      <div class="campo-buscar">
+        {% icono 'buscar' 20 %}
+        <input class="form-control" id="buscar-chat" type="search" placeholder="{% if es_alumno %}Buscar en este módulo{% else %}Buscar alumno{% endif %}" data-filtro="lista-chats" autocomplete="off">
+      </div>
+    </div>
+    <div id="lista-chats" class="mensajeria-scroll">
+      {% if not conversaciones %}
+        <p class="p-3 texto-2 mb-0">Todavía no hay mensajes en este módulo.</p>
+      {% endif %}
+      <ul class="lista-filas">
+        {% for c in conversaciones %}
+          <li data-buscar="{{ c.otro_usuario.nombre_completo|lower }}">
+            <a class="fila chat-fila {% if c.id == activa %}activa{% endif %}" href="{% url 'mensajes:ver' c.id %}#ultimo"{% if c.id == activa %} aria-current="page"{% endif %}>
+              <span class="avatar" aria-hidden="true"{% if c.otro_usuario.rol != 'docente' %} style="background:var(--azul)"{% endif %}>{{ c.otro_usuario.iniciales }}</span>
+              <span class="cuerpo">
+                <span class="{% if c.sin_leer %}titulo{% else %}fw-bold{% endif %}">{% if c.otro_usuario.rol == 'docente' %}Prof. {% endif %}{{ c.otro_usuario.nombre_completo }}</span>
+                <span class="detalle text-truncate">
+                  <span class="etiqueta-autor {% if c.ultimo_autor == user.id %}yo{% endif %}">{% if c.ultimo_autor == user.id %}(Usted){% elif c.otro_usuario.rol == 'docente' %}Docente{% else %}Alumno{% endif %}</span>
+                  {% if c.ultimo_texto %}{{ c.ultimo_texto|truncatechars:60 }}{% else %}Archivo adjunto{% endif %}
+                </span>
+              </span>
+              <span class="d-flex flex-column align-items-end gap-1">
+                {% if c.ultimo_fecha %}<span class="small texto-2 text-nowrap">{{ c.ultimo_fecha|hace_tiempo }}</span>{% endif %}
+                {% if c.sin_leer %}<span class="contador position-static" aria-label="{{ c.sin_leer }} sin leer">{{ c.sin_leer }}</span>{% endif %}
+              </span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="px-3 texto-2 small" data-sin-resultados hidden>No se encontró a nadie con ese nombre.</p>
+    </div>
+  </aside>
+
+  <section class="mensajeria-chat tarjeta" aria-label="Conversación">
+    {% if not activa %}
+      {% if es_alumno %}
+        {% vacio 'mensaje' 'Elige un mensaje' 'Selecciona una conversación a la izquierda, o escríbele a tu profesor. También puedes enviarle una foto.' 'Nuevo mensaje' url_nuevo %}
+      {% else %}
+        {% vacio 'mensaje' 'Elige un mensaje' 'Selecciona una conversación a la izquierda, o escribe a un alumno o a todo el módulo.' 'Nuevo mensaje' url_nuevo %}
+      {% endif %}
+    {% else %}
+      <header class="chat-cabecera">
+        <span class="avatar" aria-hidden="true">{{ otro.iniciales }}</span>
+        <div style="min-width:0">
+          <div class="fw-bold">{% if otro.rol == 'docente' %}Prof. {% endif %}{{ otro.nombre_completo }} <span class="chip chip-gris">{% if otro.rol == 'docente' %}Docente{% else %}Alumno{% endif %}</span></div>
+          <div class="texto-2 small text-truncate">{{ modulo.nombre }}</div>
+        </div>
+      </header>
+      <div class="chat mensajeria-scroll" aria-live="polite">
+        {% if not mensajes %}
+          <div class="texto-2 text-center py-4">Escribe tu primer mensaje aquí abajo.</div>
+        {% endif %}
+        {% for m in mensajes %}
+          {% if m.dia_nuevo %}<div class="chat-dia">{{ m.dia_texto }}</div>{% endif %}
+          <div class="burbuja {% if m.mio %}mia{% else %}suya{% endif %}"{% if m.es_ultimo %} id="ultimo"{% endif %}>
+            {% if m.archivo_ruta %}
+              {% if m.es_foto %}
+                <a href="{% url 'mensajes:adjunto' m.id %}" target="_blank" rel="noopener"><img class="foto-mensaje" src="{% url 'mensajes:adjunto' m.id %}" alt="Foto enviada"></a>
+              {% else %}
+                <a class="adjunto" href="{% url 'mensajes:adjunto' m.id %}" target="_blank" rel="noopener">{% icono 'bajar' 18 %} {{ m.archivo_nombre }}</a>
+              {% endif %}
+            {% endif %}
+            {% if m.texto %}<div class="texto" id="msg-{{ m.id }}">{{ m.texto|linebreaksbr }}</div>{% endif %}
+            <div class="hora">
+              {{ m.creado|hora_texto }}
+              {% if m.mio %} · {% if m.leido %}Leído{% else %}Enviado{% endif %}{% endif %}
+            </div>
+            {% if not m.mio and m.texto %}
+              <button type="button" class="btn-leer btn-texto p-0" style="min-height:32px;color:inherit" data-leer="msg-{{ m.id }}" aria-pressed="false">{% icono 'voz' 18 %} Escuchar</button>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <form method="post" action="{{ accion }}" enctype="multipart/form-data" class="chat-escribir">
+        {% csrf_token %}
+        <label class="visually-hidden" for="texto">Tu mensaje</label>
+        <div class="d-flex gap-2 align-items-end">
+          <label class="btn btn-borde boton-adjuntar position-relative mb-0" title="Adjuntar foto o archivo">
+            {% icono 'camara' 22 %}<span class="visually-hidden">Adjuntar foto o archivo</span>
+            <input type="file" name="archivo" accept="image/*,.pdf,.doc,.docx" data-previa="" data-nombre="nombre-adjunto" class="position-absolute opacity-0" style="width:1px;height:1px">
+          </label>
+          <textarea class="form-control" id="texto" name="texto" rows="1" maxlength="3000" placeholder="Escribe tu mensaje…"></textarea>
+          <button type="submit" class="btn btn-cetpro" aria-label="Enviar">{% icono 'enviar' 22 %}<span class="d-none d-sm-inline">Enviar</span></button>
+        </div>
+        <div id="nombre-adjunto" class="small fw-bold mt-1" aria-live="polite"></div>
+      </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
