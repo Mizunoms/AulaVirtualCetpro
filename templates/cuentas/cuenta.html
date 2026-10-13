@@ -1,0 +1,93 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<div class="cuenta">
+<aside class="cuenta-lado" aria-label="Mis datos">
+<div class="tarjeta p text-center">
+  <span class="avatar avatar-grande mx-auto" aria-hidden="true">{{ u.iniciales }}</span>
+  <div class="fs-5 fw-bold mt-2">{{ u.nombre_completo }}</div>
+  <div class="texto-2">{{ u.get_rol_display }} · {{ u.identificador }}</div>
+</div>
+{% if aj.web %}
+  <ul class="tarjeta lista-filas">
+    <li>
+      <a class="fila" href="{{ aj.web }}" target="_blank" rel="noopener">
+        <span class="ico-caja ico-gris">{% icono 'web' %}</span>
+        <span class="cuerpo"><span class="titulo">Página web del CETPRO</span></span>
+        <span class="flecha">{% icono 'derecha' %}</span>
+      </a>
+    </li>
+  </ul>
+{% endif %}
+
+<form method="post" action="{% url 'cuentas:salir' %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-peligro btn-lg w-100">{% icono 'salir' %} Cerrar sesión</button>
+</form>
+</aside>
+
+<div class="cuenta-ajustes">
+<form method="post" action="{% url 'cuentas:preferencias' %}">
+  {% csrf_token %}
+  <h2 class="seccion-titulo">Para ver y escuchar mejor</h2>
+  <div class="tarjeta">
+    <fieldset class="p-3">
+      <legend class="form-label d-flex align-items-center gap-2">{% icono 'letra' 24 %} Tamaño de la letra</legend>
+      <div class="opciones">
+        <input type="radio" name="tamano_letra" id="tl-normal" value="normal" {% if pref.tamano_letra == 'normal' %}checked{% endif %}>
+        <label for="tl-normal" style="font-size:1rem">Normal</label>
+        <input type="radio" name="tamano_letra" id="tl-grande" value="grande" {% if pref.tamano_letra == 'grande' %}checked{% endif %}>
+        <label for="tl-grande" style="font-size:1.15rem">Grande</label>
+        <input type="radio" name="tamano_letra" id="tl-muy_grande" value="muy_grande" {% if pref.tamano_letra == 'muy_grande' %}checked{% endif %}>
+        <label for="tl-muy_grande" style="font-size:1.3rem">Muy grande</label>
+      </div>
+    </fieldset>
+    <fieldset class="p-3 border-top">
+      <legend class="form-label d-flex align-items-center gap-2">{% icono 'luna' 24 %} Colores de la pantalla</legend>
+      <div class="opciones">
+        <input type="radio" name="tema" id="tema-claro" value="claro" {% if tema == 'claro' %}checked{% endif %}>
+        <label for="tema-claro">Modo claro</label>
+        <input type="radio" name="tema" id="tema-oscuro" value="oscuro" {% if tema == 'oscuro' %}checked{% endif %}>
+        <label for="tema-oscuro">Modo oscuro</label>
+      </div>
+      <div class="ayuda">El modo oscuro cansa menos la vista de noche. Se recuerda en este celular o computadora.</div>
+    </fieldset>
+    <label class="interruptor border-top">
+      {% icono 'contraste' 26 %}<span class="texto">Alto contraste<span class="d-block small texto-2 fw-normal">Colores más fuertes y bordes negros</span></span>
+      <input type="checkbox" name="alto_contraste" value="1" {% if pref.alto_contraste %}checked{% endif %}>
+    </label>
+    <label class="interruptor">
+      {% icono 'voz' 26 %}<span class="texto">Leer en voz alta<span class="d-block small texto-2 fw-normal">Aparece el botón «Escuchar» en tareas y avisos</span></span>
+      <input type="checkbox" name="lectura_voz" value="1" {% if pref.lectura_voz %}checked{% endif %}>
+    </label>
+  </div>
+  <button type="submit" class="btn btn-cetpro w-100 mt-3">Guardar cambios</button>
+</form>
+
+<details class="tarjeta" id="clave">
+  <summary class="fila" style="cursor:pointer">
+    <span class="ico-caja ico-gris">{% icono 'clave' %}</span>
+    <span class="cuerpo"><span class="titulo">Cambiar mi contraseña</span></span>
+    <span class="flecha">{% icono 'derecha' %}</span>
+  </summary>
+  <form method="post" action="{% url 'cuentas:clave' %}" class="p-3 border-top d-flex flex-column gap-3">
+    {% csrf_token %}
+    <div>
+      <label class="form-label" for="actual">Contraseña actual</label>
+      <input class="form-control" type="password" id="actual" name="actual" autocomplete="current-password" required>
+    </div>
+    <div>
+      <label class="form-label" for="nueva">Contraseña nueva</label>
+      <input class="form-control" type="password" id="nueva" name="nueva" autocomplete="new-password" minlength="6" required>
+      <div class="ayuda">Al menos 6 letras o números. Que sea fácil de recordar para ti, pero no tu DNI.</div>
+    </div>
+    <div>
+      <label class="form-label" for="repetir">Escribe otra vez la contraseña nueva</label>
+      <input class="form-control" type="password" id="repetir" name="repetir" autocomplete="new-password" minlength="6" required>
+    </div>
+    <button type="submit" class="btn btn-cetpro">Cambiar contraseña</button>
+  </form>
+</details>
+</div>
+</div>
+{% endblock %}

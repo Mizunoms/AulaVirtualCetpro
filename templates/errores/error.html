@@ -1,0 +1,7 @@
+{% extends "layouts/app.html" %}
+{% block contenido %}
+<div class="tarjeta p-4 text-center">
+  <p class="fs-5 mb-3">{{ mensaje }}</p>
+  <a class="btn btn-cetpro" href="{% url 'nucleo:inicio' %}">Ir al inicio</a>
+</div>
+{% endblock %}

@@ -1,11 +1,12 @@
-"""Forma de entrar: DNI (alumnos) o correo (docentes y administración)."""
+"""Forma de entrar al panel técnico de Django: DNI o correo.
 
-import re
+(Las pantallas del aula comprueban la contraseña ellas mismas, con límite de intentos; ver `views.entrar`.)
+"""
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
-DOMINIO_INSTITUCIONAL = "cetpro.com"
+from apps.nucleo import ajustes
 
 
 def normalizar_identificador(texto):
@@ -14,10 +15,10 @@ def normalizar_identificador(texto):
     Un correo sin «@» se completa con el dominio del CETPRO (ej. «maria» -> maria@cetpro.com).
     """
     texto = (texto or "").strip().lower()
-    if re.fullmatch(r"\d{8}", texto):
+    if len(texto) == 8 and texto.isdigit():
         return "dni", texto
     if "@" not in texto and texto:
-        texto = f"{texto}@{DOMINIO_INSTITUCIONAL}"
+        texto = f"{texto}@{ajustes.ajuste('dominio_correo')}"
     return "correo", texto
 
 

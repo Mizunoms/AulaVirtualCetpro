@@ -21,6 +21,4 @@ class UsuarioAdmin(UserAdmin):
         ("Datos", {"fields": ("dni", "nombres", "apellidos", "telefono", "fecha_nacimiento", "rol")}),
         ("Permisos", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
     )
-    add_fieldsets = (
-        (None, {"classes": ("wide",), "fields": ("correo", "nombres", "rol", "password1", "password2")}),
-    )
+    add_fieldsets = ((None, {"classes": ("wide",), "fields": ("correo", "nombres", "rol", "password1", "password2")}),)

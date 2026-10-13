@@ -1,0 +1,208 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Ajustes del aula en pestañas: Identidad visual · Periodo y matrículas · Contacto y soporte (Cursos llega en la fase 2). #}
+{% block contenido %}
+<nav class="pestanas pestanas-gestion" aria-label="Secciones de ajustes">
+  {% for clave, texto in pestanas.items %}
+    <a href="{% url 'nucleo:ajustes' %}?tab={{ clave }}" {% if tab == clave %}aria-current="page"{% endif %}>{{ texto }}</a>
+  {% endfor %}
+</nav>
+
+{% if tab == 'identidad' %}
+  <div class="rejilla-ajustes">
+    <form method="post" action="{% url 'nucleo:ajustes' %}" class="tarjeta p d-flex flex-column gap-3">
+      {% csrf_token %}
+      <input type="hidden" name="tab" value="identidad">
+      <h2 class="h4 mb-0">{% icono 'paleta' %} Nombres y colores</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="centro_nombre">Nombre del centro</label>
+          <input class="form-control" id="centro_nombre" name="centro_nombre" maxlength="60" required value="{{ v.centro_nombre }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="aula_nombre">Nombre del aula</label>
+          <input class="form-control" id="aula_nombre" name="aula_nombre" maxlength="60" required value="{{ v.aula_nombre }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="bienvenida">Frase de bienvenida (pantalla de entrada)</label>
+          <input class="form-control" id="bienvenida" name="bienvenida" maxlength="200" value="{{ v.bienvenida }}">
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="color_principal">Color principal</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input class="form-control form-control-color" type="color" id="color_principal" name="color_principal" value="{{ v.color_principal }}" data-color-tema="color_principal">
+            <span class="texto-2">Menú y barra de arriba</span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="color_acento">Color de acento</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input class="form-control form-control-color" type="color" id="color_acento" name="color_acento" value="{{ v.color_acento }}" data-color-tema="color_acento">
+            <span class="texto-2">Detalles y números</span>
+          </div>
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="color_secundario">Botones y enlaces</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input class="form-control form-control-color" type="color" id="color_secundario" name="color_secundario" value="{{ v.color_secundario }}" data-color-tema="color_secundario">
+            <span class="texto-2">Botones principales</span>
+          </div>
+        </div>
+      </div>
+      <div class="vista-tema" aria-label="Vista previa de los colores">
+        <div class="vt-barra" data-vt="color_principal" style="background:{{ v.color_principal }}">{% icono 'inicio' 20 %} {{ v.aula_nombre }}</div>
+        <div class="vt-cuerpo">
+          <span class="vt-boton" data-vt="color_secundario" style="background:{{ v.color_secundario }}">Botón</span>
+          <span class="vt-boton" data-vt="color_acento" style="background:{{ v.color_acento }}">3</span>
+          <span class="texto-2">Así se verán los colores.</span>
+        </div>
+      </div>
+      <p class="ayuda mb-0">Si un color es muy claro, el aula no lo acepta: la letra blanca no se leería bien. Cada persona elige el <b>modo claro u oscuro</b> en «Mi cuenta» (o con el botón del menú), sin cambiar estos colores.</p>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-cetpro">Guardar</button>
+        <button type="submit" name="restaurar_colores" value="1" class="btn btn-borde">Volver a los colores del CETPRO</button>
+      </div>
+    </form>
+
+    <section id="imagenes" class="tarjeta p d-flex flex-column gap-4">
+      <h2 class="h4 mb-0">{% icono 'imagen' %} Logo y foto de entrada</h2>
+
+      <div class="d-flex flex-column flex-md-row gap-3">
+        <div style="min-width:140px"><img class="imagen-ajuste" src="{{ logo_url }}" alt="Logo actual"></div>
+        <form method="post" action="{% url 'nucleo:ajustes_imagen' %}" enctype="multipart/form-data" class="flex-grow-1 d-flex flex-column gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="cual" value="logo">
+          <label class="form-label mb-0" for="img-logo">Logo</label>
+          <span class="ayuda mt-0">Se ve en el menú, en la pantalla de entrada y en la pestaña del navegador. Mejor cuadrado, PNG.</span>
+          <input class="form-control" type="file" id="img-logo" name="imagen" accept="image/png,image/jpeg,image/webp" required data-sin-comprimir>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-cetpro">{% icono 'subir' 20 %} Subir</button>
+            {% if a.logo %}<button type="submit" name="quitar" value="1" class="btn btn-borde" formnovalidate>Quitar y usar el original</button>{% endif %}
+          </div>
+        </form>
+      </div>
+
+      <div class="d-flex flex-column flex-md-row gap-3">
+        <div style="min-width:140px">
+          {% if fondo_login_url %}<img class="imagen-ajuste" src="{{ fondo_login_url }}" alt="Foto de la pantalla de entrada actual">{% else %}<span class="texto-2">Sin foto (se usa un fondo de color)</span>{% endif %}
+        </div>
+        <form method="post" action="{% url 'nucleo:ajustes_imagen' %}" enctype="multipart/form-data" class="flex-grow-1 d-flex flex-column gap-2">
+          {% csrf_token %}
+          <input type="hidden" name="cual" value="fondo_login">
+          <label class="form-label mb-0" for="img-fondo_login">Foto de la pantalla de entrada</label>
+          <span class="ayuda mt-0">Una foto del CETPRO o de un taller. Se oscurece un poco para que el texto se lea.</span>
+          <input class="form-control" type="file" id="img-fondo_login" name="imagen" accept="image/png,image/jpeg,image/webp" required data-sin-comprimir>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-cetpro">{% icono 'subir' 20 %} Subir</button>
+            {% if a.fondo_login %}<button type="submit" name="quitar" value="1" class="btn btn-borde" formnovalidate>Quitar y usar el original</button>{% endif %}
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <section id="fotos" class="tarjeta p d-flex flex-column gap-3">
+    <h2 class="h4 mb-0">{% icono 'camara' %} Fotos de los talleres</h2>
+    <p class="texto-2 mb-0">Una foto real de cada taller (panadería, peluquería…) se ve en las tarjetas de sus módulos. Mejor horizontal.</p>
+    <div class="row g-3">
+      {% for esp in especialidades %}
+        {% foto_especialidad esp.nombre as foto %}
+        <div class="col-12 col-md-6 col-xl-3">
+          <form method="post" action="{% url 'nucleo:ajustes_foto' %}" enctype="multipart/form-data" class="tarjeta h-100 overflow-hidden d-flex flex-column">
+            {% csrf_token %}
+            <input type="hidden" name="nombre" value="{{ esp.nombre }}">
+            <div class="foto-taller" style="background-color:{{ esp.color }}{% if foto %};background-image:url('{{ foto }}'){% endif %}"><span>{{ esp.nombre }}</span></div>
+            <div class="p-3 d-flex flex-column gap-2">
+              <label class="visually-hidden" for="foto-{{ forloop.counter }}">Foto de {{ esp.nombre }}</label>
+              <input class="form-control" type="file" id="foto-{{ forloop.counter }}" name="foto" accept="image/jpeg,image/png,image/webp" required>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-borde flex-fill">{% icono 'subir' 20 %} Subir</button>
+                {% if foto %}<button type="submit" name="quitar" value="1" class="btn btn-texto" formnovalidate>Quitar</button>{% endif %}
+              </div>
+            </div>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+{% elif tab == 'periodo' %}
+  <div class="rejilla-ajustes">
+    <form method="post" action="{% url 'nucleo:ajustes' %}" class="tarjeta p d-flex flex-column gap-3">
+      {% csrf_token %}
+      <input type="hidden" name="tab" value="periodo">
+      <h2 class="h4 mb-0">{% icono 'calendario' %} Periodo y matrículas</h2>
+      <div>
+        <label class="form-label" for="periodo">Periodo académico activo</label>
+        <input class="form-control" id="periodo" name="periodo" maxlength="20" value="{{ v.periodo }}" placeholder="2026-II" style="max-width:200px">
+        <div class="ayuda">Ejemplos: 2026-I, 2026-II. Se usa al crear módulos nuevos.</div>
+      </div>
+      <label class="interruptor tarjeta">
+        <span class="texto">Matrículas abiertas: los alumnos pueden crear su cuenta con su DNI y el código del módulo, o unirse a otro módulo con su código
+          <span class="d-block fw-normal texto-2">Si lo apagas, solo entran los alumnos que cargues en una lista. Apágalo cuando termine la matrícula del periodo.</span></span>
+        <input type="checkbox" name="registro_abierto" value="1" {% if a.registro_abierto == '1' %}checked{% endif %}>
+      </label>
+      <div>
+        <label class="form-label" for="aviso_general">Aviso general del aula <span class="fw-normal texto-2">(déjalo vacío para quitarlo)</span></label>
+        <input class="form-control" id="aviso_general" name="aviso_general" maxlength="300" value="{{ v.aviso_general }}" placeholder="Ej.: El lunes 20 no hay clases por feriado.">
+        <div class="ayuda">Aparece arriba en todas las páginas, para todos.</div>
+      </div>
+      <div>
+        <label class="form-label" for="dominio_correo">Correo de profesores y administradores</label>
+        <div class="d-flex align-items-center gap-2" style="max-width:420px">
+          <span class="fw-bold fs-5">nombre @</span>
+          <input class="form-control" id="dominio_correo" name="dominio_correo" maxlength="60" required value="{{ v.dominio_correo }}" placeholder="cetpro.com">
+        </div>
+        <div class="ayuda">En la entrada, el profesor puede escribir solo su nombre (ej. profesortecnico) y el aula completa el resto.</div>
+      </div>
+      <button type="submit" class="btn btn-cetpro align-self-start">Guardar</button>
+    </form>
+    {% if conteos_modulos %}
+      <section class="tarjeta p d-flex flex-column gap-3">
+        <h2 class="h4 mb-0">{% icono 'cursos' %} Módulos del periodo</h2>
+        <p class="mb-0">Hay <b>{{ conteos_modulos.activos }}</b> módulos activos y <b>{{ conteos_modulos.archivados }}</b> archivados.</p>
+        <p class="texto-2 mb-0">Cuando termina un periodo, archiva sus módulos para no acumular módulos viejos o de prueba. Archivar no borra nada: alumnos y docente dejan de verlos y se pueden reactivar cuando quieras.</p>
+      </section>
+    {% endif %}
+  </div>
+
+{% else %}
+  <form method="post" action="{% url 'nucleo:ajustes' %}" class="tarjeta p d-flex flex-column gap-3">
+    {% csrf_token %}
+    <input type="hidden" name="tab" value="contacto">
+    <h2 class="h4 mb-0">{% icono 'whatsapp' %} Contacto y soporte</h2>
+    <p class="texto-2 mb-0">Aparece en la pantalla de entrada y en el Inicio del alumno, para quien necesite ayuda.</p>
+    <div class="row g-3">
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="whatsapp">WhatsApp de soporte</label>
+        <input class="form-control" id="whatsapp" name="whatsapp" inputmode="tel" maxlength="15" value="{{ v.whatsapp }}" placeholder="987654321">
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="telefono">Teléfono de secretaría</label>
+        <input class="form-control" id="telefono" name="telefono" inputmode="tel" maxlength="20" value="{{ v.telefono }}" placeholder="01 1234567">
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="horario_atencion">Horario de atención</label>
+        <input class="form-control" id="horario_atencion" name="horario_atencion" maxlength="120" value="{{ v.horario_atencion }}" placeholder="Lunes a viernes de 8:00 a 6:00">
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="web">Página web del CETPRO</label>
+        <input class="form-control" id="web" name="web" type="url" maxlength="200" value="{{ v.web }}" placeholder="https://…">
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="reglamento_url">Enlace al reglamento del estudiante</label>
+        <input class="form-control" id="reglamento_url" name="reglamento_url" type="url" maxlength="300" value="{{ v.reglamento_url }}" placeholder="https://…">
+        <div class="ayuda">Un PDF o un documento de Google Drive. Aparece en el Inicio del alumno y como «Normas del taller».</div>
+      </div>
+      <div class="col-md-6 col-xl-4">
+        <label class="form-label" for="horario_url">Enlace al horario de clases</label>
+        <input class="form-control" id="horario_url" name="horario_url" type="url" maxlength="300" value="{{ v.horario_url }}" placeholder="https://…">
+        <div class="ayuda">Opcional. Si lo dejas vacío, el alumno ve el horario de cada uno de sus módulos.</div>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-cetpro align-self-start">Guardar</button>
+  </form>
+{% endif %}
+{% endblock %}

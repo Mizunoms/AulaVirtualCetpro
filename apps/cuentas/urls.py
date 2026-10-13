@@ -5,6 +5,11 @@ from . import views
 app_name = "cuentas"
 
 urlpatterns = [
-    path("entrar/", views.EntrarView.as_view(), name="entrar"),
-    path("salir/", views.salir, name="salir"),
+    path("login", views.entrar, name="login"),
+    path("salir", views.salir, name="salir"),
+    path("registro", views.registro_pendiente, name="registro"),
+    path("cuenta", views.cuenta, name="cuenta"),
+    path("cuenta/preferencias", views.preferencias, name="preferencias"),
+    path("cuenta/clave", views.cambiar_clave, name="clave"),
+    path("cuenta/nueva-clave", views.nueva_clave, name="nueva_clave"),
 ]

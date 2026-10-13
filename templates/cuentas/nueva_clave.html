@@ -1,0 +1,44 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Primera vez con una contraseña temporal. `temporal` solo viene de «Crear mi cuenta». #}
+{% block contenido %}
+{% if temporal %}
+  <div style="max-width:560px" class="d-flex flex-column gap-3 mb-3">
+    <div class="tarjeta p text-center">
+      <span class="ico-caja ico-verde mx-auto mb-2" style="width:64px;height:64px;border-radius:999px">{% icono 'check' 34 %}</span>
+      <h2 class="h3 mb-1">¡Tu cuenta está lista, {{ u.primer_nombre }}!</h2>
+      <p class="texto-2 mb-0">Paso 3 de 3. Ahora elige una contraseña que <b>tú recuerdes</b>.</p>
+    </div>
+    <div class="tarjeta-clave">
+      <div class="dato-acceso">Tu DNI</div>
+      <div class="valor">{{ u.dni }}</div>
+      <div class="dato-acceso mt-3">Contraseña temporal <span class="fw-normal">(solo por si cierras esta página)</span></div>
+      <div class="valor" id="clave-nueva">{{ temporal }}</div>
+      <button type="button" class="btn btn-leer btn-borde mt-2" data-leer="clave-nueva" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+    </div>
+  </div>
+{% endif %}
+<div class="tarjeta p d-flex flex-column gap-3" style="max-width:560px">
+  {% if not temporal %}
+    <div class="mensaje mensaje-ok" role="status">{% icono 'clave' 26 %}<span>Hola, {{ u.primer_nombre }}. La contraseña que te dieron es temporal.</span></div>
+  {% endif %}
+  <p class="mb-0">Por seguridad, elige <b>una contraseña propia</b>. Solo tú la sabrás. Después podrás usar el aula normalmente.</p>
+  <form method="post" action="{% url 'cuentas:nueva_clave' %}" class="d-flex flex-column gap-3">
+    {% csrf_token %}
+    <div>
+      <label class="form-label" for="nueva">Contraseña nueva</label>
+      <input class="form-control" type="password" id="nueva" name="nueva" autocomplete="new-password" minlength="6" required autofocus>
+      <div class="ayuda">Al menos 6 letras o números. Que sea fácil de recordar para ti, pero no tu DNI.</div>
+    </div>
+    <div>
+      <label class="form-label" for="repetir">Escríbela otra vez</label>
+      <input class="form-control" type="password" id="repetir" name="repetir" autocomplete="new-password" minlength="6" required>
+    </div>
+    <button type="submit" class="btn btn-cetpro btn-lg">Guardar mi contraseña</button>
+  </form>
+  <form method="post" action="{% url 'cuentas:salir' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-borde w-100">Salir y hacerlo después</button>
+  </form>
+</div>
+{% endblock %}

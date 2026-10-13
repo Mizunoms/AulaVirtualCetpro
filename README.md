@@ -19,7 +19,11 @@ powershell -ExecutionPolicy Bypass -File scripts\crear-base-postgres.ps1   # cre
 .venv\Scripts\python manage.py runserver
 ```
 
-Abrir <http://127.0.0.1:8000> y entrar con el correo y la contraseña del superusuario.
+Abrir <http://127.0.0.1:8000> y entrar con el correo y la contraseña del superusuario
+(en «Soy profesor» se puede escribir solo la parte antes de la `@`).
+
+Para probar con cuentas de ejemplo (solo en tu PC): `.venv\Scripts\python manage.py datos_demo`
+(crea un administrador, un docente y un alumno; las claves están en el propio comando).
 
 ## Pruebas
 

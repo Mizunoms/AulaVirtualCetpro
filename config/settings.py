@@ -16,6 +16,8 @@ env = environ.Env(
     CSRF_TRUSTED_ORIGINS=(list, []),
     FORCE_SCRIPT_NAME=(str, ""),
     SESSION_COOKIE_SECURE=(bool, False),
+    URL_BASE=(str, ""),
+    ARCHIVOS_MAX_MB=(int, 10),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "apps.nucleo.middleware.CabecerasSeguridad",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -62,6 +65,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.nucleo.contexto.aula",
             ],
         },
     },
@@ -82,9 +86,21 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LOGIN_URL = "cuentas:entrar"
+LOGIN_URL = "cuentas:login"
 LOGIN_REDIRECT_URL = "nucleo:inicio"
-LOGOUT_REDIRECT_URL = "cuentas:entrar"
+LOGOUT_REDIRECT_URL = "cuentas:login"
+
+# Las direcciones del aula no llevan «/» al final (igual que en el sistema anterior).
+APPEND_SLASH = False
+
+# Un mensaje «ok» o «error» (igual que en el sistema anterior)
+from django.contrib.messages import constants as _m  # noqa: E402
+
+MESSAGE_TAGS = {_m.SUCCESS: "ok", _m.ERROR: "error"}
+CSRF_FAILURE_VIEW = "apps.nucleo.views.error_csrf"
+
+# Dirección pública del aula (ej. https://servidor.ts.net/aula). Vacío = se detecta sola.
+URL_BASE = env("URL_BASE")
 
 LANGUAGE_CODE = "es-pe"
 TIME_ZONE = "America/Lima"
@@ -104,8 +120,16 @@ MEDIA_ROOT = BASE_DIR / "storage" / "uploads"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Archivos que se pueden subir (se comprueba también su contenido real)
+ARCHIVOS_MAX_MB = env("ARCHIVOS_MAX_MB")
+ARCHIVOS_EXTENSIONES = ["jpg", "jpeg", "png", "webp", "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"]
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+
 # Seguridad de sesión y cookies
-SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 horas
+SESSION_COOKIE_NAME = "aula_cetpro"
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_AGE = 60 * 60 * 8  # 8 horas, para que nadie pierda un examen o un formulario largo
 SESSION_COOKIE_SECURE = env("SESSION_COOKIE_SECURE")
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SESSION_COOKIE_HTTPONLY = True

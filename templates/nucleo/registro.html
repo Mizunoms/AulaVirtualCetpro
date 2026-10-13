@@ -1,0 +1,38 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Registro de actividad: quién hizo qué, cuándo y desde qué dirección. #}
+{% block contenido %}
+<nav class="pestanas pestanas-gestion" aria-label="Tipo de movimiento">
+  <a href="{{ base }}" {% if not accion %}aria-current="page"{% endif %}>Todo</a>
+  {% for clave, texto in acciones.items %}
+    <a href="{{ base }}?accion={{ clave }}" {% if accion == clave %}aria-current="page"{% endif %}>{{ texto }}</a>
+  {% endfor %}
+</nav>
+
+{% if not filas %}
+  {% vacio 'alerta' 'Todavía no hay movimientos' 'Aquí aparecerán los accesos, los cambios de contraseña, las cuentas creadas, las notas y los ajustes.' %}
+{% else %}
+  <div class="tarjeta tabla-gestion-caja">
+    <table class="tabla-gestion">
+      <caption class="visually-hidden">Registro de actividad</caption>
+      <thead><tr><th scope="col">Cuándo</th><th scope="col">Quién</th><th scope="col">Tipo</th><th scope="col">Qué pasó</th><th scope="col">Desde</th></tr></thead>
+      <tbody>
+        {% for r in filas %}
+          <tr>
+            <td data-titulo="Cuándo" class="text-nowrap">{{ r.creado|fecha_corta }} {{ r.creado|time:"H:i" }}<div class="small texto-2">{{ r.creado|hace_tiempo }}</div></td>
+            <td data-titulo="Quién">{% if r.usuario %}<b>{{ r.usuario.nombre_completo }}</b><div class="small texto-2">{{ r.usuario.get_rol_display }}</div>{% else %}<span class="texto-2">—</span>{% endif %}</td>
+            <td data-titulo="Tipo"><span class="chip chip-gris">{{ acciones|get_item:r.accion|default:r.accion }}</span></td>
+            <td data-titulo="Qué pasó">{{ r.detalle }}</td>
+            <td data-titulo="Desde" class="small texto-2">{{ r.ip }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="pie-tabla">
+    <span class="texto-2">Mostrando {{ desde }}–{{ hasta }} de {{ total|plural:"movimiento,movimientos" }}</span>
+    {% paginador num_pagina paginas base accion=accion %}
+  </div>
+{% endif %}
+<p class="ayuda mb-0">El registro no guarda contraseñas. Solo quién hizo qué, cuándo y desde qué dirección de internet.</p>
+{% endblock %}

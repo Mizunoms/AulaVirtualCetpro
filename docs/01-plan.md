@@ -10,12 +10,16 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Pruebas corriendo contra PostgreSQL 18 y pantalla de entrar vista en el navegador
 - [x] Primer commit
 
-## Fase 1 — Núcleo
-- [ ] Configuración del CETPRO (`ajuste()`): nombre, logo, colores, especialidades
-- [ ] Preferencias de accesibilidad (tamaño de letra, alto contraste, voz) y modo claro/oscuro
-- [ ] Menú: inferior en celular, lateral en PC
-- [ ] Permisos por rol (administrador, dirección, docente, alumno) y registro de actividad
-- [ ] Límite de intentos al entrar
+## Fase 1 — Núcleo (mismas pantallas, textos y direcciones que el sistema PHP)
+- [x] Marco general igual al anterior (CSS, JS, logo y colores copiados): menú inferior en celular, lateral en PC
+- [x] Entrar: «Soy alumno» (DNI) / «Soy profesor» (correo o solo el nombre), cuenta pendiente → «Crear mi cuenta»
+- [x] Límite de intentos al entrar (por cuenta y por red)
+- [x] Mi cuenta: tamaño de letra, alto contraste, voz, modo claro/oscuro, cambiar contraseña
+- [x] Contraseña temporal: obliga a elegir una propia (`/cuenta/nueva-clave`)
+- [x] Ajustes del aula (administrador): identidad y colores (con control de contraste), periodo, contacto, logo y foto de entrada, fotos de talleres
+- [x] Permisos por rol (`@exigir`), registro de actividad (`/admin/registro`), páginas de error con el marco del aula
+- [x] Subida segura de archivos (extensión + tipo real, nombre al azar, fuera de `static/`)
+- [ ] Pestaña «Cursos» (especialidades) de Ajustes — se hace con los módulos, en la fase 2
 
 ## Fase 2 — Académico
 - [ ] Cursos (programas) y módulos; unidades didácticas (nombre, créditos, horas)

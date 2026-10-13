@@ -1,0 +1,49 @@
+{% extends "layouts/publico.html" %}
+{% load aula %}
+{# Página de entrar. Dos opciones: «Soy alumno» (DNI y contraseña) y «Soy profesor» (correo del aula y contraseña). #}
+{% block contenido %}
+<h1>Entrar al aula</h1>
+<p class="texto-2 mb-3">¿Quién eres?</p>
+<nav class="opciones mb-4" aria-label="Elige cómo entrar">
+  <a class="opcion-entrar" href="{% url 'cuentas:login' %}" {% if como != 'personal' %}aria-current="page"{% endif %}>{% icono 'cuenta' 22 %} Soy alumno</a>
+  <a class="opcion-entrar" href="{% url 'cuentas:login' %}?como=personal" {% if como == 'personal' %}aria-current="page"{% endif %}>{% icono 'calificar' 22 %} Soy profesor</a>
+</nav>
+
+<form method="post" action="{% url 'cuentas:login' %}">
+  {% csrf_token %}
+  <input type="hidden" name="tipo" value="{% if como == 'personal' %}personal{% else %}alumno{% endif %}">
+  {% if como == 'personal' %}
+    <div class="mb-3">
+      <label class="form-label" for="usuario">Tu correo del aula</label>
+      <div class="campo-correo">
+        <input class="form-control" id="usuario" name="usuario" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="120"
+               value="{{ old.usuario }}" required autofocus placeholder="profesortecnico" aria-describedby="ayuda-correo">
+        <span class="dominio" aria-hidden="true">@{{ aj.dominio_correo }}</span>
+      </div>
+      <div class="ayuda" id="ayuda-correo">Para profesores y administradores. Escribe tu nombre de usuario (o el correo completo).</div>
+    </div>
+  {% else %}
+    <div class="mb-3">
+      <label class="form-label" for="usuario">Tu DNI</label>
+      <input class="form-control campo-grande" id="usuario" name="usuario" type="text" inputmode="numeric" autocomplete="username" maxlength="8"
+             value="{{ old.usuario }}" required autofocus aria-describedby="ayuda-dni">
+      <div class="ayuda" id="ayuda-dni">Los 8 números de tu documento.</div>
+    </div>
+  {% endif %}
+  <div class="mb-4">
+    <label class="form-label" for="clave">Tu contraseña</label>
+    <div class="d-flex gap-2">
+      <input class="form-control" id="clave" name="clave" type="password" autocomplete="current-password" required>
+      <button type="button" class="btn btn-borde" data-ver-clave="clave" aria-pressed="false" aria-label="Ver u ocultar la contraseña">Ver</button>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-cetpro btn-lg w-100">Entrar</button>
+</form>
+
+{% if como == 'personal' %}
+  <p class="texto-2 mt-3 mb-0 text-center">¿Olvidaste tu contraseña? Pídele una nueva al administrador del aula.</p>
+{% else %}
+  <p class="texto-2 mt-3 mb-1 text-center">¿Olvidaste tu contraseña? Pídele una nueva a tu profesor.</p>
+  <p class="mt-2 mb-0 text-center"><a class="fw-bold" href="{% url 'cuentas:registro' %}">¿Es tu primera vez? Crea tu contraseña aquí</a></p>
+{% endif %}
+{% endblock %}

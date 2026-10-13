@@ -1,10 +1,20 @@
-{% extends "base.html" %}
-{% block titulo %}Inicio{% endblock %}
-
+{% extends "layouts/app.html" %}
+{% load aula %}
 {% block contenido %}
-<section class="tarjeta">
-  <h1>Hola, {{ user.nombres }}</h1>
-  <p>Entraste como <strong>{{ user.get_rol_display }}</strong>.</p>
-  <p class="ayuda">Esta es la versión nueva del aula (Python + Django + PostgreSQL). Aquí irán tus cursos.</p>
+<section class="tarjeta p">
+  <h2 class="h3">Hola, {{ user.primer_nombre }}</h2>
+  <p>Entraste como <b>{{ user.get_rol_display }}</b>.</p>
+  <p class="texto-2 mb-0">Esta es la versión nueva del aula (Python + Django + PostgreSQL). Aquí irán tus módulos, tareas y avisos.</p>
 </section>
+{% if user.es_admin %}
+  <ul class="tarjeta lista-filas mt-3">
+    <li>
+      <a class="fila" href="{% url 'nucleo:registro' %}">
+        <span class="ico-caja ico-gris">{% icono 'alerta' %}</span>
+        <span class="cuerpo"><span class="titulo">Registro de actividad</span><span class="detalle">Quién hizo qué en el aula</span></span>
+        <span class="flecha">{% icono 'derecha' %}</span>
+      </a>
+    </li>
+  </ul>
+{% endif %}
 {% endblock %}
