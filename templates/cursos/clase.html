@@ -56,7 +56,7 @@
             <div class="mt-2 fw-bold" style="color:var(--ok)">{% icono 'check' 18 %} {{ t.resultado }}</div>
           {% else %}
             <div class="texto-2 mt-2 d-flex align-items-center gap-1">{% icono 'reloj' 18 %} {{ t.limite|vencimiento_texto }}</div>
-            <div class="boton-falso">{{ t.boton }} {% icono 'derecha' 20 %}</div>
+            <div class="boton-falso">{{ t.boton_clase|default:t.boton }} {% icono 'derecha' 20 %}</div>
           {% endif %}
         </a>
       </div>

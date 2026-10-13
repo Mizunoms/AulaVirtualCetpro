@@ -50,7 +50,9 @@ class ItemClase:
     id: int = 0
     extra: dict = field(default_factory=dict)
 
-    boton: str = ""  # texto del botón de la tarjeta («Subir foto o archivo», «Responder las preguntas»)
+    boton: str = ""  # texto del botón de la tarjeta en el inicio («Subir foto o archivo», «Dar el examen»)
+    boton_modulo: str = ""  # el mismo botón en la página del módulo (si es distinto)
+    boton_clase: str = ""  # el mismo botón en la página de la clase (si es distinto)
     resultado: str = ""  # lo que ve el alumno cuando ya la hizo («Ya la entregaste · Tu nota: 16»)
 
     @property

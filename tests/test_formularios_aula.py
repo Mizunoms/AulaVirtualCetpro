@@ -27,10 +27,11 @@ pytestmark = pytest.mark.django_db
 def test_el_alumno_ve_el_formulario_dentro_de_la_clase(cliente_de, rosa, modulo, clase, examen):
     c = cliente_de(rosa)
     html = c.get(reverse("academico:clase", args=[clase.pk])).content.decode()
-    assert "Examen de bioseguridad" in html and "Dar el examen" in html and reverse("formularios:ver", args=[examen.pk]) in html
+    assert "Examen de bioseguridad" in html and "Responder las preguntas" in html
+    assert reverse("formularios:ver", args=[examen.pk]) in html
     responder(c, examen, respuestas_correctas(examen))
     html = c.get(reverse("academico:clase", args=[clase.pk])).content.decode()
-    assert "Ya respondiste · Tu nota: 20" in html and "Dar el examen" not in html
+    assert "Ya respondiste · Tu nota: 20" in html and "Responder las preguntas" not in html
 
 
 def test_el_docente_ve_el_formulario_dentro_de_la_clase(cliente_de, docente, rosa, modulo, clase, examen):

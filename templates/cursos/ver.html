@@ -35,7 +35,7 @@
                   <div class="texto-2">{{ t.clase_titulo }}</div>
                 </div>
               </div>
-              <div class="boton-falso">{{ t.boton }} {% icono 'derecha' 20 %}</div>
+              <div class="boton-falso">{{ t.boton_modulo|default:t.boton }} {% icono 'derecha' 20 %}</div>
             </a>
           {% endfor %}
         </div>

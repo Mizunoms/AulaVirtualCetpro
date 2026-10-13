@@ -59,7 +59,7 @@ def _item_tarea_alumno(t, entrega):
         chip, clase_chip = "Por entregar", "chip-aviso"
     return contenido.ItemClase(
         clase_id=t.clase_id, tipo="tarea", titulo=t.titulo, url=reverse("tareas:ver", args=[t.pk]), icono="camara", color="ico-ambar",
-        detalle="Entregar foto o archivo", boton="Subir foto o archivo", chip=chip, chip_clase=clase_chip, limite=t.fecha_limite,
+        detalle="Entregar foto o archivo", boton="Subir foto o archivo", boton_clase="Entregar foto o archivo", chip=chip, chip_clase=clase_chip, limite=t.fecha_limite,
         hecha=hecha, cuenta_en_avance=True, abierta=t.acepta_entregas, clase_titulo=t.clase.titulo, modulo_nombre=t.clase.modulo.nombre,
         modulo_id=t.clase.modulo_id, id=t.pk, resultado=_texto_resultado(entrega) if hecha else "",
     )  # fmt: skip

@@ -61,5 +61,5 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 
 ## Fase 7 — Datos del piloto y servidor
 - [ ] Script de migración MariaDB → PostgreSQL (`scripts/migrar_desde_php.py`)
-- [ ] Pruebas de aceptación con el cliente HTTP del sistema anterior
+- [x] Pruebas de aceptación con el cliente HTTP del sistema anterior (`aceptacion/`, 536 comprobaciones, ver README)
 - [ ] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/`

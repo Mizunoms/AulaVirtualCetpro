@@ -127,7 +127,7 @@ def procesar(request):
         return volver_con_error(request, volver, "No se encontró ninguna fila. Sube un Excel o pega la lista.")
 
     # Módulos en los que se inscribe a todos: los marcados en la pantalla (uno o dos)
-    ids = [int(x) for x in request.POST.getlist("curso_id[]") if x.isdigit()]
+    ids = [int(x) for x in request.POST.getlist("curso_id[]") + request.POST.getlist("curso_id") if x.isdigit()]
     marcados = list(Modulo.objects.activos().filter(pk__in=ids).order_by("nombre"))
     con_clave = "con_clave" in request.POST
 

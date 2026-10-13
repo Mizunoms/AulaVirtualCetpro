@@ -61,6 +61,8 @@ def _item_alumno(f, estado):
         color="ico-azul",
         detalle=f.nombre_modo + (f" · {f.tiempo_minutos} min" if f.tiempo_minutos else ""),
         boton="Dar el examen" if f.es_examen else "Responder",
+        boton_modulo="Responder las preguntas",
+        boton_clase="Responder las preguntas",
         limite=f.fecha_limite,
         hecha=hecha,
         cuenta_en_avance=not f.es_encuesta,

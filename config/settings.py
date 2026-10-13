@@ -18,6 +18,7 @@ env = environ.Env(
     SESSION_COOKIE_SECURE=(bool, False),
     URL_BASE=(str, ""),
     ARCHIVOS_MAX_MB=(int, 10),
+    ARCHIVOS_CARPETA=(str, ""),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -120,7 +121,8 @@ STORAGES = {
 }
 
 # Archivos subidos por docentes y alumnos: fuera de la carpeta pública, se sirven con permisos.
-MEDIA_ROOT = BASE_DIR / "storage" / "uploads"
+# (Se puede cambiar con ARCHIVOS_CARPETA en el .env, por ejemplo una carpeta aparte en el servidor.)
+MEDIA_ROOT = Path(env("ARCHIVOS_CARPETA")) if env("ARCHIVOS_CARPETA") else BASE_DIR / "storage" / "uploads"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

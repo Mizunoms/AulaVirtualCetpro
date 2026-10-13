@@ -33,6 +33,25 @@ Para probar con cuentas de ejemplo (solo en tu PC): `.venv\Scripts\python manage
 
 Las pruebas crean y borran una base temporal (`test_aula_virtual_cetpro`); no tocan los datos reales.
 
+### Pruebas de aceptación (las del sistema anterior)
+
+Los guiones HTTP del sistema PHP están copiados en `aceptacion/guiones/` y se corren contra este sistema:
+
+```powershell
+.venv\Scripts\python aceptacion\correr.py                  # los cuatro guiones
+.venv\Scripts\python aceptacion\correr.py test_version2    # solo uno
+```
+
+Cada guion arma una base propia (`aula_virtual_aceptacion`, nunca la de trabajo), carga los mismos datos de prueba
+que el sistema anterior (`manage.py datos_aceptacion`), levanta el sitio con Waitress en el puerto 8090 y guarda el
+resultado en `aceptacion/.tmp/salida-<guion>.txt`. Si una comprobación falla, la última pantalla queda en
+`aceptacion/.tmp/fallas/`. Hoy pasan las 536 comprobaciones.
+
+Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones):
+- Al darle una contraseña nueva a alguien, Django cierra sus sesiones abiertas (más seguro que antes).
+- No existen las cuentas del antiguo «modo prueba» (la migración de datos no las trae).
+- Los archivos subidos están en la carpeta temporal de la prueba, y el Excel no pone comillas a los textos con espacios.
+
 ## Documentación
 
 - [CLAUDE.md](CLAUDE.md) — reglas del proyecto

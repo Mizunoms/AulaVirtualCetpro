@@ -8,7 +8,8 @@ filterwarnings = ["ignore:No directory at:UserWarning"]
 [tool.ruff]
 line-length = 130
 target-version = "py312"
-extend-exclude = ["migrations"]
+# aceptacion/guiones son las pruebas HTTP del sistema anterior, copiadas casi tal cual: no se les cambia el estilo
+extend-exclude = ["migrations", "aceptacion/guiones"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "DJ"]

@@ -22,3 +22,6 @@ desktop.ini
 .idea/
 .vscode/
 *.log
+
+# Resultados de la prueba de aceptación (aceptacion/correr.py)
+aceptacion/.tmp/
