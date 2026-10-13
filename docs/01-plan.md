@@ -50,7 +50,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 
 ## Fase 5 — Panel del CETPRO
 - [x] Personas: lista con pestañas, filtros y paginación; crear, editar, «Más», desactivar y **eliminar de verdad** (con «Entiendo» y borrado de archivos); acciones en lote
-- [ ] Importar plan de estudios (Excel)
+- [x] Importar plan de estudios (Excel del Ministerio): leer, revisar y crear o completar módulos con sus unidades didácticas
 - [x] Cargar alumnos desde Excel, CSV o lista pegada (títulos de columna, módulos por 1, 2, «1 y 2» o código)
 - [x] Claves temporales y envío por WhatsApp (una sola vez)
 - [ ] Respaldo desde el panel

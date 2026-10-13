@@ -1,0 +1,18 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Paso 1: subir el Excel del plan de estudios. #}
+{% block contenido %}
+<form method="post" action="{% url 'academico:plan' %}" enctype="multipart/form-data" class="tarjeta p d-flex flex-column gap-3" style="max-width:680px">
+  {% csrf_token %}
+  <div>
+    <p class="fs-5 fw-bold mb-1">Sube el plan de estudios en Excel</p>
+    <p class="texto-2 mb-0">Es el archivo del Ministerio de Educación, con las hojas <b>Programa de estudio</b>, <b>Organización modular</b> y <b>M1, M2…</b>. El aula lee el curso, sus módulos y las <b>unidades didácticas</b> con sus créditos y horas, y llena todo por ti.</p>
+  </div>
+  <div class="mensaje mensaje-ok" role="note">{% icono 'check' 24 %}<span>Antes de guardar nada, te muestro lo que encontré para que lo revises.</span></div>
+  <div>
+    <label class="form-label" for="archivo">Archivo de Excel (.xlsx)</label>
+    <input class="form-control" type="file" id="archivo" name="archivo" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+  </div>
+  <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'subir' 22 %} Leer el plan</button>
+</form>
+{% endblock %}

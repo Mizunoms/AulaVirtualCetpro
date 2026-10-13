@@ -422,3 +422,82 @@ def _texto_docx(archivo):
     xml = xml.replace("</w:p>", "\n")  # cada párrafo en su línea
     # Las listas numeradas automáticas de Word no guardan el número; `desde_texto` lo resuelve con las líneas que terminan en «?».
     return html.unescape(re.sub(r"<[^>]+>", "", xml))
+
+
+class LibroXlsx:
+    """Un libro de Excel (.xlsx) abierto para leer varias hojas por su nombre (el plan de estudios del Ministerio, por ejemplo).
+    Sin librerías: es un zip con XML. Uso:  `with LibroXlsx(archivo) as libro: libro.filas(libro.hojas()["Nombre"])`"""
+
+    def __init__(self, archivo, max_bytes=MAX_BYTES_XML):
+        self._z = _abrir_zip(archivo, "No pudimos abrir el Excel. Guárdalo otra vez como «Libro de Excel (.xlsx)».")
+        self._max = max_bytes
+        self._compartidas = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self._z.close()
+
+    def _leer(self, nombre):
+        try:
+            info = self._z.getinfo(nombre)
+        except KeyError:
+            return None
+        if info.file_size > self._max:
+            raise ImportadorError("El archivo es demasiado grande para leerlo.")
+        return self._z.read(nombre)
+
+    def hojas(self):
+        """{nombre de la hoja: ruta dentro del zip}, en el orden del libro."""
+        libro, rels = self._leer("xl/workbook.xml"), self._leer("xl/_rels/workbook.xml.rels")
+        if libro is None or rels is None:
+            raise ImportadorError("El archivo no es un Excel válido.")
+        destinos = {}
+        for rel in _xml(rels).iter(f"{_NS_PKG}Relationship"):
+            destino = (rel.get("Target") or "").lstrip("/")
+            destinos[rel.get("Id")] = destino if destino.startswith("xl/") else "xl/" + destino
+        hojas = {}
+        sheets = _xml(libro).find(f"{_NS}sheets")
+        for hoja in sheets.findall(f"{_NS}sheet") if sheets is not None else []:
+            rid = hoja.get(f"{_NS_REL}id")
+            if rid in destinos:
+                hojas[hoja.get("name") or ""] = destinos[rid]
+        return hojas
+
+    def _textos(self):
+        if self._compartidas is None:
+            xml = self._leer("xl/sharedStrings.xml")
+            self._compartidas = [_texto_nodo(si) for si in _xml(xml).findall(f"{_NS}si")] if xml is not None else []
+        return self._compartidas
+
+    def filas(self, ruta):
+        """Las filas de una hoja: {número de fila: {número de columna (desde 0): texto}}. No incluye las celdas vacías,
+        con error ni lógicas."""
+        xml = self._leer(ruta)
+        if xml is None:
+            raise ImportadorError("El Excel está dañado o incompleto.")
+        compartidas = self._textos()
+        datos = _xml(xml).find(f"{_NS}sheetData")
+        filas = {}
+        for row in datos.findall(f"{_NS}row") if datos is not None else []:
+            fila = {}
+            for c in row.findall(f"{_NS}c"):
+                tipo = c.get("t") or ""
+                if tipo in ("e", "b"):
+                    continue
+                v = c.find(f"{_NS}v")
+                if tipo == "s":
+                    pos = int(v.text) if v is not None and (v.text or "").isdigit() else -1
+                    valor = compartidas[pos] if 0 <= pos < len(compartidas) else ""
+                elif tipo == "inlineStr":
+                    inline = c.find(f"{_NS}is")
+                    valor = _texto_nodo(inline) if inline is not None else ""
+                else:
+                    valor = (v.text or "") if v is not None else ""
+                if valor.strip() == "":
+                    continue
+                fila[_indice_columna(re.sub(r"\d+", "", c.get("r") or "A") or "A")] = valor
+            if fila:
+                filas[int(row.get("r") or len(filas) + 1)] = dict(sorted(fila.items()))
+        return filas

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_admin
+from . import views, views_admin, views_plan
 
 app_name = "academico"
 
@@ -29,6 +29,10 @@ urlpatterns = [
     path("clases/<int:id>/preguntas", views.preguntar, name="preguntar"),
     path("clases/<int:id>/eliminar", views.eliminar_clase, name="eliminar_clase"),
     path("preguntas-clase/<int:id>/borrar", views.borrar_pregunta, name="borrar_pregunta"),
+    # ----- Plan de estudios (administrador y docente) -----
+    path("plan", views_plan.subir_o_leer, name="plan"),
+    path("plan/revisar", views_plan.revisar, name="plan_revisar"),
+    path("plan/crear", views_plan.crear, name="plan_crear"),
     # ----- Administración -----
     path("admin/cursos", views_admin.cursos, name="admin_cursos"),
     path("admin/modulos", views_admin.modulos_admin, name="admin_modulos"),

@@ -1,0 +1,92 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Paso 2: lo que se encontró en el Excel. Se elige qué módulos crear (o completar si ya existen). #}
+{% block contenido %}
+<div class="mensaje mensaje-ok" role="status">{% icono 'check' 26 %}<span>Encontré <b>{{ plan.modulos|length|plural:"módulo,módulos" }}</b> en el curso «{{ plan.curso|default:"sin nombre" }}»: {{ creditos|plural:"crédito,créditos" }} y {{ horas|plural:"hora,horas" }} en total. Revisa y elige qué cargar.</span></div>
+{% for aviso in plan.avisos %}
+  <div class="mensaje mensaje-error" role="alert">{% icono 'alerta' 24 %}<span>{{ aviso }}</span></div>
+{% endfor %}
+
+<form method="post" action="{% url 'academico:plan_crear' %}" class="d-flex flex-column gap-3" style="max-width:860px">
+  {% csrf_token %}
+  <section class="tarjeta p d-flex flex-column gap-3">
+    <div class="row g-3">
+      <div class="col-12 col-md-8">
+        <label class="form-label" for="curso">Curso</label>
+        <select class="form-select" id="curso" name="curso" required>
+          <option value="">Elige…</option>
+          {% if nuevo_posible %}
+            <option value="__nuevo__" {% if curso_elegido == '__nuevo__' %}selected{% endif %}>Crear el curso «{{ plan.curso }}»</option>
+          {% endif %}
+          {% for c in especialidades %}
+            <option {% if curso_elegido == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+        {% if not curso_sel and not es_admin %}<div class="ayuda">El curso del archivo todavía no existe en el aula. Elige otro o pídele al administrador que lo cree.</div>{% endif %}
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label" for="periodo">Periodo</label>
+        <input class="form-control" id="periodo" name="periodo" maxlength="20" value="{{ periodo }}">
+      </div>
+    </div>
+  </section>
+
+  {% for m in plan.modulos %}
+    <section class="tarjeta p d-flex flex-column gap-3" aria-labelledby="mod-{{ m.i }}">
+      <div>
+        <label class="d-flex align-items-start gap-2 fw-bold fs-5" id="mod-{{ m.i }}">
+          <input type="checkbox" class="mt-1" name="usar[{{ m.i }}]" value="1" {% if m.usar %}checked{% endif %} style="width:22px;height:22px;flex-shrink:0">
+          <span>{{ m.modulo }} · {{ m.nombre }}</span>
+        </label>
+        <div class="texto-2">{{ m.creditos|plural:"crédito,créditos" }} · {{ m.horas|plural:"hora,horas" }} · {{ m.unidades|length|plural:"unidad didáctica,unidades didácticas" }}</div>
+      </div>
+      <ul class="lista-did">
+        {% for u in m.unidades %}
+          <li><span class="fw-bold">{{ u.nombre }}</span><span class="texto-2">{{ u.creditos|plural:"crédito,créditos" }} · {{ u.horas|plural:"hora,horas" }}</span></li>
+        {% endfor %}
+      </ul>
+      <div class="row g-2">
+        <div class="col-12">
+          <label class="form-label" for="destino-{{ m.i }}">¿Qué hacer con este módulo?</label>
+          <select class="form-select" id="destino-{{ m.i }}" name="destino[{{ m.i }}]">
+            <option value="nuevo">Crear un módulo nuevo</option>
+            {% for x in existentes %}
+              <option value="{{ x.id }}" {% if m.destino == x.id|stringformat:"s" %}selected{% endif %}>Completar el que ya existe: {{ x.nombre }} · {{ x.turno }} · Prof. {{ x.docente.apellidos }}</option>
+            {% endfor %}
+          </select>
+          <div class="ayuda">«Completar» le pone estas unidades didácticas a un módulo que ya creaste. «Crear» arma uno nuevo con los datos de abajo.</div>
+        </div>
+        {% if es_admin %}
+          <div class="col-12 col-md-5">
+            <label class="form-label" for="docente-{{ m.i }}">Docente <span class="fw-normal texto-2">(si creas uno nuevo)</span></label>
+            <select class="form-select" id="docente-{{ m.i }}" name="docente[{{ m.i }}]">
+              <option value="">Elige…</option>
+              {% for d in docentes %}
+                <option value="{{ d.id }}" {% if m.docente_sel == d.id|stringformat:"s" %}selected{% endif %}>{{ d.apellidos }}, {{ d.nombres }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+        <div class="col-6 {% if es_admin %}col-md-3{% else %}col-md-4{% endif %}">
+          <label class="form-label" for="turno-{{ m.i }}">Turno</label>
+          <select class="form-select" id="turno-{{ m.i }}" name="turno[{{ m.i }}]">
+            <option value="">Elige…</option>
+            {% for valor, texto in turnos %}
+              <option value="{{ valor }}" {% if m.turno_sel == valor %}selected{% endif %}>{{ texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-6 {% if es_admin %}col-md-4{% else %}col-md-8{% endif %}">
+          <label class="form-label" for="horario-{{ m.i }}">Horario <span class="fw-normal texto-2">(opcional)</span></label>
+          <input class="form-control" id="horario-{{ m.i }}" name="horario[{{ m.i }}]" maxlength="120" value="{{ m.horario }}" placeholder="Lunes a viernes · 18:30 a 22:00">
+        </div>
+      </div>
+    </section>
+  {% endfor %}
+
+  <div class="d-grid d-sm-flex gap-2">
+    <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'check' 22 %} Cargar los módulos marcados</button>
+    <a class="btn btn-borde btn-lg" href="{% url 'academico:plan' %}">Subir otro archivo</a>
+  </div>
+</form>
+{% endblock %}
