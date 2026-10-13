@@ -356,6 +356,12 @@ class Clase(models.Model):
             inicio = fin + timedelta(days=1)
         return len(temas)
 
+    @classmethod
+    def ultima_o_crear(cls, modulo):
+        """La clase abierta más reciente; si el módulo no tiene ninguna, crea la «Clase 1»."""
+        actual = cls.actual(list(cls.objects.filter(modulo=modulo)))
+        return actual or cls.crear(modulo, "Clase 1")
+
     def esta_vacia(self):
         """¿No tiene materiales, tareas ni formularios?"""
         return not any(funcion(self) for funcion in CONTENIDO_DE_CLASE)
@@ -379,6 +385,31 @@ class Clase(models.Model):
 
 # funciones(clase) → True si tiene contenido (las llenan materiales, tareas y formularios)
 CONTENIDO_DE_CLASE = []
+
+
+class Evaluacion(models.Model):
+    """Cómo se calcula la nota final de un módulo: pesos de tareas, tests y asistencia, y nota mínima."""
+
+    modulo = models.OneToOneField(Modulo, on_delete=models.CASCADE, related_name="evaluacion")
+    peso_tareas = models.PositiveSmallIntegerField(default=50)  # trabajos con foto o archivo
+    peso_tests = models.PositiveSmallIntegerField(default=30)  # formularios con nota
+    peso_asistencia = models.PositiveSmallIntegerField(default=20)  # % de asistencia llevado a 0–20
+    nota_minima = models.DecimalField(max_digits=4, decimal_places=2, default=11)
+
+    class Meta:
+        verbose_name = "evaluación"
+        verbose_name_plural = "evaluaciones"
+
+    def __str__(self):
+        return f"Evaluación de {self.modulo}"
+
+    @classmethod
+    def de(cls, modulo):
+        """La evaluación del módulo (con los valores por defecto si el docente todavía no la cambió)."""
+        try:
+            return modulo.evaluacion
+        except cls.DoesNotExist:
+            return cls(modulo=modulo)
 
 
 class Aviso(models.Model):

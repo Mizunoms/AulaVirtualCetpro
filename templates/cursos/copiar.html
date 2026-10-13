@@ -1,0 +1,27 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<div class="tarjeta p">
+  <p class="mb-2"><b>Se copian:</b> las clases (con su tema y lo que aprenderán), los materiales, las tareas y los formularios con sus preguntas.</p>
+  <p class="mb-0 texto-2"><b>No se copian:</b> los alumnos, sus entregas, notas, asistencia ni mensajes. El módulo nuevo tiene otro código para inscribirse.</p>
+</div>
+<form method="post" action="{% url 'academico:copiar' modulo.id %}" class="tarjeta p d-flex flex-column gap-3">
+  {% csrf_token %}
+  <div>
+    <label class="form-label" for="nombre">Nombre del módulo nuevo</label>
+    <input class="form-control" id="nombre" name="nombre" maxlength="150" value="{{ v.nombre }}">
+  </div>
+  <div class="row g-2">
+    <div class="col-6">
+      <label class="form-label" for="periodo">Periodo</label>
+      <input class="form-control" id="periodo" name="periodo" maxlength="20" value="{{ v.periodo }}">
+    </div>
+    <div class="col-6">
+      <label class="form-label" for="desde">La primera clase empieza el</label>
+      <input class="form-control" id="desde" name="desde" type="date" value="{{ v.desde }}">
+    </div>
+  </div>
+  <div class="ayuda">Todas las fechas (clases, tareas y formularios) se corren igual, para que empiecen ese día. Si la dejas vacía, quedan las mismas fechas.</div>
+  <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'copiar' 22 %} Copiar módulo</button>
+</form>
+{% endblock %}

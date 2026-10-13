@@ -201,7 +201,7 @@
       <span class="cuerpo"><span class="titulo">Subir material</span><span class="detalle">Un archivo, una foto, un enlace o un video de YouTube</span></span>
       <span class="flecha">{% icono 'derecha' %}</span>
     </summary>
-    <form method="post" action="{% enlace 'materiales:guardar' modulo.id %}" enctype="multipart/form-data" class="border-top p-3">
+    <form method="post" action="{% url 'tareas:material_guardar' modulo.id %}" enctype="multipart/form-data" class="border-top p-3">
       {% csrf_token %}
       <input type="hidden" name="unidad_id" value="{{ clase.id }}">
       <fieldset class="mb-3">

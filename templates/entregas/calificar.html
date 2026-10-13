@@ -1,0 +1,81 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<div style="max-width:720px" class="d-flex flex-column gap-3">
+  <div class="tarjeta p">
+    {% if e.archivo_ruta and es_imagen %}
+      <a href="{% url 'tareas:entrega_archivo' e.id %}" target="_blank" rel="noopener">
+        <img src="{% url 'tareas:entrega_archivo' e.id %}" alt="Trabajo de {{ e.alumno.nombre_completo }}" class="vista-previa visible">
+      </a>
+      <div class="ayuda">Toca la foto para verla más grande.</div>
+    {% elif e.archivo_ruta %}
+      <a class="btn btn-borde" href="{% url 'tareas:entrega_archivo' e.id %}" target="_blank" rel="noopener">{% icono 'bajar' 20 %} Abrir {{ e.archivo_nombre }}</a>
+    {% elif e.enlace %}
+      <a class="btn btn-borde" href="{{ e.enlace }}" target="_blank" rel="noopener">{% icono 'enlace' 20 %} Abrir el enlace</a>
+    {% endif %}
+    <div class="texto-2 mt-2">Entregó el {{ e.fecha_entrega|fecha_larga }} a las {{ e.fecha_entrega|hora_texto }}{% if e.tardia %} · <b>tarde</b>{% endif %}</div>
+    {% if e.comentario_alumno %}
+      <div class="mt-2"><b>Mensaje del alumno:</b> {{ e.comentario_alumno }}</div>
+    {% endif %}
+  </div>
+
+  <form method="post" action="{% url 'tareas:calificar' e.id %}" enctype="multipart/form-data" class="d-flex flex-column gap-3">
+    {% csrf_token %}
+    <input type="hidden" name="desde" value="{{ desde }}">
+
+    {% if e.tarea.tipo_calificacion == 'aprobado' %}
+      <fieldset>
+        <legend class="form-label">¿Aprobó?</legend>
+        <div class="opciones">
+          <input type="radio" name="aprobado" id="ap-1" value="1" {% if e.aprobado is True %}checked{% endif %} required>
+          <label for="ap-1">Aprobó</label>
+          <input type="radio" name="aprobado" id="ap-0" value="0" {% if e.aprobado is False %}checked{% endif %}>
+          <label for="ap-0">No aprobó</label>
+        </div>
+      </fieldset>
+    {% else %}
+      {% if criterios_puntos %}
+        <div class="tarjeta p d-flex flex-column gap-2" data-rubrica="nota">
+          <h2 class="h6 fw-bold mb-0">Criterios de evaluación</h2>
+          <p class="ayuda mt-0 mb-1">Pon los puntos de cada criterio y la nota se calcula sola. Puedes cambiarla abajo.</p>
+          {% for c in criterios_puntos %}
+            <div class="rubrica-fila">
+              <label for="pts-{{ forloop.counter0 }}">{{ c.texto }} <span class="texto-2">(máximo {{ c.puntos }})</span></label>
+              <input class="form-control" type="number" id="pts-{{ forloop.counter0 }}" data-pts min="0" max="{{ c.puntos }}" step="0.5" inputmode="decimal">
+            </div>
+          {% endfor %}
+          <div class="criterios-total">Suman <b data-suma>0</b> de 20 puntos</div>
+        </div>
+      {% endif %}
+      <div class="tarjeta p">
+        <label class="form-label" for="nota">Nota del trabajo (de 0 a 20)</label>
+        <input class="form-control fs-3 fw-bold text-center" style="max-width:160px" type="number" id="nota" name="nota" min="0" max="20" step="0.5" inputmode="decimal" required value="{{ valor_nota }}" autofocus>
+        {% if tardia_con_penalidad %}
+          <div class="ayuda">Entregó tarde: al guardar se restan {{ e.tarea.penalidad_puntos|nota_fmt }} puntos automáticamente.</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div>
+      <label class="form-label" for="comentario">Comentario para el alumno</label>
+      <textarea class="form-control" id="comentario" name="comentario" rows="3" maxlength="2000" placeholder="Ej.: Buen trabajo. Cuida la simetría.">{{ comentario }}</textarea>
+    </div>
+
+    <div>
+      <label class="form-label" for="retro">Devolverle un archivo o foto <span class="fw-normal texto-2">(opcional)</span></label>
+      <input class="form-control" type="file" id="retro" name="retro" accept=".pdf,.doc,.docx,image/*">
+      <div class="ayuda">Por ejemplo, la foto de su trabajo con tus correcciones, o una guía para mejorar.</div>
+      {% if e.retro_ruta %}
+        <div class="mt-1">Ya le devolviste: <a href="{% url 'tareas:entrega_retro' e.id %}" target="_blank" rel="noopener">{{ e.retro_nombre }}</a></div>
+      {% endif %}
+    </div>
+
+    {% if siguiente %}
+      <button type="submit" name="siguiente" value="1" class="btn btn-cetpro btn-lg">Guardar nota y ver el siguiente</button>
+      <button type="submit" name="siguiente" value="0" class="btn btn-borde">Guardar y volver a la lista</button>
+    {% else %}
+      <button type="submit" name="siguiente" value="0" class="btn btn-cetpro btn-lg">Guardar nota</button>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Bandeja de calificación. PC: a la izquierda (60 %) los trabajos y tests, con filtros; a la derecha (40 %, fija) las pautas de lo que se eligió y el botón para calificar. Celular: la lista y debajo el resumen. #}
+{% block contenido %}
+<div class="bandeja">
+  <div class="bandeja-lista d-flex flex-column gap-3">
+    <div class="pestanas" role="tablist" aria-label="Qué ver" style="align-self:flex-start">
+      <a href="{{ url_pendientes }}" {% if pestana == 'pendientes' %}aria-current="page"{% endif %}>Pendientes ({{ cuenta_pendientes }})</a>
+      <a href="{{ url_recientes }}" {% if pestana == 'recientes' %}aria-current="page"{% endif %}>Calificados recientemente</a>
+    </div>
+
+    <form method="get" action="{{ base }}" class="filtros-bandeja tarjeta p">
+      {% if pestana == 'recientes' %}<input type="hidden" name="pestana" value="recientes">{% endif %}
+      <div class="flex-grow-1" style="min-width:200px">
+        <label class="form-label" for="f-modulo">Módulo</label>
+        <select class="form-select" id="f-modulo" name="modulo" data-autoenviar>
+          <option value="">Todos mis módulos</option>
+          {% for id, nombre in modulos.items %}<option value="{{ id }}" {% if modulo_id == id %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div style="min-width:200px">
+        <label class="form-label" for="f-estado">Estado</label>
+        <select class="form-select" id="f-estado" name="estado" data-autoenviar>
+          <option value="">Todos</option>
+          <option value="a_tiempo" {% if estado == 'a_tiempo' %}selected{% endif %}>Entregado a tiempo</option>
+          <option value="tarde" {% if estado == 'tarde' %}selected{% endif %}>Con retraso</option>
+        </select>
+      </div>
+      <div class="d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-borde">Filtrar</button>
+        {% if hay_filtro %}<a class="btn btn-texto" href="{{ url_sin_filtros }}">Quitar filtros</a>{% endif %}
+      </div>
+    </form>
+
+    {% if not lista %}
+      {% if pestana == 'pendientes' and not hay_filtro %}
+        <div class="mensaje mensaje-ok">{% icono 'check' 28 %}<span>¡Todo calificado! No tienes trabajos pendientes.</span></div>
+      {% elif hay_filtro %}
+        {% vacio 'calificar' 'No hay trabajos con ese filtro' 'Prueba con otro módulo o quita los filtros.' %}
+      {% else %}
+        {% vacio 'calificar' 'Todavía no calificaste nada' 'Aquí verás lo que calificaste hace poco, por si quieres corregir una nota.' %}
+      {% endif %}
+    {% endif %}
+
+    <ul class="lista-entregas">
+      {% for x in lista %}
+        <li class="entrega-fila {% if seleccion and x.clave == seleccion.clave %}activa{% endif %}">
+          <a class="entrega-item" href="{{ x.url_ver }}" {% if seleccion and x.clave == seleccion.clave %}aria-current="true"{% endif %}>
+            <span class="avatar" aria-hidden="true" style="background:var(--azul)">{{ x.iniciales }}</span>
+            <span class="cuerpo">
+              <span class="fw-bold">{{ x.nombres }} {{ x.apellidos }}</span>
+              <span class="detalle">{{ x.titulo }} · {{ x.curso }}</span>
+              <span class="detalle">{% if pestana == 'recientes' %}Entregó{% elif x.tipo == 'examen' %}Respondió{% else %}Entregó{% endif %} el {{ x.fecha|fecha_larga }} a las {{ x.fecha|hora_texto }}</span>
+            </span>
+            <span class="d-flex flex-column align-items-end gap-1">
+              {% if pestana == 'recientes' %}
+                <span class="chip chip-ok">{% if x.nota is not None %}Nota {{ x.nota|nota_fmt }}{% elif x.aprobado %}Aprobó{% else %}No aprobó{% endif %}</span>
+              {% elif x.tipo == 'examen' %}
+                <span class="chip chip-info">{{ x.modo }} por revisar</span>
+              {% endif %}
+              {% if x.tipo == 'tarea' %}<span class="chip {% if x.tardia %}chip-mal{% else %}chip-ok{% endif %}">{% if x.tardia %}Con retraso{% else %}Entregado a tiempo{% endif %}</span>{% endif %}
+            </span>
+          </a>
+          <a class="btn {% if pestana == 'recientes' %}btn-borde{% else %}btn-cetpro{% endif %}" href="{{ x.enlace }}">{% if pestana == 'recientes' %}Corregir{% else %}Calificar{% endif %}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <aside class="bandeja-detalle" aria-label="Resumen de lo elegido">
+    {% if not seleccion %}
+      <section class="tarjeta p text-center texto-2">{% icono 'calificar' 32 %}<p class="mb-0 mt-2">Cuando elijas un trabajo, aquí verás lo que pediste y cómo calificarlo.</p></section>
+    {% else %}
+      {% with x=seleccion %}
+      <section class="tarjeta p d-flex flex-column gap-3">
+        <div>
+          <div class="curso-bb-esp">{{ x.curso }}</div>
+          <h2 class="h5 fw-bold mb-1">{% if x.tipo != 'tarea' %}{{ x.modo }}: {% endif %}{{ x.titulo }}</h2>
+          <div class="texto-2 small">De {{ x.nombres }} {{ x.apellidos }} · {{ x.fecha|hace_tiempo }}</div>
+        </div>
+
+        {% if x.tipo == 'tarea' and x.archivo %}
+          <div>
+            {% if x.es_imagen %}
+              <a href="{{ x.archivo }}" target="_blank" rel="noopener"><img class="vista-previa visible" src="{{ x.archivo }}" alt="Trabajo de {{ x.nombres }}" style="max-height:220px"></a>
+            {% else %}
+              <a class="btn btn-borde w-100" href="{{ x.archivo }}" target="_blank" rel="noopener">{% icono 'bajar' 20 %} Ver {{ x.archivo_nombre }}</a>
+            {% endif %}
+          </div>
+        {% endif %}
+        {% if x.tipo == 'tarea' and x.comentario_alumno %}
+          <div class="small"><b>Mensaje del alumno:</b> {{ x.comentario_alumno }}</div>
+        {% endif %}
+
+        {% if x.tipo == 'tarea' %}
+          <div>
+            <h3 class="h6 fw-bold mb-1">Lo que pediste</h3>
+            <p class="mb-0 small" style="white-space:pre-line">{% if x.instrucciones %}{{ x.instrucciones|truncatechars:320 }}{% else %}Sin instrucciones escritas.{% endif %}</p>
+          </div>
+          <div>
+            <h3 class="h6 fw-bold mb-1">Cómo calificar</h3>
+            {% if x.tipo_calificacion == 'aprobado' %}
+              <p class="mb-0 small">Se marca <b>Aprobó</b> o <b>No aprobó</b>.</p>
+            {% else %}
+              <p class="mb-1 small">Puntaje máximo: <b>20</b> (de 0 a 20).</p>
+              {% if x.criterios %}
+                <ul class="lista-criterios lista-criterios-compacta">
+                  {% for c in x.criterios %}<li>{% icono 'check' 16 %} <span>{{ c.texto }}</span>{% if c.puntos is not None %}<b>{{ c.puntos }} pts</b>{% endif %}</li>{% endfor %}
+                </ul>
+                {% if suma_criterios %}<div class="small texto-2 mt-1">Los criterios suman {{ suma_criterios }} puntos.</div>{% endif %}
+              {% endif %}
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="small mb-0">Revisa las respuestas abiertas y confirma el puntaje de este test.</p>
+        {% endif %}
+
+        <a class="btn btn-cetpro btn-lg w-100" href="{{ x.enlace }}">{% icono 'calificar' 22 %} {% if pestana == 'recientes' %}Corregir la nota{% elif x.tipo == 'tarea' %}Abrir y calificar evidencia{% else %}Abrir y revisar{% endif %}</a>
+      </section>
+      {% endwith %}
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

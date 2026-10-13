@@ -7,12 +7,12 @@ CONTADORES = {}
 
 
 def registrar_contador(clave, funcion):
-    CONTADORES[clave] = funcion
+    """Suma `funcion(usuario)` al número del menú de esa clave (varias partes del aula pueden sumar al mismo)."""
+    CONTADORES.setdefault(clave, []).append(funcion)
 
 
 def contar(clave, usuario):
-    funcion = CONTADORES.get(clave)
-    return int(funcion(usuario)) if funcion else 0
+    return sum(int(funcion(usuario)) for funcion in CONTADORES.get(clave, []))
 
 
 def url_o_numeral(nombre, *args):

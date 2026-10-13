@@ -5,6 +5,7 @@ urlpatterns = [
     path("", include("apps.nucleo.urls")),
     path("", include("apps.cuentas.urls")),
     path("", include("apps.academico.urls")),
+    path("", include("apps.tareas.urls")),
     # Panel técnico de Django: solo para quien administra el sistema (no es el panel del CETPRO).
     path("django-admin/", admin.site.urls),
 ]

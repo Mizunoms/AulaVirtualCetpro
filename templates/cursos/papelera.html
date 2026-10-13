@@ -1,0 +1,25 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<p class="texto-2 mb-0">Lo que borras se guarda aquí {{ dias }} días. Una tarea recuperada vuelve con sus entregas y notas.</p>
+{% if not items %}
+  {% vacio 'basura' 'La papelera está vacía' 'Aquí llega lo que borres y se puede recuperar durante 30 días.' None None True %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for x in items %}
+      <li class="fila flex-wrap">
+        <span class="ico-caja {{ x.color }}">{% icono x.icono %}</span>
+        <span class="cuerpo">
+          <span class="titulo">{{ x.titulo }}</span>
+          <span class="detalle">{{ x.tipo_nombre }} · {{ x.clase_titulo }} · borrado el {{ x.eliminado|fecha_larga }} · se borra para siempre en {{ x.quedan|plural:"día,días" }}</span>
+        </span>
+        <form method="post" action="{% url 'academico:papelera' modulo.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="tipo" value="{{ x.tipo }}">
+          <button type="submit" name="item" value="{{ x.id }}" class="btn btn-borde">{% icono 'atras' 20 %} Recuperar</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

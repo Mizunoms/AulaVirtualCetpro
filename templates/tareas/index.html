@@ -1,0 +1,61 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% pestanas_modulo modulo 'tareas' acceso %}
+{% if es_docente %}
+  <a class="btn btn-cetpro btn-lg w-100" href="{% url 'academico:nueva_actividad' modulo.id %}">{% icono 'mas' 22 %} Crear tarea</a>
+  <p class="texto-2 mb-0">Las tareas se crean dentro de cada clase. Este botón te lleva a la clase de ahora.</p>
+{% endif %}
+
+<h2 class="seccion-titulo">Formularios y exámenes</h2>
+{% if not formularios %}
+  {% url 'academico:nueva_actividad' modulo.id as url_nueva %}
+  {% if es_docente %}
+    {% vacio 'examen' 'Todavía no creaste formularios' 'Los formularios se crean dentro de cada clase, con «Crear tarea».' 'Crear tarea' url_nueva %}
+  {% else %}
+    {% vacio 'examen' 'No hay formularios por ahora' 'Cuando tu profesor publique uno, aparecerá aquí y en tu Inicio.' %}
+  {% endif %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for q in formularios %}
+      <li>
+        <a class="fila" href="{{ q.url }}">
+          <span class="ico-caja ico-azul">{% icono 'examen' %}</span>
+          <span class="cuerpo">
+            <span class="titulo">{{ q.titulo }}</span>
+            <span class="detalle">{{ q.detalle }}</span>
+          </span>
+          {% if q.chip %}<span class="chip {{ q.chip_clase }}">{{ q.chip }}</span>{% endif %}
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<h2 class="seccion-titulo">Tareas</h2>
+{% if not filas %}
+  {% url 'academico:nueva_actividad' modulo.id as url_nueva %}
+  {% if es_docente %}
+    {% vacio 'tarea' 'Todavía no dejaste tareas' 'Las tareas se crean dentro de cada clase, con «Crear tarea».' 'Crear tarea' url_nueva %}
+  {% else %}
+    {% vacio 'tarea' 'Tu profesor todavía no dejó tareas' 'Cuando deje una, aparecerá aquí y en tu Inicio.' %}
+  {% endif %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for f in filas %}
+      <li>
+        <a class="fila" href="{% url 'tareas:ver' f.tarea.id %}">
+          <span class="ico-caja ico-ambar">{% icono 'tarea' %}</span>
+          <span class="cuerpo">
+            <span class="titulo">{{ f.tarea.titulo }}</span>
+            <span class="detalle">{{ f.tarea.fecha_limite|vencimiento_texto }}{{ f.detalle }}</span>
+          </span>
+          <span class="chip {{ f.chip_clase }}">{{ f.chip }}</span>
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

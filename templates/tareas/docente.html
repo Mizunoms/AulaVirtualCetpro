@@ -1,0 +1,71 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% if publicada %}
+  <div class="tarjeta p d-flex flex-column gap-2">
+    <div class="fw-bold fs-5">Avisa a tus alumnos por WhatsApp</div>
+    <a class="btn btn-whatsapp btn-lg" href="https://wa.me/?text={{ texto_whatsapp|urlencode }}" target="_blank" rel="noopener">{% icono 'whatsapp' 22 %} Compartir en WhatsApp</a>
+  </div>
+{% endif %}
+
+<div class="tarjeta p d-flex flex-column gap-2">
+  <div class="d-flex flex-wrap gap-2">
+    <span class="chip {% if tarea.vencida %}chip-gris{% else %}chip-info{% endif %}">{{ tarea.fecha_limite|vencimiento_texto }} · {{ tarea.fecha_limite|hora_texto }}</span>
+    <span class="chip chip-info">{{ tarea.get_tipo_calificacion_display }}</span>
+    {% if tarea.tipo == 'grupal' %}<span class="chip chip-gris">En grupo</span>{% endif %}
+  </div>
+  {% if tarea.instrucciones %}<div style="white-space:pre-line">{{ tarea.instrucciones }}</div>{% endif %}
+  {% if tarea.archivo_ruta %}
+    <a class="align-self-start" href="{% url 'tareas:archivo' tarea.id %}">{% icono 'bajar' 18 %} {{ tarea.archivo_nombre }}</a>
+  {% endif %}
+  <div class="texto-2">{{ tarea.texto_tardia }}</div>
+</div>
+
+<div class="row g-2 text-center">
+  <div class="col-4"><div class="mensaje-ok rounded-4 p-2"><div class="fs-3 fw-bold">{{ a_tiempo }}</div><div class="fw-bold small">A tiempo</div></div></div>
+  <div class="col-4"><div class="rounded-4 p-2" style="background:var(--aviso-fondo);color:var(--aviso)"><div class="fs-3 fw-bold">{{ tarde }}</div><div class="fw-bold small">Tarde</div></div></div>
+  <div class="col-4"><div class="mensaje-error rounded-4 p-2"><div class="fs-3 fw-bold">{{ faltan }}</div><div class="fw-bold small">No entregaron</div></div></div>
+</div>
+
+{% if not lista %}
+  {% url 'academico:alumnos' modulo.id as url_alumnos %}
+  {% vacio 'usuarios' 'Este módulo todavía no tiene alumnos' 'Comparte el código del módulo para que se inscriban.' 'Ver el código' url_alumnos %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for x in lista %}
+      {% with a=x.alumno e=x.entrega %}
+      <li>
+        <{% if e and es_docente %}a href="{% url 'tareas:calificar' e.id %}?desde=tarea"{% else %}div{% endif %} class="fila" style="min-height:64px">
+          <span class="ico-caja ico-azul rounded-circle">{{ a.iniciales }}</span>
+          <span class="cuerpo">
+            <span class="fw-bold">{{ a.apellidos }}, {{ a.nombres }}</span>
+            <span class="detalle">{% if e %}Entregó el {{ e.fecha_entrega|fecha_larga }}{% else %}Sin entrega{% endif %}</span>
+          </span>
+          {% if x.calificada %}
+            <span class="chip chip-info">{{ e.resultado_texto }}</span>
+          {% elif e %}
+            <span class="chip {% if e.tardia %}chip-aviso{% else %}chip-ok{% endif %}">{% if e.tardia %}Tarde · calificar{% else %}Calificar{% endif %}</span>
+          {% else %}
+            <span class="chip chip-mal">No entregó</span>
+          {% endif %}
+          {% if not e and es_docente and a.telefono %}
+            <a class="btn btn-whatsapp" href="{{ a.telefono|whatsapp_url }}?text={{ 'Hola '|add:a.primer_nombre|add:'. '|add:texto_recordar|urlencode }}"
+               target="_blank" rel="noopener" aria-label="Recordar por WhatsApp a {{ a.nombres }}">{% icono 'whatsapp' 20 %} Recordar</a>
+          {% endif %}
+        </{% if e and es_docente %}a{% else %}div{% endif %}>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if es_docente %}
+  {% if faltan > 0 %}
+    <a class="btn btn-borde" href="https://wa.me/?text={{ texto_recordar|urlencode }}" target="_blank" rel="noopener">{% icono 'whatsapp' 20 %} Recordar a todos por WhatsApp (grupo)</a>
+  {% endif %}
+  <form method="post" action="{% url 'tareas:eliminar' tarea.id %}" data-confirmar="¿Borrar esta tarea? Irá a la papelera con sus entregas y podrás recuperarla durante 30 días." class="text-center">
+    {% csrf_token %}
+    <button type="submit" name="borrar" value="1" class="btn-texto">{% icono 'basura' 18 %} Borrar esta tarea</button>
+  </form>
+{% endif %}
+{% endblock %}

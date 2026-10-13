@@ -1,0 +1,116 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<form method="post" action="{% url 'tareas:modulo' modulo.id %}" enctype="multipart/form-data" class="d-flex flex-column gap-3" style="max-width:720px">
+  {% csrf_token %}
+
+  <div>
+    <label class="form-label" for="titulo">1. Nombre de la tarea</label>
+    <input class="form-control" id="titulo" name="titulo" maxlength="150" required value="{{ old.titulo }}" placeholder="Ej.: Foto de corte degrafilado">
+  </div>
+
+  <div>
+    <label class="form-label" for="instrucciones">2. ¿Qué deben hacer?</label>
+    <textarea class="form-control" id="instrucciones" name="instrucciones" rows="4" maxlength="5000" placeholder="Ej.: Toma una foto del corte terminado, de frente y de perfil.">{{ old.instrucciones }}</textarea>
+  </div>
+
+  <fieldset class="criterios-editor" data-filas data-max="10">
+    <legend class="form-label">Criterios de evaluación <span class="fw-normal texto-2">(opcional)</span></legend>
+    <p class="ayuda mt-0">Escribe qué vas a revisar y cuántos puntos vale cada cosa. Entre todos deben sumar 20. Tus alumnos lo verán al entregar.</p>
+    <ol class="filas-lista" role="list" data-lista>
+      {% for c in criterios_filas %}
+        <li class="fila-criterio" data-fila>
+          <input class="form-control" type="text" name="criterio_texto[]" maxlength="150" value="{{ c.texto }}" placeholder="Ej.: {{ c.ejemplo }}" data-etiqueta="Criterio #">
+          <span class="puntos-campo"><input class="form-control" type="number" name="criterio_puntos[]" min="0" max="20" step="1" inputmode="numeric" value="{{ c.puntos }}" data-etiqueta="Puntos del criterio #" data-puntos> <span>pts</span></span>
+          <button type="button" class="btn btn-texto" data-quitar data-etiqueta="Quitar el criterio #" hidden>Quitar</button>
+        </li>
+      {% endfor %}
+    </ol>
+    <template data-molde>
+      <li class="fila-criterio" data-fila>
+        <input class="form-control" type="text" name="criterio_texto[]" maxlength="150" placeholder="Ej.: Lo que vas a revisar" data-etiqueta="Criterio #">
+        <span class="puntos-campo"><input class="form-control" type="number" name="criterio_puntos[]" min="0" max="20" step="1" inputmode="numeric" data-etiqueta="Puntos del criterio #" data-puntos> <span>pts</span></span>
+        <button type="button" class="btn btn-texto" data-quitar data-etiqueta="Quitar el criterio #">Quitar</button>
+      </li>
+    </template>
+    <button type="button" class="btn btn-borde mt-2" data-agregar hidden>{% icono 'mas' 20 %} Agregar criterio</button>
+    <div class="criterios-total mt-2" aria-live="polite">Suman <b data-total>0</b> de 20 puntos<span data-resto></span></div>
+  </fieldset>
+
+  <div class="row g-2">
+    <div class="col-7">
+      <label class="form-label" for="fecha">3. ¿Hasta qué día?</label>
+      <input class="form-control" type="date" id="fecha" name="fecha" required value="{{ old.fecha|default:fecha_defecto }}">
+    </div>
+    <div class="col-5">
+      <label class="form-label" for="hora">¿Hasta qué hora?</label>
+      <input class="form-control" type="time" id="hora" name="hora" required value="{{ old.hora|default:'23:59' }}">
+    </div>
+  </div>
+
+  <details class="tarjeta" {% if tiene_titulo %}open{% endif %}>
+    <summary class="fila" style="cursor:pointer;min-height:56px">
+      <span class="cuerpo"><span class="fw-bold">Más opciones</span><span class="detalle">Clase, entregas tarde, forma de calificar, archivo</span></span>
+      <span class="flecha">{% icono 'derecha' %}</span>
+    </summary>
+    <div class="p-3 border-top d-flex flex-column gap-3">
+      {% if clases %}
+        <div>
+          <label class="form-label" for="unidad_id">¿En qué clase va?</label>
+          <select class="form-select" id="unidad_id" name="unidad_id">
+            {% for c in clases %}
+              <option value="{{ c.id }}" {% if clase_elegida == c.id|stringformat:"s" %}selected{% endif %}>Clase {{ c.n }}: {{ c.titulo }} · {{ c.situacion_texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      <fieldset>
+        <legend class="form-label">¿Acepta entregas después de la fecha?</legend>
+        <div class="opciones">
+          {% for valor, texto in politicas %}
+            <input type="radio" name="politica_tardia" id="pt-{{ valor }}" value="{{ valor }}" {% if tardia_sel == valor %}checked{% endif %}>
+            <label for="pt-{{ valor }}">{{ texto }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div id="caja-penalidad" {% if tardia_sel != 'penalidad' %}hidden{% endif %}>
+        <label class="form-label" for="penalidad_puntos">¿Cuántos puntos se restan?</label>
+        <input class="form-control" style="max-width:160px" type="number" id="penalidad_puntos" name="penalidad_puntos" min="0" max="20" step="0.5" value="{{ old.penalidad_puntos|default:'2' }}">
+      </div>
+
+      <fieldset>
+        <legend class="form-label">¿Cómo la calificas?</legend>
+        <div class="opciones">
+          {% for valor, texto in calificaciones %}
+            <input type="radio" name="tipo_calificacion" id="tc-{{ valor }}" value="{{ valor }}" {% if calif_sel == valor %}checked{% endif %}>
+            <label for="tc-{{ valor }}">{{ texto }}</label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="form-label">¿Individual o en grupo?</legend>
+        <div class="opciones">
+          {% for valor, texto in tipos %}
+            <input type="radio" name="tipo" id="tp-{{ valor }}" value="{{ valor }}" {% if tipo_sel == valor %}checked{% endif %}>
+            <label for="tp-{{ valor }}">{{ texto }}</label>
+          {% endfor %}
+        </div>
+        <div class="ayuda">En grupo: cada integrante sube el mismo trabajo.</div>
+      </fieldset>
+
+      <div>
+        <span class="form-label">Archivo para tus alumnos (opcional)</span>
+        <label class="btn-subir position-relative" style="min-height:90px">
+          {% icono 'subir' 28 %} Adjuntar un archivo
+          <input type="file" name="archivo" data-nombre="nombre-adjunto" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*">
+        </label>
+        <div id="nombre-adjunto" class="fw-bold mt-2" aria-live="polite"></div>
+      </div>
+    </div>
+  </details>
+
+  <button type="submit" class="btn btn-cetpro btn-lg">Publicar tarea</button>
+</form>
+{% endblock %}

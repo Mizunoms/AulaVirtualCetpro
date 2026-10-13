@@ -799,6 +799,82 @@ def unirse(request):
     return redirect("academico:modulo", id=m.pk)
 
 
+# ---------- Copiar el módulo y papelera ----------
+
+
+@exigir(Rol.DOCENTE)
+def copiar(request, id):
+    """Copiar el módulo para el siguiente periodo (sin alumnos ni notas)."""
+    m = modulo_del_docente(request, id)
+    old = request.session.get("_old", {})
+    return vista(
+        request,
+        "cursos/copiar.html",
+        {
+            "modulo": m,
+            "v": {
+                "nombre": old.get("nombre", m.nombre),
+                "periodo": old.get("periodo", ajustes.ajuste("periodo")),
+                "desde": old.get("desde", ""),
+            },
+        },
+        titulo="Copiar módulo",
+        sub=m.nombre,
+        volver=reverse("academico:modulo", args=[id]),
+        menu="cursos",
+    )
+
+
+@require_POST
+@exigir(Rol.DOCENTE)
+def guardar_copia(request, id):
+    from . import copia
+
+    m = modulo_del_docente(request, id)
+    nombre = _entrada(request, "nombre")[:150] or m.nombre
+    periodo = _entrada(request, "periodo")[:20] or ajustes.ajuste("periodo")
+    desde_txt = _entrada(request, "desde")
+    desde = _fecha(desde_txt) if desde_txt else None
+    if desde_txt and desde is None:
+        return volver_con_error(request, reverse("academico:copiar", args=[id]), "Revisa la fecha de la primera clase.")
+    nuevo = copia.copiar_modulo(m, request.user, nombre, periodo, desde)
+    ok(request, "Módulo copiado con sus clases, materiales, tareas y formularios. Tiene un código nuevo para tus alumnos.")
+    return redirect("academico:modulo", id=nuevo.pk)
+
+
+@exigir(Rol.DOCENTE)
+def papelera_ver(request, id):
+    """Papelera del módulo: lo borrado en los últimos 30 días."""
+    from . import papelera
+
+    m = modulo_del_docente(request, id)
+    papelera.vaciar_viejos()
+    return vista(
+        request,
+        "cursos/papelera.html",
+        {"modulo": m, "items": papelera.de_modulo(m), "dias": papelera.DIAS},
+        titulo="Papelera",
+        sub=m.nombre,
+        volver=reverse("academico:modulo", args=[id]),
+        menu="cursos",
+    )
+
+
+@require_POST
+@exigir(Rol.DOCENTE)
+def papelera_recuperar(request, id):
+    from . import papelera
+
+    modulo_del_docente(request, id)
+    item = _entrada(request, "item")
+    clase_id = papelera.recuperar(Modulo.objects.get(pk=id), _entrada(request, "tipo"), int(item) if item.isdigit() else 0)
+    if clase_id is None:
+        error(request, "No se encontró eso en la papelera.")
+        return redirect("academico:papelera", id=id)
+    ok(request, "Recuperado. Volvió a su clase.")
+    return redirect("academico:clase", id=clase_id)
+
+
 # ---------- Direcciones con GET y POST ----------
 
 modulos_o_guardar = por_metodo(GET=modulos, POST=guardar)
@@ -806,3 +882,5 @@ editar_o_actualizar = por_metodo(GET=editar, POST=actualizar)
 eliminar_o_confirmar = por_metodo(GET=confirmar_eliminar, POST=eliminar)
 clase_o_actualizar = por_metodo(GET=clase, POST=exigir(Rol.DOCENTE)(require_POST(actualizar_clase)))
 clases_o_crear = por_metodo(GET=clases_redirigir, POST=crear_clase)
+copiar_o_guardar = por_metodo(GET=copiar, POST=guardar_copia)
+papelera_o_recuperar = por_metodo(GET=papelera_ver, POST=papelera_recuperar)

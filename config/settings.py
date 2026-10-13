@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.cuentas",
     "apps.nucleo",
     "apps.academico",
+    "apps.tareas",
 ]
 
 MIDDLEWARE = [

@@ -32,9 +32,13 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Contenido de las clases (materiales, tareas, formularios) conectado por `apps/academico/contenido.py` — lo llenan las fases 3 y 4
 
 ## Fase 3 — Contenido y trabajos
-- [ ] Materiales (archivo, enlace, video) con papelera
-- [ ] Tareas y entregas (foto desde el celular), calificación, política de entrega tardía
-- [ ] Servir archivos con permisos
+- [x] Materiales (archivo, enlace, video de YouTube) con papelera de 30 días y recuperar
+- [x] Tareas con criterios (suman 20), política de entrega tarde (no acepta / acepta / resta puntos) y archivo adjunto
+- [x] Entregas con foto desde el celular, archivo o enlace; reenviar mientras no tenga nota
+- [x] Calificar (nota, rúbrica, aprobó/no aprobó), comentario, archivo devuelto, «Guardar y ver el siguiente»
+- [x] Bandeja «Por calificar» con filtros y «Calificados recientemente»
+- [x] Archivos servidos solo con permisos (dueño, docente del módulo, administración); se borran al eliminar lo que los tenía
+- [x] Copiar el módulo para el siguiente periodo y papelera del módulo
 
 ## Fase 4 — Evaluación y comunicación
 - [ ] Formularios con nota

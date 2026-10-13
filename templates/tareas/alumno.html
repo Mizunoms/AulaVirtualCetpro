@@ -1,0 +1,110 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Ficha de entrega. PC: a la izquierda lo que pide el profesor y cómo califica; a la derecha la entrega. Celular: uno debajo del otro. #}
+{% block contenido %}
+<div class="ficha">
+  <div class="ficha-guia d-flex flex-column gap-3">
+    <section class="tarjeta p d-flex flex-column gap-2">
+      <div class="d-flex flex-wrap gap-2">
+        <span class="chip {{ clase_fecha }}">{% icono 'reloj' 16 %} {{ tarea.fecha_limite|vencimiento_texto }} · {{ tarea.fecha_limite|tiempo_restante }}</span>
+        {% if tarea.tipo == 'grupal' %}<span class="chip chip-gris">En grupo</span>{% endif %}
+      </div>
+      <h2 class="h5 fw-bold mb-0">{% icono 'tarea' 20 %} Lo que pide tu profesor</h2>
+      {% if tarea.instrucciones %}
+        <div id="instrucciones" class="fs-5" style="white-space:pre-line">{{ tarea.instrucciones }}</div>
+        <button type="button" class="btn btn-borde btn-leer align-self-start" data-leer="instrucciones" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+      {% else %}
+        <p class="texto-2 mb-0">Tu profesor no dejó más indicaciones. Si tienes dudas, escríbele.</p>
+      {% endif %}
+      {% if tarea.archivo_ruta %}
+        <a class="btn btn-borde align-self-start" href="{% url 'tareas:archivo' tarea.id %}">{% icono 'bajar' 20 %} Ver archivo del profesor</a>
+      {% endif %}
+    </section>
+
+    <section class="tarjeta p d-flex flex-column gap-2">
+      <h2 class="h5 fw-bold mb-0">{% icono 'notas' 20 %} Cómo te van a calificar</h2>
+      {% if criterios %}
+        <p class="mb-0 texto-2">Tu profesor revisará:</p>
+        <ul class="lista-criterios">
+          {% for cr in criterios %}<li>{% icono 'check' 18 %} <span>{{ cr.texto }}</span>{% if cr.puntos is not None %}<b class="puntos-criterio">{{ cr.puntos }} pts</b>{% endif %}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      <ul class="lista-datos">
+        <li><b>Nota:</b> {{ tarea.get_tipo_calificacion_display }}{% if tarea.tipo_calificacion != 'aprobado' %} · apruebas con {{ minima|nota_fmt }}{% endif %}</li>
+        <li><b>Si entregas tarde:</b> {{ tarea.texto_tardia }}</li>
+        <li><b>Fecha límite:</b> {{ tarea.fecha_limite|fecha_larga }}, {{ tarea.fecha_limite|hora_texto }}</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="ficha-entrega d-flex flex-column gap-3">
+    {% if calificada %}
+      <section class="tarjeta p">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="texto-2">Tu nota</div>
+            <div class="display-6 fw-bold">{% if entrega.nota is not None %}{{ entrega.nota|nota_fmt }}<span class="fs-6 texto-2"> de 20</span>{% elif entrega.aprobado %}Aprobó{% else %}No aprobó{% endif %}</div>
+          </div>
+          {% if entrega.nota is not None %}
+            <span class="chip {% if entrega.nota >= minima %}chip-ok{% else %}chip-mal{% endif %}">{% if entrega.nota >= minima %}Aprobado{% else %}Desaprobado{% endif %}</span>
+          {% endif %}
+        </div>
+        {% if entrega.comentario_docente %}
+          <div class="mt-2"><b>Comentario del profesor:</b> {{ entrega.comentario_docente }}</div>
+        {% endif %}
+        {% if entrega.retro_ruta %}
+          <a class="btn btn-borde mt-2" href="{% url 'tareas:entrega_retro' entrega.id %}" target="_blank" rel="noopener">{% icono 'bajar' 20 %} Ver lo que te devolvió tu profesor</a>
+        {% endif %}
+      </section>
+    {% elif entrega %}
+      <div class="mensaje mensaje-ok">
+        {% icono 'check' 28 %}
+        <span>Ya entregaste esta tarea el {{ entrega.fecha_entrega|fecha_larga }}.{% if entrega.tardia %} (Entrega tarde.){% endif %}<br>
+          <span class="fw-normal">Te avisaremos cuando tenga nota.</span></span>
+      </div>
+    {% endif %}
+
+    {% if entrega and entrega.archivo_ruta %}
+      <section class="tarjeta p">
+        <div class="fw-bold mb-2">Lo que enviaste</div>
+        {% if entrega.es_imagen %}
+          <img src="{% url 'tareas:entrega_archivo' entrega.id %}" alt="Tu foto entregada" class="vista-previa visible">
+        {% else %}
+          <a href="{% url 'tareas:entrega_archivo' entrega.id %}">{{ entrega.archivo_nombre }}</a>
+        {% endif %}
+      </section>
+    {% elif entrega and entrega.enlace %}
+      <section class="tarjeta p"><div class="fw-bold mb-1">Lo que enviaste</div><a href="{{ entrega.enlace }}" target="_blank" rel="noopener">{{ entrega.enlace }}</a></section>
+    {% endif %}
+
+    {% if not calificada and puede_entregar %}
+      <form method="post" action="{% url 'tareas:entregar' tarea.id %}" enctype="multipart/form-data" class="tarjeta p d-flex flex-column gap-3" data-requiere-archivo>
+        {% csrf_token %}
+        <h2 class="h5 fw-bold mb-0">{% icono 'subir' 20 %} {% if entrega %}¿Te equivocaste? Envíala otra vez{% else %}Entrega tu trabajo{% endif %}</h2>
+
+        <label class="zona-carga position-relative" data-soltar="archivo">
+          {% icono 'camara' 40 %}
+          <span class="fs-5 fw-bold">Tomar foto</span>
+          <span class="texto-2 small d-none d-lg-block">o arrastra aquí tu foto o archivo</span>
+          <input type="file" id="foto" name="foto" accept="image/*" capture="environment" data-previa="previa" data-nombre="nombre-archivo" data-otro="archivo">
+        </label>
+        <label class="btn btn-borde w-100 position-relative">
+          {% icono 'subir' 20 %} Elegir un archivo (foto, PDF o Word)
+          <input type="file" id="archivo" name="archivo" class="position-absolute opacity-0" style="width:1px;height:1px" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*" data-previa="previa" data-nombre="nombre-archivo" data-otro="foto">
+        </label>
+
+        <img id="previa" class="vista-previa" alt="Vista previa de tu foto">
+        <div id="nombre-archivo" class="fw-bold" aria-live="polite"></div>
+        <div>
+          <label class="form-label" for="comentario">Comentario para tu profesor <span class="fw-normal texto-2">(si quieres)</span></label>
+          <textarea class="form-control" id="comentario" name="comentario" rows="2" maxlength="2000" placeholder="Ej.: Me costó el lado izquierdo, ¿está bien así?"></textarea>
+        </div>
+        <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'enviar' 22 %} Confirmar y enviar tarea</button>
+        <p class="ayuda mt-0 mb-0" data-aviso-archivo>Primero toma la foto o elige el archivo.</p>
+      </form>
+    {% elif not entrega and not puede_entregar %}
+      <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>Esta tarea ya no acepta entregas (la fecha pasó o la clase se cerró). Si tuviste un problema, habla con tu profesor.</span></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

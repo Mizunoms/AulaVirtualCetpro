@@ -128,12 +128,26 @@ def asistencia_por_alumno(modulo):
     return {}
 
 
+# función(modulo, usuario, acceso) → list[ItemClase] de los formularios del módulo (para «Tareas y exámenes»)
+FORMULARIOS_DEL_MODULO = []
+# función(docente) → list[dict] de lo que espera su revisión en «Por calificar» (tests y formularios)
+BANDEJA_PENDIENTES = []
+# función(alumno) → list[ItemClase] de los formularios que el alumno aún puede responder
+FORMULARIOS_PENDIENTES = []
 # función(alumno) → list[dict(titulo, modulo_nombre, nota_texto)] de las notas recientes
 NOTAS_NUEVAS = []
 # función(docente) → list[ItemClase] próximas fechas de sus tareas y tests (con extra["entregaron"], extra["texto_entregas"])
 PROXIMAS_DE_DOCENTE = []
 # función(docente) → list[(url, modulo_id)] de cada trabajo o test esperando nota
 ESPERANDO_NOTA = []
+
+
+def formularios_del_modulo(modulo, usuario, acceso):
+    return [it for f in FORMULARIOS_DEL_MODULO for it in f(modulo, usuario, acceso)]
+
+
+def bandeja_pendientes(docente):
+    return [x for f in BANDEJA_PENDIENTES for x in f(docente)]
 
 
 def notas_nuevas(alumno):
