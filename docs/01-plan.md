@@ -6,8 +6,9 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Repositorio nuevo, entorno virtual, Django 5.2, dependencias
 - [x] Usuario propio (DNI o correo), entrar y salir, panel técnico de Django
 - [x] Plantilla base accesible y primeras pruebas
-- [ ] Base PostgreSQL creada (`scripts/crear-base-postgres.ps1`) y `migrate` corrido
-- [ ] Primer commit
+- [x] Base PostgreSQL creada (`scripts/crear-base-postgres.ps1`) y `migrate` corrido
+- [x] Pruebas corriendo contra PostgreSQL 18 y pantalla de entrar vista en el navegador
+- [x] Primer commit
 
 ## Fase 1 — Núcleo
 - [ ] Configuración del CETPRO (`ajuste()`): nombre, logo, colores, especialidades
