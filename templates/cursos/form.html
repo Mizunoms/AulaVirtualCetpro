@@ -1,0 +1,71 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Formulario del docente para crear o editar su módulo. #}
+{% block contenido %}
+{% if not es %}
+  <div class="tarjeta p d-flex flex-wrap align-items-center gap-3">
+    <span class="flex-grow-1"><b>¿Tienes el plan de estudios en Excel?</b> Súbelo y se llenan solos los módulos y sus unidades didácticas.</span>
+    <a class="btn btn-borde" href="{% enlace 'academico:plan' %}">{% icono 'subir' 20 %} Cargar plan de estudios</a>
+  </div>
+{% endif %}
+<form method="post" action="{% if es %}{% url 'academico:editar' modulo.id %}{% else %}{% url 'academico:modulos' %}{% endif %}" class="d-flex flex-column gap-3">
+  {% csrf_token %}
+  <div class="tarjeta p d-flex flex-column gap-3">
+    <div>
+      <label class="form-label" for="especialidad">Curso</label>
+      <select class="form-select" id="especialidad" name="especialidad" required>
+        <option value="">Elige…</option>
+        {% for e in especialidades %}
+          <option {% if esp == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <fieldset>
+      <legend class="form-label">¿Qué módulo es?</legend>
+      <div class="opciones">
+        <input type="radio" name="modulo" id="mod-1" value="Módulo 1" {% if mod_sel == 'Módulo 1' %}checked{% endif %}>
+        <label for="mod-1">Módulo 1</label>
+        <input type="radio" name="modulo" id="mod-2" value="Módulo 2" {% if mod_sel == 'Módulo 2' %}checked{% endif %}>
+        <label for="mod-2">Módulo 2</label>
+      </div>
+      <div class="ayuda">Cada curso tiene sus módulos. Elige el que vas a dictar.</div>
+    </fieldset>
+    <div>
+      <label class="form-label" for="nombre">Nombre del módulo <span class="fw-normal texto-2">(opcional)</span></label>
+      <input class="form-control" id="nombre" name="nombre" maxlength="150" value="{{ v.nombre }}" placeholder="Ej.: Corte de cabello">
+      <div class="ayuda">Si lo dejas vacío, se llama como el curso y el módulo (ej. Peluquería y Barbería – Módulo 1).</div>
+    </div>
+    <fieldset>
+      <legend class="form-label">Turno</legend>
+      <div class="opciones">
+        {% for valor, texto in turnos %}
+          <input type="radio" name="turno" id="turno-{{ valor }}" value="{{ valor }}" {% if v.turno == valor %}checked{% endif %}>
+          <label for="turno-{{ valor }}">{{ texto }}</label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div>
+      <label class="form-label" for="horario">Horario <span class="fw-normal texto-2">(opcional)</span></label>
+      <input class="form-control" id="horario" name="horario" maxlength="120" value="{{ v.horario }}" placeholder="Ej.: Lunes a viernes · 8:00 a 12:00">
+    </div>
+    <div>
+      <label class="form-label" for="whatsapp_grupo">Grupo de WhatsApp del módulo <span class="fw-normal texto-2">(opcional)</span></label>
+      <input class="form-control" id="whatsapp_grupo" name="whatsapp_grupo" type="url" maxlength="300" value="{{ v.whatsapp_grupo }}" placeholder="https://chat.whatsapp.com/…">
+      <div class="ayuda">Pega el enlace de invitación de tu grupo. En el módulo tendrás un botón verde para abrirlo.</div>
+    </div>
+    <div id="unidades-didacticas">{% include "partials/unidades_didacticas.html" %}</div>
+  </div>
+
+  {% if not es %}
+    <div class="tarjeta p d-flex flex-column gap-3">
+      <div>
+        <div class="fw-bold fs-5">Clases del módulo <span class="fw-normal texto-2 fs-6">(puedes hacerlo después)</span></div>
+        <p class="texto-2 mb-0">Escribe los temas y creamos las clases por ti.</p>
+      </div>
+      {% include "partials/temas.html" %}
+    </div>
+  {% endif %}
+
+  <button type="submit" class="btn btn-cetpro btn-lg">{% if es %}Guardar cambios{% else %}Crear módulo{% endif %}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# El alumno abre una clase que todavía no empieza. #}
+{% block contenido %}
+<div class="tarjeta p text-center">
+  <span class="ico-caja ico-azul mx-auto mb-2">{% icono 'candado' %}</span>
+  <p class="fs-5 fw-bold mb-1">Esta clase todavía no empieza.</p>
+  <p class="texto-2 mb-3">Se abre {% if clase.fecha_inicio %}el {{ clase.fecha_inicio|fecha_larga }}{% else %}cuando tu profesor la abra{% endif %}.</p>
+  <a class="btn btn-cetpro" href="{% url 'academico:modulo' modulo.id %}#clases">Volver a las clases</a>
+</div>
+{% endblock %}

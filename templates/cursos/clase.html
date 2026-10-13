@@ -1,0 +1,293 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Una clase: materiales, tareas y formularios. El docente sube material y crea tareas aquí mismo. #}
+{% block contenido %}
+{% with sit=clase.situacion %}
+{% if sit != 'abierta' or clase.fecha_inicio or clase.fecha_fin or es_docente and clase.estado != 'auto' %}
+  <div class="tarjeta p d-flex flex-wrap align-items-center gap-2">
+    <span class="chip {% if sit == 'abierta' %}chip-ok{% elif sit == 'proxima' %}chip-info{% else %}chip-gris{% endif %}">{{ clase.situacion_texto }}</span>
+    {% if clase.fecha_inicio or clase.fecha_fin %}<span class="texto-2 fw-bold">{{ clase.fechas_texto }}</span>{% endif %}
+    {% if es_docente and clase.estado != 'auto' %}<span class="texto-2">· la abriste o cerraste a mano</span>{% endif %}
+  </div>
+{% endif %}
+
+{% if clase.descripcion %}
+  <div class="tarjeta p d-flex gap-3">
+    <span class="ico-caja ico-verde">{% icono 'estrella' %}</span>
+    <div style="min-width:0">
+      <div class="fw-bold">En esta clase aprenderás</div>
+      <div id="descripcion-clase" style="white-space:pre-line">{{ clase.descripcion }}</div>
+      <button type="button" class="btn btn-borde btn-leer mt-2" data-leer="descripcion-clase" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+    </div>
+  </div>
+{% elif es_docente %}
+  <a class="tarjeta fila" href="#editar" style="min-height:56px">
+    <span class="ico-caja ico-gris">{% icono 'editar' 22 %}</span>
+    <span class="cuerpo"><span class="fw-bold">Escribe qué aprenderán en esta clase</span><span class="detalle">Ayuda a tus alumnos a saber de qué trata</span></span>
+  </a>
+{% endif %}
+
+{% if sit == 'cerrada' %}
+  <div class="aviso-modo">{% icono 'candado' 20 %}<span>Clase cerrada: se pueden ver los materiales, pero ya no se entregan tareas ni formularios.</span></div>
+{% endif %}
+
+{% if es_docente %}
+  <div class="d-grid d-sm-flex gap-2">
+    <a class="btn btn-cetpro btn-lg flex-fill" href="#subir">{% icono 'subir' 22 %} Subir material</a>
+    <a class="btn btn-cetpro btn-lg flex-fill" href="#crear">{% icono 'mas' 22 %} Crear tarea</a>
+    <a class="btn btn-borde btn-lg flex-fill" href="{% enlace 'asistencia:modulo' modulo.id %}?tema={{ clase.titulo|urlencode }}">{% icono 'calendario' 22 %} Tomar asistencia</a>
+  </div>
+{% endif %}
+
+{% if es_alumno %}
+  <h2 class="seccion-titulo">{% icono 'tarea' %} Tareas de esta clase</h2>
+  {% if not tareas %}
+    {% vacio 'check' 'No hay tareas en esta clase' 'Revisa los materiales para ver y leer.' None None True %}
+  {% endif %}
+  <div class="row g-3">
+    {% for t in tareas %}
+      <div class="col-12 col-lg-6">
+        <a class="tarjeta tarjeta-tarea h-100" href="{{ t.url }}">
+          <div class="d-flex align-items-center gap-3">
+            <span class="ico-caja {% if t.hecha %}ico-verde{% elif t.es_examen %}ico-azul{% else %}ico-ambar{% endif %}">{% if t.hecha %}{% icono 'check' %}{% elif t.es_examen %}{% icono 'examen' %}{% else %}{% icono 'camara' %}{% endif %}</span>
+            <div class="fw-bold fs-5 lh-sm">{{ t.titulo }}</div>
+          </div>
+          {% if t.hecha %}
+            <div class="mt-2 fw-bold" style="color:var(--ok)">{% icono 'check' 18 %} {{ t.resultado }}</div>
+          {% else %}
+            <div class="texto-2 mt-2 d-flex align-items-center gap-1">{% icono 'reloj' 18 %} {{ t.limite|vencimiento_texto }}</div>
+            <div class="boton-falso">{{ t.boton }} {% icono 'derecha' 20 %}</div>
+          {% endif %}
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<h2 class="seccion-titulo">{% icono 'carpeta' %} {% if es_alumno %}Para ver y leer{% else %}Materiales{% endif %}</h2>
+{% if not materiales %}
+  {% if es_docente %}
+    {% vacio 'carpeta' 'Todavía no subiste materiales' 'Sube guías, fotos, videos de YouTube o enlaces para esta clase.' 'Subir material' '#subir' %}
+  {% else %}
+    {% vacio 'carpeta' 'Tu profesor todavía no subió materiales' 'Cuando lo haga, aparecerán aquí.' %}
+  {% endif %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for m in materiales %}
+      <li class="d-flex align-items-center">
+        <a class="fila" href="{{ m.url }}" {% if m.nueva_pestana %}target="_blank" rel="noopener"{% endif %}>
+          <span class="ico-caja {{ m.color }}">{% if m.etiqueta %}{{ m.etiqueta }}{% else %}{% icono m.icono 20 %}{% endif %}</span>
+          <span class="cuerpo">
+            <span class="fw-bold">{{ m.titulo }}</span>
+            <span class="detalle">{{ m.detalle }}</span>
+          </span>
+          <span class="fw-bold" style="color:var(--azul)">{{ m.accion }}</span>
+        </a>
+        {% if es_docente and m.extra.borrar_url %}
+          <form method="post" action="{{ m.extra.borrar_url }}" data-confirmar="¿Borrar «{{ m.titulo }}»?" class="pe-2">
+            {% csrf_token %}
+            <button type="submit" name="borrar" value="1" class="btn-texto" aria-label="Borrar {{ m.titulo }}">{% icono 'basura' 20 %}</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if not es_alumno %}
+  <h2 class="seccion-titulo">{% icono 'tarea' %} Tareas</h2>
+  {% if not tareas %}
+    {% vacio 'tarea' 'Todavía no creaste tareas en esta clase' 'Puede ser un trabajo con foto o un formulario con preguntas.' 'Crear tarea' '#crear' %}
+  {% else %}
+    <ul class="tarjeta lista-filas">
+      {% for t in tareas %}
+        <li>
+          <a class="fila" href="{{ t.url }}">
+            <span class="ico-caja {{ t.color }}">{% icono t.icono %}</span>
+            <span class="cuerpo">
+              <span class="titulo">{{ t.titulo }}</span>
+              <span class="detalle">{{ t.detalle }} · {{ t.limite|vencimiento_texto }}</span>
+              <span class="d-flex flex-wrap gap-1 mt-1">
+                {% for chip, clase_chip in t.extra.chips %}<span class="chip {{ clase_chip }}">{{ chip }}</span>{% endfor %}
+              </span>
+            </span>
+            <span class="flecha">{% icono 'derecha' %}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endif %}
+
+<h2 class="seccion-titulo" id="preguntas">{% icono 'mensaje' %} Preguntas de la clase</h2>
+{% if puede_preguntar %}
+  <form method="post" action="{% url 'academico:preguntar' clase.id %}" class="tarjeta p d-flex flex-column gap-2">
+    {% csrf_token %}
+    <label class="form-label mb-0" for="nueva-pregunta">{% if es_alumno %}¿Tienes una duda? Pregúntala aquí{% else %}Escribe algo para toda la clase{% endif %}</label>
+    <textarea class="form-control" id="nueva-pregunta" name="texto" rows="2" maxlength="2000" required placeholder="{% if es_alumno %}Ej.: ¿La foto puede ser del costado o solo de frente?{% else %}Ej.: Recuerden traer su peine.{% endif %}">{{ old.texto }}</textarea>
+    <div class="ayuda mt-0">La ven tu profesor y tus compañeros del módulo.</div>
+    <button type="submit" class="btn btn-cetpro align-self-start">{% icono 'enviar' 20 %} {% if es_alumno %}Preguntar{% else %}Publicar{% endif %}</button>
+  </form>
+{% endif %}
+{% if not preguntas %}
+  <p class="texto-2 mb-0 d-flex gap-2 align-items-center">{% icono 'mensaje' 20 %} Todavía no hay preguntas en esta clase.</p>
+{% endif %}
+{% for p in preguntas %}
+  <article class="tarjeta p d-flex flex-column gap-2" id="pregunta-{{ p.id }}">
+    <div class="d-flex gap-2 align-items-start">
+      <span class="avatar flex-shrink-0" style="width:40px;height:40px;font-size:.875rem;{% if p.autor.rol != 'docente' %}background:var(--azul){% endif %}" aria-hidden="true">{{ p.autor.iniciales }}</span>
+      <div class="flex-grow-1" style="min-width:0">
+        <div class="fw-bold">{{ p.autor.nombre_completo }}{% if p.autor.rol == 'docente' %} <span class="chip chip-info">Profesor</span>{% endif %}</div>
+        <div class="texto-2 small">{{ p.creado|fecha_larga }}, {{ p.creado|hora_texto }}</div>
+        <div class="mt-1" style="white-space:pre-line;overflow-wrap:anywhere">{{ p.texto }}</div>
+      </div>
+      {% if es_docente or p.autor_id == user.id %}
+        <form method="post" action="{% url 'academico:borrar_pregunta' p.id %}" data-confirmar="¿Borrar esta pregunta y sus respuestas?">
+          {% csrf_token %}
+          <button type="submit" name="borrar" value="1" class="btn-texto" aria-label="Borrar pregunta">{% icono 'basura' 18 %}</button>
+        </form>
+      {% endif %}
+    </div>
+    {% for r in p.lista_respuestas %}
+      <div class="d-flex gap-2 align-items-start ms-4 ps-3" style="border-left:3px solid {% if r.autor.rol == 'docente' %}var(--ok){% else %}var(--borde){% endif %}">
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-bold">{{ r.autor.nombre_completo }}{% if r.autor.rol == 'docente' %} <span class="chip chip-ok">Profesor</span>{% endif %} <span class="texto-2 small fw-normal">· {{ r.creado|fecha_corta }}</span></div>
+          <div style="white-space:pre-line;overflow-wrap:anywhere">{{ r.texto }}</div>
+        </div>
+        {% if es_docente or r.autor_id == user.id %}
+          <form method="post" action="{% url 'academico:borrar_pregunta' r.id %}" data-confirmar="¿Borrar esta respuesta?">
+            {% csrf_token %}
+            <button type="submit" name="borrar" value="1" class="btn-texto" aria-label="Borrar respuesta">{% icono 'basura' 18 %}</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% if acceso != 'lectura' %}
+      <details>
+        <summary class="btn btn-borde">Responder</summary>
+        <form method="post" action="{% url 'academico:preguntar' clase.id %}" class="d-flex flex-column gap-2 mt-2">
+          {% csrf_token %}
+          <input type="hidden" name="padre" value="{{ p.id }}">
+          <label class="visually-hidden" for="resp-{{ p.id }}">Tu respuesta</label>
+          <textarea class="form-control" id="resp-{{ p.id }}" name="texto" rows="2" maxlength="2000" required placeholder="Escribe tu respuesta"></textarea>
+          <button type="submit" class="btn btn-cetpro align-self-start">Enviar respuesta</button>
+        </form>
+      </details>
+    {% endif %}
+  </article>
+{% endfor %}
+
+{% if es_docente %}
+  <section id="crear" class="tarjeta p d-flex flex-column gap-3">
+    <h2 class="h4 mb-0">{% icono 'mas' %} Crear tarea en esta clase</h2>
+    <p class="texto-2 mb-0">¿Qué quieres que hagan tus alumnos?</p>
+    <div class="accesos" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      <a class="acceso" href="{% enlace 'tareas:nueva' modulo.id %}?clase={{ clase.id }}">
+        <span class="ico-caja ico-ambar">{% icono 'camara' %}</span>
+        <span class="titulo">Entregar un trabajo</span>
+        <span class="detalle">Suben una foto o un archivo (ej. foto del corte, del pan, de la prenda). Tú pones la nota.</span>
+      </a>
+      <a class="acceso" href="{% enlace 'formularios:nuevo' modulo.id %}?clase={{ clase.id }}">
+        <span class="ico-caja ico-azul">{% icono 'examen' %}</span>
+        <span class="titulo">Formulario con preguntas</span>
+        <span class="detalle">Como Google Forms: test con nota automática, trabajo para revisar o encuesta.</span>
+      </a>
+    </div>
+  </section>
+
+  <details id="subir" class="tarjeta" {% if old.unidad_id %}open{% endif %}>
+    <summary class="fila" style="min-height:64px">
+      <span class="ico-caja ico-azul">{% icono 'subir' %}</span>
+      <span class="cuerpo"><span class="titulo">Subir material</span><span class="detalle">Un archivo, una foto, un enlace o un video de YouTube</span></span>
+      <span class="flecha">{% icono 'derecha' %}</span>
+    </summary>
+    <form method="post" action="{% enlace 'materiales:guardar' modulo.id %}" enctype="multipart/form-data" class="border-top p-3">
+      {% csrf_token %}
+      <input type="hidden" name="unidad_id" value="{{ clase.id }}">
+      <fieldset class="mb-3">
+        <legend class="form-label">¿Qué vas a subir?</legend>
+        <div class="opciones">
+          <input type="radio" name="tipo" id="tipo-a" value="archivo" data-material checked>
+          <label for="tipo-a">Un archivo o foto</label>
+          <input type="radio" name="tipo" id="tipo-e" value="enlace" data-material>
+          <label for="tipo-e">Un enlace o video</label>
+        </div>
+      </fieldset>
+      <div data-campo="archivo" class="mb-3">
+        <label class="btn-subir position-relative">
+          {% icono 'subir' 32 %} Elegir archivo
+          <span class="small fw-normal texto-2">PDF, Word, PowerPoint, Excel o foto · máximo {{ max_mb }} MB</span>
+          <input type="file" name="archivo" data-previa="" data-nombre="nombre-mat" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*">
+        </label>
+        <div id="nombre-mat" class="fw-bold mt-2" aria-live="polite"></div>
+      </div>
+      <div data-campo="enlace" class="mb-3" hidden>
+        <label class="form-label" for="url">Dirección del enlace</label>
+        <input class="form-control" type="url" id="url" name="url" placeholder="https://www.youtube.com/...">
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="titulo">Nombre (para que tus alumnos lo reconozcan)</label>
+        <input class="form-control" id="titulo" name="titulo" maxlength="150" placeholder="Ej.: Guía de técnica de corte">
+        <div class="ayuda">Si lo dejas vacío, usamos el nombre del archivo.</div>
+      </div>
+      <button type="submit" class="btn btn-cetpro w-100">Publicar material</button>
+    </form>
+  </details>
+
+  <details id="editar" class="tarjeta">
+    <summary class="fila" style="min-height:64px">
+      <span class="ico-caja ico-gris">{% icono 'ajustes' %}</span>
+      <span class="cuerpo"><span class="titulo">Ajustes de la clase</span><span class="detalle">Tema, fechas, abrir o cerrar</span></span>
+      <span class="flecha">{% icono 'derecha' %}</span>
+    </summary>
+    <div class="border-top p-3 d-flex flex-column gap-4">
+      <form method="post" action="{% url 'academico:estado_clase' clase.id %}">
+        {% csrf_token %}
+        <div class="fw-bold mb-2">¿Quién abre y cierra esta clase?</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" name="estado" value="auto" class="btn {% if clase.estado == 'auto' %}btn-cetpro{% else %}btn-borde{% endif %}">{% icono 'calendario' 20 %} Según las fechas</button>
+          <button type="submit" name="estado" value="abierta" class="btn {% if clase.estado == 'abierta' %}btn-cetpro{% else %}btn-borde{% endif %}">{% icono 'abierto' 20 %} Abierta ya</button>
+          <button type="submit" name="estado" value="cerrada" class="btn {% if clase.estado == 'cerrada' %}btn-cetpro{% else %}btn-borde{% endif %}">{% icono 'candado' 20 %} Cerrada ya</button>
+        </div>
+      </form>
+      <form method="post" action="{% url 'academico:clase' clase.id %}" class="d-flex flex-column gap-3">
+        {% csrf_token %}
+        <div>
+          <label class="form-label" for="tema">Tema</label>
+          <input class="form-control" id="tema" name="tema" maxlength="150" required value="{{ clase.titulo }}">
+        </div>
+        <div>
+          <label class="form-label" for="descripcion">¿Qué aprenderán?</label>
+          <textarea class="form-control" id="descripcion" name="descripcion" rows="3" maxlength="2000" placeholder="Ej.: Aprenderás a usar la navaja y a degradar desde la nuca.">{{ clase.descripcion }}</textarea>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label" for="ini">Se abre el</label>
+            <input class="form-control" id="ini" name="fecha_inicio" type="date" value="{{ clase.fecha_inicio|date:'Y-m-d' }}">
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="fin">Se cierra después del</label>
+            <input class="form-control" id="fin" name="fecha_fin" type="date" value="{{ clase.fecha_fin|date:'Y-m-d' }}">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-cetpro align-self-start">Guardar</button>
+      </form>
+      <form method="post" action="{% url 'academico:mover_clase' clase.id %}">
+        {% csrf_token %}
+        <div class="fw-bold mb-2">Lugar de la clase</div>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="submit" name="dir" value="antes" class="btn btn-borde">{% icono 'arriba' 20 %} Mover antes</button>
+          <button type="submit" name="dir" value="despues" class="btn btn-borde">{% icono 'abajo' 20 %} Mover después</button>
+        </div>
+      </form>
+      {% if not materiales and not tareas %}
+        <form method="post" action="{% url 'academico:eliminar_clase' clase.id %}" data-confirmar="¿Borrar esta clase?">
+          {% csrf_token %}
+          <button type="submit" name="borrar" value="1" class="btn btn-peligro">{% icono 'basura' 20 %} Borrar clase</button>
+        </form>
+      {% endif %}
+    </div>
+  </details>
+{% endif %}
+{% endwith %}
+{% endblock %}

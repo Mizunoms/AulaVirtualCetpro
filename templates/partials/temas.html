@@ -1,0 +1,40 @@
+{% load aula %}
+{# Campos para crear varias clases: una fila por clase («Clase 1», «Clase 2»…) y, si se quiere, fechas seguidas. Se usa al crear un módulo y en «Agregar clases». `prefijo` evita que los id se repitan. #}
+<div data-filas data-max="40">
+  <div class="form-label" id="{{ prefijo }}-temas-titulo">Tema de cada clase <span class="fw-normal texto-2">(una fila por clase)</span></div>
+  <ol class="filas-lista" role="list" data-lista aria-labelledby="{{ prefijo }}-temas-titulo">
+    {% for f in temas_filas %}
+      <li class="fila-tema" data-fila>
+        <span class="fila-num">Clase <span data-num>{{ f.n }}</span></span>
+        <input class="form-control" type="text" name="temas[]" maxlength="150" value="{{ f.valor }}" placeholder="Ej.: {{ f.ejemplo }}" data-etiqueta="Tema de la clase #">
+        <button type="button" class="btn btn-texto" data-quitar data-etiqueta="Quitar la clase #" hidden>Quitar</button>
+      </li>
+    {% endfor %}
+  </ol>
+  <template data-molde>
+    <li class="fila-tema" data-fila>
+      <span class="fila-num">Clase <span data-num></span></span>
+      <input class="form-control" type="text" name="temas[]" maxlength="150" placeholder="Ej.: Tema de la clase" data-etiqueta="Tema de la clase #">
+      <button type="button" class="btn btn-texto" data-quitar data-etiqueta="Quitar la clase #">Quitar</button>
+    </li>
+  </template>
+  <button type="button" class="btn btn-borde mt-2" data-agregar hidden>{% icono 'mas' 20 %} Añadir otra clase</button>
+  <div class="ayuda">Cada fila es una clase. Las filas vacías se ignoran. Después, dentro de cada clase, subes materiales y creas tareas.</div>
+</div>
+<label class="interruptor-chico align-self-start">
+  <input type="checkbox" name="con_fechas" value="1" data-mostrar="{{ prefijo }}-fechas" {% if con_fechas %}checked{% endif %}>
+  Ponerles fechas: cada clase se abre sola y se cierra cuando termina
+</label>
+<div class="row g-2" id="{{ prefijo }}-fechas">
+  <div class="col-6 col-md-4">
+    <label class="form-label" for="{{ prefijo }}-desde">La primera empieza el</label>
+    <input class="form-control" id="{{ prefijo }}-desde" name="desde" type="date" value="{{ desde }}">
+  </div>
+  <div class="col-6 col-md-4">
+    <label class="form-label" for="{{ prefijo }}-dias">Cada clase dura (días)</label>
+    <input class="form-control" id="{{ prefijo }}-dias" name="dias" type="number" min="1" max="120" value="{{ dias }}">
+  </div>
+  <div class="col-12 col-md-4 d-flex align-items-end">
+    <span class="ayuda">7 días = una clase por semana.</span>
+  </div>
+</div>

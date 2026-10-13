@@ -12,6 +12,5 @@ extend-exclude = ["migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "DJ"]
-
-[tool.ruff.lint.per-file-ignores]
-"apps/nucleo/iconos.py" = ["E501"]
+# Los textos de pantalla en español pueden ser largos: el formateador acomoda el código, no se parten frases.
+ignore = ["E501"]

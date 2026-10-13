@@ -65,6 +65,64 @@ class Registro(models.Model):
             pass
 
 
+class Notificacion(models.Model):
+    """Avisos dentro del aula (la campana): nueva tarea, te calificaron, nuevo aviso del profesor…"""
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notificaciones")
+    mensaje = models.CharField(max_length=255)
+    enlace = models.CharField(max_length=255, blank=True, default="")
+    leida = models.BooleanField(default=False)
+    creado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "notificación"
+        verbose_name_plural = "notificaciones"
+        ordering = ["-id"]
+        indexes = [models.Index(fields=["usuario", "leida", "creado"], name="notif_usuario_idx")]
+
+    def __str__(self):
+        return self.mensaje
+
+    @staticmethod
+    def _relativo(enlace):
+        """Se guarda sin la carpeta donde está instalada el aula (ej. «/aula»), para que no dependa de ella."""
+        from django.urls import get_script_prefix
+
+        prefijo = get_script_prefix().rstrip("/")
+        return enlace[len(prefijo) :] if prefijo and enlace.startswith(prefijo + "/") else enlace
+
+    @property
+    def enlace_url(self):
+        from django.urls import get_script_prefix
+
+        return get_script_prefix().rstrip("/") + (self.enlace or "/")
+
+    @classmethod
+    def crear(cls, usuario, mensaje, enlace=""):
+        return cls.objects.create(usuario=usuario, mensaje=mensaje[:255], enlace=cls._relativo(enlace)[:255])
+
+    @classmethod
+    def a_alumnos(cls, modulo, mensaje, enlace=""):
+        """El mismo aviso para todos los alumnos activos de un módulo."""
+        relativo = cls._relativo(enlace)[:255]
+        cls.objects.bulk_create([cls(usuario=a, mensaje=mensaje[:255], enlace=relativo) for a in modulo.alumnos()])
+
+    @classmethod
+    def sin_leer(cls, usuario):
+        return cls.objects.filter(usuario=usuario, leida=False).count()
+
+    @classmethod
+    def marcar_leidas(cls, usuario):
+        import random
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        cls.objects.filter(usuario=usuario, leida=False).update(leida=True)
+        if random.randint(1, 20) == 1:  # limpieza ocasional de lo viejo
+            cls.objects.filter(leida=True, creado__lt=timezone.now() - timedelta(days=90)).delete()
+
+
 class IntentoAcceso(models.Model):
     """Intentos fallidos de entrar o registrarse (para frenar a quien prueba contraseñas o códigos).
 

@@ -1,0 +1,120 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Catálogo de módulos del administrador: tarjetas en cuadrícula con filtros, archivado en bloque y paginación. #}
+{% block contenido %}
+<div class="d-grid d-sm-flex flex-wrap gap-2">
+  <a class="btn btn-cetpro" href="{% url 'academico:admin_nuevo' %}">{% icono 'mas' 22 %} Nuevo módulo</a>
+  <a class="btn btn-borde" href="{% url 'academico:admin_cursos' %}">{% icono 'cursos' 22 %} Ver por cursos</a>
+</div>
+
+<nav class="pestanas pestanas-gestion" aria-label="Qué módulos mostrar">
+  {% for clave, texto in pestanas %}
+    <a href="{{ base }}{% if clave != 'activos' %}?estado={{ clave }}{% endif %}" {% if filtros.estado == clave %}aria-current="page"{% endif %}>{{ texto }} ({{ conteos|get_item:clave }})</a>
+  {% endfor %}
+</nav>
+
+<form method="get" action="{{ base }}" class="tarjeta p filtros-gestion">
+  {% if filtros.estado != 'activos' %}<input type="hidden" name="estado" value="{{ filtros.estado }}">{% endif %}
+  <div class="flex-grow-1" style="min-width:220px">
+    <label class="form-label" for="q">Buscar módulo, docente o código</label>
+    <input class="form-control" id="q" name="q" value="{{ filtros.q }}">
+  </div>
+  <div style="min-width:200px">
+    <label class="form-label" for="f-esp">Curso</label>
+    <select class="form-select" id="f-esp" name="especialidad" data-autoenviar>
+      <option value="">Todas</option>
+      {% for esp in especialidades %}<option {% if filtros.especialidad == esp %}selected{% endif %}>{{ esp }}</option>{% endfor %}
+    </select>
+  </div>
+  <div style="min-width:140px">
+    <label class="form-label" for="f-periodo">Periodo</label>
+    <select class="form-select" id="f-periodo" name="periodo" data-autoenviar>
+      <option value="">Todos</option>
+      {% for p in periodos %}<option {% if filtros.periodo == p %}selected{% endif %}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div style="min-width:120px">
+    <label class="form-label" for="f-por">Por página</label>
+    <select class="form-select" id="f-por" name="por" data-autoenviar>
+      {% for n in por_opciones %}<option value="{{ n }}" {% if por == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="d-flex align-items-end gap-2">
+    <button type="submit" class="btn btn-borde">{% icono 'buscar' 20 %} Buscar</button>
+    {% if filtros.q or filtros.especialidad or filtros.periodo %}
+      <a class="btn btn-texto" href="{{ base }}{% if filtros.estado != 'activos' %}?estado={{ filtros.estado }}{% endif %}">Quitar filtros</a>
+    {% endif %}
+  </div>
+</form>
+
+<form id="lote-modulos" method="post" action="{% url 'academico:admin_lote' %}" class="barra-lote tarjeta p" data-confirmar="¿Aplicar esta acción? Los módulos archivados dejan de verse para alumnos y docentes (no se borra nada).">
+  {% csrf_token %}
+  <input type="hidden" name="volver" value="{{ volver }}">
+  <span class="fw-bold">Archivar en bloque:</span>
+  <label class="visually-hidden" for="accion-modulos">Acción para los módulos marcados</label>
+  <select class="form-select" id="accion-modulos" name="accion" style="max-width:300px">
+    <option value="">Con los módulos marcados…</option>
+    <option value="archivar">Archivar los marcados</option>
+    <option value="reactivar">Reactivar los marcados</option>
+    <option value="archivar_periodo">Archivar todo un periodo (elige a la derecha)</option>
+  </select>
+  <label class="visually-hidden" for="periodo-archivar">Periodo a archivar</label>
+  <select class="form-select" id="periodo-archivar" name="periodo" style="max-width:160px">
+    <option value="">Periodo…</option>
+    {% for p in periodos %}{% if p != periodo_actual %}<option>{{ p }}</option>{% endif %}{% endfor %}
+  </select>
+  <button type="submit" class="btn btn-cetpro">Aplicar</button>
+  <span class="texto-2 small">Archivar sirve para no acumular módulos de prueba o de periodos pasados. No se borra nada y se puede reactivar.</span>
+</form>
+
+{% if not modulos %}
+  {% url 'academico:admin_nuevo' as url_nuevo %}
+  {% if filtros.estado == 'archivados' %}
+    {% vacio 'cursos' 'No hay módulos archivados' 'Cambia la pestaña o quita los filtros. Los docentes crean sus módulos desde su cuenta, o puedes crearlos aquí.' 'Nuevo módulo' url_nuevo %}
+  {% else %}
+    {% vacio 'cursos' 'No se encontraron módulos' 'Cambia la pestaña o quita los filtros. Los docentes crean sus módulos desde su cuenta, o puedes crearlos aquí.' 'Nuevo módulo' url_nuevo %}
+  {% endif %}
+{% else %}
+  <div class="rejilla-catalogo">
+    {% for c in modulos %}
+      {% color_curso c.especialidad as color %}
+      <article class="modulo-admin {% if not c.activo %}archivado{% endif %}" style="--color:{{ color }}">
+        <div class="modulo-admin-cabeza">
+          <label class="marca-modulo"><input type="checkbox" name="ids[]" value="{{ c.id }}" form="lote-modulos" aria-label="Marcar {{ c.nombre }}"></label>
+          <div class="curso-bb-esp">{% if c.codigo %}{{ c.codigo_fmt }} · {% endif %}{{ c.especialidad }}</div>
+          <span class="chip {% if c.activo %}chip-ok{% else %}chip-gris{% endif %}">{% if c.activo %}Activo{% else %}Archivado{% endif %}</span>
+        </div>
+        <h2 class="curso-bb-titulo"><a href="{% url 'academico:modulo' c.id %}">{{ c.nombre }}</a></h2>
+        <ul class="lista-datos modulo-admin-datos">
+          <li>{% icono 'cuenta' 18 %} Prof. {{ c.docente.nombre_completo }}</li>
+          <li>{% icono 'usuarios' 18 %} {{ c.total_alumnos|plural:"alumno matriculado,alumnos matriculados" }}</li>
+          <li>{% icono 'reloj' 18 %} Turno {{ c.turno }}{% if c.horario %} · {{ c.horario }}{% endif %} · {{ c.periodo }}</li>
+        </ul>
+        <div class="acciones-card">
+          <a class="btn btn-borde" href="{% url 'academico:admin_alumnos' c.id %}">{% icono 'usuarios' 18 %} Ver alumnos</a>
+          <a class="btn btn-borde" href="{% url 'academico:admin_editar' c.id %}#horario">{% icono 'reloj' 18 %} Horario</a>
+          <a class="btn btn-borde" href="{% enlace 'academico:notas_modulo' c.id %}">{% icono 'notas' 18 %} Registro de notas</a>
+          <details class="menu-opciones">
+            <summary class="btn btn-borde">{% icono 'ajustes' 18 %} Opciones</summary>
+            <div class="menu-opciones-lista">
+              <a href="{% url 'academico:admin_editar' c.id %}">{% icono 'editar' 18 %} Editar módulo</a>
+              <a href="{% url 'academico:modulo' c.id %}">{% icono 'cursos' 18 %} Abrir el módulo</a>
+              <form method="post" action="{% url 'academico:admin_estado' c.id %}" data-confirmar="{% if c.activo %}¿Archivar este módulo? Alumnos y docente dejarán de verlo (no se borra nada).{% else %}¿Reactivar este módulo?{% endif %}">
+                {% csrf_token %}<input type="hidden" name="volver" value="{{ volver }}">
+                <button type="submit">{% if c.activo %}{% icono 'carpeta' 18 %} Archivar módulo{% else %}{% icono 'check' 18 %} Reactivar módulo{% endif %}</button>
+              </form>
+              <div class="menu-separador" role="separator"></div>
+              <a class="peligro" href="{% url 'academico:admin_eliminar' c.id %}">{% icono 'basura' 18 %} Eliminar módulo…</a>
+            </div>
+          </details>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+
+  <div class="pie-tabla">
+    <span class="texto-2">Mostrando {{ desde }}–{{ hasta }} de {{ total|plural:"módulo,módulos" }}</span>
+    {% paginador num_pagina paginas base params %}
+  </div>
+{% endif %}
+{% endblock %}

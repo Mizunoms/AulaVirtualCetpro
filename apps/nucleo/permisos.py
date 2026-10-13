@@ -1,6 +1,7 @@
 """Quién puede ver qué: sesión iniciada, rol y contraseña propia.
 
 Uso:  @exigir()  → cualquier persona con sesión;  @exigir("admin")  → solo ese rol (o varios).
+Dentro de una vista se puede cortar con `raise Detener(respuesta)` (por ejemplo `no_encontrado(request)`).
 """
 
 from functools import wraps
@@ -9,6 +10,14 @@ from django.shortcuts import redirect
 from django.urls import reverse
 
 from .utils import pagina_error
+
+
+class Detener(Exception):  # noqa: N818 - no es un error: corta la vista con una respuesta lista
+    """Corta la vista y devuelve esta respuesta (página de «no encontrado», «sin permiso», una redirección…)."""
+
+    def __init__(self, respuesta):
+        super().__init__("detenida")
+        self.respuesta = respuesta
 
 
 def prohibido(request):
@@ -34,7 +43,10 @@ def exigir(*roles):
                 return redirect("cuentas:nueva_clave")
             if roles and u.rol not in roles:
                 return prohibido(request)
-            return vista(request, *args, **kwargs)
+            try:
+                return vista(request, *args, **kwargs)
+            except Detener as d:
+                return d.respuesta
 
         return envoltura
 

@@ -15,12 +15,12 @@ def contar(clave, usuario):
     return int(funcion(usuario)) if funcion else 0
 
 
-def url_o_numeral(nombre):
+def url_o_numeral(nombre, *args):
     """Dirección de una ruta; si esa parte del aula todavía no existe, devuelve '#'."""
     from django.urls import NoReverseMatch
 
     try:
-        return reverse(nombre)
+        return reverse(nombre, args=args or None)
     except NoReverseMatch:
         return "#"
 

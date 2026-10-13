@@ -1,0 +1,6 @@
+{% load aula %}
+<nav class="pestanas-modulo" aria-label="Secciones de {{ modulo.nombre }}"><ul>
+  {% for clave, texto, ruta, ico in pestanas %}
+    <li><a href="{{ ruta }}"{% if clave == activa %} class="activa" aria-current="page"{% endif %}>{% icono ico 20 %}<span>{{ texto }}</span></a></li>
+  {% endfor %}
+</ul></nav>

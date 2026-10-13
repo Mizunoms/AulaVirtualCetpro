@@ -20,12 +20,6 @@ def _entrada(request, clave, defecto=""):
     return (request.POST.get(clave) or defecto).strip()
 
 
-def _volver_con_error(request, ruta, mensaje):
-    request.session["_old"] = {k: v for k, v in request.POST.items() if k != "csrfmiddlewaretoken"}
-    error(request, mensaje)
-    return redirect(ruta)
-
-
 # ---------- Entrar y salir ----------
 
 
@@ -107,11 +101,6 @@ def salir(request):
     logout(request)
     ok(request, "Cerraste sesión. ¡Hasta pronto!")
     return redirect(reverse("cuentas:login") + ("?como=personal" if personal else ""))
-
-
-def registro_pendiente(request):
-    """«Crear mi cuenta» (DNI + código del módulo): se termina en la fase 2."""
-    return render(request, "cuentas/registro_pronto.html", {"titulo": "Crear mi cuenta"})
 
 
 # ---------- Mi cuenta ----------

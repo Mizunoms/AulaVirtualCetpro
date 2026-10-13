@@ -1,0 +1,45 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# La campana: avisos nuevos y, para el alumno, lo que vence pronto. #}
+{% block contenido %}
+{% if pronto %}
+  <h2 class="seccion-titulo grupo-hoy">{% icono 'reloj' %} Vence pronto</h2>
+  <ul class="tarjeta lista-filas">
+    {% for p in pronto %}
+      <li>
+        <a class="fila" href="{{ p.url }}">
+          <span class="ico-caja ico-ambar">{% icono 'alerta' %}</span>
+          <span class="cuerpo">
+            <span class="titulo">{{ p.titulo }}</span>
+            <span class="detalle fw-bold">{{ p.limite|vencimiento_texto }} · {{ p.modulo_nombre }}</span>
+          </span>
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<h2 class="seccion-titulo">{% icono 'campana' %} Avisos</h2>
+{% if not avisos %}
+  {% vacio 'campana' 'No tienes avisos todavía' 'Aquí verás cuando haya una tarea nueva, cuando te califiquen o cuando tu profesor publique un aviso.' %}
+{% else %}
+  <ul class="tarjeta lista-filas">
+    {% for a in avisos %}
+      {% with nuevo=a.leida|yesno:"0,1" %}
+      <li>
+        <a class="fila" href="{{ a.enlace_url }}">
+          <span class="ico-caja {% if not a.leida %}ico-azul{% else %}ico-gris{% endif %}">{% icono 'campana' %}</span>
+          <span class="cuerpo">
+            <span class="{% if not a.leida %}titulo{% else %}fw-bold{% endif %}">{{ a.mensaje }}</span>
+            <span class="detalle">{{ a.creado|fecha_larga }}, {{ a.creado|hora_texto }}</span>
+          </span>
+          {% if not a.leida %}<span class="chip chip-info">Nuevo</span>{% endif %}
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+      {% endwith %}
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

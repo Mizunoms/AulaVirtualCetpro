@@ -1,0 +1,22 @@
+{% extends "layouts/publico.html" %}
+{% load aula %}
+{% block contenido %}
+<div class="pasos-registro" aria-hidden="true"><span class="hecho"></span><span></span><span></span></div>
+<h1>Crear mi cuenta</h1>
+<p class="texto-2 mb-3">Paso 1 de 3. Escribe tu DNI.</p>
+<form method="post" action="{% url 'cuentas:registro' %}">
+  {% csrf_token %}
+  <div class="mb-4">
+    <label class="form-label" for="dni">Tu DNI</label>
+    <input class="form-control campo-grande" id="dni" name="dni" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" autocomplete="off"
+           value="{{ old.dni }}" required autofocus placeholder="12345678">
+    <div class="ayuda">Son los 8 números de tu documento de identidad.</div>
+  </div>
+  <button type="submit" class="btn btn-cetpro btn-lg w-100">Continuar {% icono 'derecha' 22 %}</button>
+</form>
+{% if not abierto %}
+  <p class="texto-2 mt-3 mb-0">Solo pueden crear su cuenta los alumnos que el CETPRO ya registró.</p>
+{% endif %}
+<div class="separador">¿Ya tienes cuenta?</div>
+<a class="btn btn-borde w-100" href="{% url 'cuentas:login' %}">Entrar con mi DNI y contraseña</a>
+{% endblock %}

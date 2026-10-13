@@ -1,0 +1,4 @@
+<div class="portada{% if foto %} con-foto{% endif %}" style="--color:{{ color }}{% if foto %};--foto:url('{{ foto }}'){% endif %}">
+  {% if not foto %}{{ dibujo }}{% endif %}
+  <span class="especialidad">{{ titulo }}</span>{% if chip %}<span class="chip {{ chip_clase }}">{{ chip }}</span>{% endif %}
+</div>

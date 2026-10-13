@@ -1,0 +1,30 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Contraseñas nuevas dadas en lote. Se muestran una sola vez. #}
+{% block contenido %}
+<div class="mensaje mensaje-ok" role="status">{% icono 'check' 26 %}<span>{{ lista|length|plural:"contraseña nueva creada,contraseñas nuevas creadas" }}. Anótalas o cópialas ahora: <b>no se volverán a mostrar</b>. Cada persona la cambiará al entrar.</span></div>
+
+<div class="d-flex flex-wrap gap-2 no-imprimir">
+  <button type="button" class="btn btn-cetpro" data-copiar="{{ texto_todo }}">{% icono 'copiar' 20 %} <span>Copiar todo</span></button>
+  <button type="button" class="btn btn-borde" data-imprimir>{% icono 'imprimir' 20 %} Imprimir</button>
+  <a class="btn btn-borde" href="{% enlace 'cuentas:admin_personas' %}">Volver a Personas</a>
+</div>
+<p class="texto-2 small mb-0 no-imprimir">Por ahora se envían por WhatsApp. El envío por correo llegará cuando el CETPRO tenga su correo institucional.</p>
+
+<div class="tarjeta tabla-gestion-caja">
+  <table class="tabla-gestion tabla-claves">
+    <caption class="visually-hidden">Contraseñas nuevas</caption>
+    <thead><tr><th scope="col">Persona</th><th scope="col">Entra con</th><th scope="col">Contraseña</th><th scope="col" class="no-imprimir">Enviar</th></tr></thead>
+    <tbody>
+      {% for x in lista %}
+        <tr>
+          <td data-titulo="Persona" class="fw-bold">{{ x.nombre }}</td>
+          <td data-titulo="Entra con">{{ x.usuario }}</td>
+          <td data-titulo="Contraseña"><code class="clave-lote">{{ x.clave }}</code></td>
+          <td data-titulo="" class="no-imprimir"><a class="btn btn-whatsapp" href="{{ x.wa }}" target="_blank" rel="noopener">{% icono 'whatsapp' 18 %} WhatsApp</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

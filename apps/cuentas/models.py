@@ -51,6 +51,29 @@ class UsuarioManager(BaseUserManager):
         extra["is_superuser"] = True
         return self._crear(correo, password, **extra)
 
+    def crear_alumno(
+        self, dni, nombres, apellidos, clave=None, origen=Origen.LISTA, telefono="", correo=None, fecha_nacimiento=None
+    ):
+        """Crea un alumno. Sin `clave` queda «pendiente»: entra cuando escribe su DNI en «Crear mi cuenta»."""
+        alumno = self._crear(
+            correo,
+            clave,
+            dni=dni,
+            nombres=nombres,
+            apellidos=apellidos,
+            telefono=telefono or "",
+            fecha_nacimiento=fecha_nacimiento,
+            origen=origen,
+            rol=Rol.ALUMNO,
+        )
+        if clave:
+            alumno.activado = timezone.now()
+            alumno.save(update_fields=["activado"])
+        return alumno
+
+    def docentes(self):
+        return self.filter(rol=Rol.DOCENTE, is_active=True).order_by("apellidos", "nombres")
+
     def buscar_para_entrar(self, texto):
         """Busca por correo (si trae «@») o por DNI (8 números). Devuelve None si no hay."""
         texto = (texto or "").strip()
@@ -113,6 +136,14 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def pendiente(self):
         """Alumno cargado en una lista que todavía no creó su contraseña."""
         return not self.has_usable_password()
+
+    def activar(self, clave, telefono=""):
+        """El alumno de la lista crea su contraseña (y puede dejar su celular)."""
+        self.set_password(clave)
+        self.activado = timezone.now()
+        if telefono:
+            self.telefono = telefono
+        self.save(update_fields=["password", "activado", "telefono"])
 
     @property
     def es_alumno(self):

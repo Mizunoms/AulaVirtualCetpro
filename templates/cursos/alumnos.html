@@ -1,0 +1,65 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% if es_docente %}
+  <div class="tarjeta p d-flex flex-column gap-3">
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <span class="ico-caja ico-azul">{% icono 'usuarios' %}</span>
+      <div class="flex-grow-1">
+        <div class="texto-2 fw-bold">Código para inscribirse</div>
+        <div class="fs-3 fw-bold" style="letter-spacing:.08em">{% if modulo.codigo %}{{ modulo.codigo_fmt }}{% else %}—{% endif %}</div>
+      </div>
+      {% if modulo.codigo %}
+        <span class="chip {% if modulo.inscripcion_abierta %}chip-ok{% else %}chip-gris{% endif %}">{% if modulo.inscripcion_abierta %}Inscripciones abiertas{% else %}Inscripciones cerradas{% endif %}</span>
+      {% endif %}
+    </div>
+    <p class="texto-2 mb-0">Tus alumnos entran a <b>{{ url_registro }}</b>, escriben su DNI y este código. Si ya tienen cuenta, lo escriben en «Mis módulos».</p>
+    <form method="post" action="{% url 'academico:codigo' modulo.id %}" class="d-flex flex-wrap gap-2">
+      {% csrf_token %}
+      {% if modulo.codigo and modulo.inscripcion_abierta %}
+        <button type="submit" name="accion" value="cerrar" class="btn btn-borde">{% icono 'candado' 20 %} Cerrar inscripciones</button>
+      {% elif modulo.codigo %}
+        <button type="submit" name="accion" value="abrir" class="btn btn-borde">{% icono 'abierto' 20 %} Abrir inscripciones</button>
+      {% endif %}
+      <button type="submit" name="accion" value="nuevo" class="btn btn-borde">{% if modulo.codigo %}Cambiar código{% else %}Crear código{% endif %}</button>
+    </form>
+  </div>
+{% endif %}
+
+{% if not alumnos %}
+  {% vacio 'usuarios' 'Todavía no hay alumnos en este módulo' 'Comparte el código de arriba (o por WhatsApp desde la página del módulo) para que se inscriban.' %}
+{% else %}
+  <h2 class="seccion-titulo">{{ alumnos|length|plural:"alumno,alumnos" }}</h2>
+  <ul class="tarjeta lista-filas">
+    {% for a in alumnos %}
+      <li class="fila flex-wrap" style="min-height:64px">
+        <span class="ico-caja ico-azul rounded-circle">{{ a.iniciales }}</span>
+        <span class="cuerpo">
+          <span class="fw-bold">{{ a.apellidos }}, {{ a.nombres }}</span>
+          <span class="detalle">{% if a.dni %}DNI {{ a.dni }}{% else %}{{ a.identificador }}{% endif %}{% if a.telefono %} · Cel. {{ a.telefono }}{% endif %}</span>
+          {% if a.pendiente %}<span class="chip chip-aviso mt-1 align-self-start">Aún no creó su contraseña</span>{% endif %}
+        </span>
+        {% if a.asistencia %}
+          <span class="chip {% if a.asistencia.pct >= 70 %}chip-ok{% else %}chip-mal{% endif %}">{{ a.asistencia.pct }}% asistencia</span>
+        {% endif %}
+        {% if es_docente %}
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-borde" href="{% enlace 'mensajes:con' modulo.id a.id %}">{% icono 'mensaje' 20 %} Mensaje</a>
+            {% with wa=a.telefono|whatsapp_url %}{% if wa %}
+              <a class="btn btn-borde" href="{{ wa }}" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp a {{ a.nombres }}">{% icono 'whatsapp' 20 %}</a>
+            {% endif %}{% endwith %}
+            <form method="post" action="{% url 'academico:clave_alumno' modulo.id a.id %}" data-confirmar="¿Darle una contraseña nueva a {{ a.nombres }}? La anterior dejará de servir.">
+              {% csrf_token %}
+              <button type="submit" name="clave" value="1" class="btn btn-borde">{% icono 'clave' 20 %} Nueva contraseña</button>
+            </form>
+            <form method="post" action="{% url 'academico:quitar_alumno' modulo.id a.id %}" data-confirmar="¿Quitar a {{ a.nombres }} de este módulo? Sus entregas se conservan.">
+              {% csrf_token %}
+              <button type="submit" name="quitar" value="1" class="btn-texto" aria-label="Quitar a {{ a.nombres }} del módulo">{% icono 'basura' 20 %}</button>
+            </form>
+          </div>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}

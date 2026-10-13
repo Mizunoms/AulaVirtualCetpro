@@ -1,0 +1,75 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+{% if nuevo %}
+  <div class="tarjeta p d-flex flex-wrap align-items-center gap-3" style="max-width:640px">
+    <span class="flex-grow-1"><b>¿Tienes el plan de estudios en Excel?</b> Súbelo y se llenan solos los módulos y sus unidades didácticas.</span>
+    <a class="btn btn-borde" href="{% enlace 'academico:plan' %}">{% icono 'subir' 20 %} Cargar plan de estudios</a>
+  </div>
+{% endif %}
+{% if not docentes %}
+  <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>Primero crea al docente en <a href="{% enlace 'cuentas:admin_nueva_persona' %}?rol=docente">Personas</a>.</span></div>
+{% endif %}
+
+<form method="post" action="{% if nuevo %}{% url 'academico:admin_modulos' %}{% else %}{% url 'academico:admin_actualizar' modulo.id %}{% endif %}" class="d-flex flex-column gap-3" style="max-width:640px">
+  {% csrf_token %}
+  <div>
+    <label class="form-label" for="especialidad">Curso</label>
+    <select class="form-select" id="especialidad" name="especialidad" required>
+      <option value="">Elige…</option>
+      {% for c in especialidades %}
+        <option {% if esp == c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <div class="ayuda">¿No está? Agrégalo en <a href="{% url 'nucleo:ajustes' %}?tab=especialidades">Ajustes → Cursos</a>.</div>
+  </div>
+  <fieldset>
+    <legend class="form-label">¿Qué módulo es?</legend>
+    <div class="opciones">
+      {% for i, mod in mod_opciones %}
+        <input type="radio" name="modulo" id="mod-{{ i }}" value="{{ mod }}" {% if mod_sel == mod %}checked{% endif %}>
+        <label for="mod-{{ i }}">{{ mod }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div>
+    <label class="form-label" for="nombre">Nombre del módulo <span class="fw-normal texto-2">(opcional)</span></label>
+    <input class="form-control" id="nombre" name="nombre" maxlength="150" value="{{ v.nombre }}" placeholder="Ej.: Atención de incidentes y problemas de operatividad">
+    <div class="ayuda">Así lo verán los alumnos. Si lo dejas vacío, se llama como el curso y el módulo.</div>
+  </div>
+  <div>
+    <label class="form-label" for="periodo">Periodo</label>
+    <input class="form-control" id="periodo" name="periodo" maxlength="20" required value="{{ v.periodo }}">
+  </div>
+  <fieldset>
+    <legend class="form-label">Turno</legend>
+    <div class="opciones">
+      {% for valor, texto in turnos %}
+        <input type="radio" name="turno" id="tu-{{ valor }}" value="{{ valor }}" {% if v.turno == valor %}checked{% endif %}>
+        <label for="tu-{{ valor }}">{{ texto }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div>
+    <label class="form-label" for="horario">Horario (opcional)</label>
+    <input class="form-control" id="horario" name="horario" maxlength="120" value="{{ v.horario }}" placeholder="Ej.: Lunes a viernes · 8:00 a 13:00">
+  </div>
+  <div>
+    <label class="form-label" for="docente_id">Docente</label>
+    <select class="form-select" id="docente_id" name="docente_id" required>
+      <option value="">Elige…</option>
+      {% for d in docentes %}
+        <option value="{{ d.id }}" {% if v.docente_id == d.id|stringformat:"s" %}selected{% endif %}>{{ d.apellidos }}, {{ d.nombres }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div id="unidades-didacticas">{% include "partials/unidades_didacticas.html" %}</div>
+  {% if not nuevo %}
+    <label class="interruptor tarjeta">
+      <span class="texto">Módulo activo<span class="d-block small texto-2 fw-normal">Si lo desactivas, ya no aparece a docentes ni alumnos</span></span>
+      <input type="checkbox" name="activo" value="1" {% if modulo.activo %}checked{% endif %}>
+    </label>
+  {% endif %}
+  <button type="submit" class="btn btn-cetpro btn-lg">{% if nuevo %}Crear módulo{% else %}Guardar cambios{% endif %}</button>
+</form>
+{% endblock %}

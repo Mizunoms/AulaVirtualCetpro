@@ -1,0 +1,187 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Inicio de administración y dirección: números clave, reportes de la semana, exportación para la UGEL, actividad reciente (solo admin) y accesos para configurar el aula (solo admin). #}
+{% block contenido %}
+<section class="hola">
+  <div class="fecha">{{ hoy_texto }}</div>
+  <h2>Hola, {{ user.primer_nombre }}</h2>
+  <p>Panel de {% if es_admin %}administración{% else %}dirección{% endif %} del {{ aj.aula_nombre }}.</p>
+</section>
+
+<nav class="kpis" aria-label="Resumen: toca un número para ir">
+  {% for ruta, num, texto, ico, clase in kpis %}
+    <a class="kpi {{ clase }}" href="{{ ruta }}">
+      <span class="kpi-ico" aria-hidden="true">{% icono ico 26 %}</span>
+      <span class="kpi-num">{{ num }}</span>
+      <span class="kpi-txt">{{ texto }}</span>
+      <span class="kpi-ir" aria-hidden="true">{% icono 'derecha' 20 %}</span>
+    </a>
+  {% endfor %}
+</nav>
+
+<h2 class="seccion-titulo">{% icono 'notas' %} Reportes de la semana</h2>
+<div class="rejilla-reportes">
+  <section class="tarjeta p reporte" aria-label="Asistencia de la semana">
+    <h3 class="h6 fw-bold mb-2">{% icono 'calendario' 20 %} Asistencia de la semana</h3>
+    {% if asistencia.pct is None %}
+      <div class="reporte-num sin-dato">—</div>
+      <p class="texto-2 mb-0">Todavía no hay asistencia registrada esta semana (desde el lunes {{ asistencia.desde|fecha_larga }}).</p>
+    {% else %}
+      <div class="reporte-num {% if asistencia.pct < 70 %}mal{% else %}bien{% endif %}">{{ asistencia.pct }}<small>%</small></div>
+      <div class="barra-p" aria-hidden="true"><span style="width:{{ asistencia.pct }}%;background:{% if asistencia.pct < 70 %}var(--mal){% else %}var(--ok){% endif %}"></span></div>
+      <p class="texto-2 small mb-0 mt-2">De {{ asistencia.registros|plural:"asistencia registrada,asistencias registradas" }} en {{ asistencia.sesiones|plural:"clase,clases" }}, desde el {{ asistencia.desde|fecha_larga }}.</p>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta p reporte" aria-label="Notas calificadas y pendientes">
+    <h3 class="h6 fw-bold mb-2">{% icono 'tarea' 20 %} Notas: calificadas y pendientes</h3>
+    {% if notas.pct is None %}
+      <div class="reporte-num sin-dato">—</div>
+      <p class="texto-2 mb-0">Todavía no hay trabajos ni tests entregados.</p>
+    {% else %}
+      <div class="reporte-par">
+        <div><div class="reporte-num bien">{{ notas.calificadas }}</div><div class="texto-2 small fw-bold">calificadas</div></div>
+        <div><div class="reporte-num {% if notas.pendientes %}aviso{% else %}bien{% endif %}">{{ notas.pendientes }}</div><div class="texto-2 small fw-bold">pendientes</div></div>
+      </div>
+      <div class="barra-p" aria-hidden="true"><span style="width:{{ notas.pct }}%;background:var(--ok)"></span></div>
+      <p class="texto-2 small mb-0 mt-2">{{ notas.pct }}% de lo entregado ya tiene nota.</p>
+    {% endif %}
+  </section>
+
+  <section class="tarjeta p reporte" aria-label="Exportar registro consolidado">
+    <h3 class="h6 fw-bold mb-2">{% icono 'bajar' 20 %} Registro consolidado</h3>
+    <p class="texto-2 small">Excel con todos los alumnos de los módulos activos: asistencia y nota final. Para la dirección o la UGEL.</p>
+    <form method="get" action="{% enlace 'academico:consolidado' %}" class="d-flex flex-column gap-2">
+      <label class="visually-hidden" for="periodo-export">Periodo</label>
+      <select class="form-select" id="periodo-export" name="periodo">
+        <option value="">Todos los módulos activos</option>
+        {% for p in periodos %}<option>{{ p }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-cetpro">{% icono 'bajar' 20 %} Exportar registro consolidado (Excel)</button>
+    </form>
+  </section>
+</div>
+
+{% if notas_modulos %}
+  <h2 class="seccion-titulo">{% icono 'cursos' %} Calificación al día, por módulo</h2>
+  <div class="tarjeta tabla-gestion-caja">
+    <table class="tabla-gestion">
+      <caption class="visually-hidden">Trabajos y tests calificados y pendientes por módulo</caption>
+      <thead><tr><th scope="col">Módulo</th><th scope="col">Docente</th><th scope="col">Calificadas</th><th scope="col">Pendientes</th><th scope="col">Al día</th></tr></thead>
+      <tbody>
+        {% for m in notas_modulos|slice:":8" %}
+          <tr>
+            <td data-titulo="Módulo"><a class="fw-bold" href="{% enlace 'academico:notas_modulo' m.id %}">{{ m.nombre }}</a><div class="small texto-2">{{ m.especialidad }}</div></td>
+            <td data-titulo="Docente">{{ m.docente }}</td>
+            <td data-titulo="Calificadas">{{ m.calificadas }}</td>
+            <td data-titulo="Pendientes">{% if m.pendientes %}<span class="chip chip-aviso">{{ m.pendientes }}</span>{% else %}<span class="chip chip-ok">0</span>{% endif %}</td>
+            <td data-titulo="Al día" style="min-width:140px">
+              {% if m.pct is None %}<span class="texto-2">Sin entregas</span>
+              {% else %}<div class="d-flex align-items-center gap-2"><span class="barra-p flex-grow-1" aria-hidden="true"><span style="width:{{ m.pct }}%"></span></span><b>{{ m.pct }}%</b></div>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% if es_admin %}
+  <h2 class="seccion-titulo">{% icono 'alerta' %} Actividad y seguridad <a class="ver-todo" href="{% url 'nucleo:registro' %}">Ver todo el registro</a></h2>
+  <div class="rejilla-ajustes">
+    <section class="tarjeta" aria-label="Últimos accesos">
+      <h3 class="h6 fw-bold p-3 pb-0 mb-0">{% icono 'cuenta' 20 %} Últimos accesos</h3>
+      {% if not accesos %}<p class="texto-2 p-3 mb-0">Todavía no hay accesos registrados.</p>{% endif %}
+      <ul class="lista-filas">
+        {% for r in accesos %}
+          <li class="fila-registro">
+            <span class="avatar" aria-hidden="true" style="background:var(--azul);width:36px;height:36px;font-size:.8125rem">{{ r.usuario.iniciales }}</span>
+            <span class="cuerpo"><span class="fw-bold">{% firstof r.usuario.nombre_completo "Alguien" %}</span><span class="detalle">{{ r.usuario.get_rol_display }}</span></span>
+            <span class="small texto-2 text-nowrap">{{ r.creado|hace_tiempo }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="tarjeta" aria-label="Movimientos recientes">
+      <h3 class="h6 fw-bold p-3 pb-0 mb-0">{% icono 'ajustes' 20 %} Movimientos recientes</h3>
+      {% if not movimientos %}<p class="texto-2 p-3 mb-0">Todavía no hay movimientos registrados.</p>{% endif %}
+      <ul class="lista-filas">
+        {% for r in movimientos %}
+          <li class="fila-registro">
+            <span class="ico-caja ico-gris" style="width:36px;height:36px">{% with ico=iconos_accion|get_item:r.accion %}{% if ico %}{% icono ico 18 %}{% else %}{% icono 'estrella' 18 %}{% endif %}{% endwith %}</span>
+            <span class="cuerpo"><span>{{ r.detalle }}</span><span class="detalle">{{ acciones|get_item:r.accion|default:r.accion }}</span></span>
+            <span class="small texto-2 text-nowrap">{{ r.creado|hace_tiempo }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+
+  <h2 class="seccion-titulo">Configurar el aula</h2>
+  <div class="accesos">
+    <a class="acceso" href="{% url 'nucleo:ajustes' %}?tab=identidad">
+      <span class="ico-caja ico-rojo">{% icono 'paleta' %}</span>
+      <span class="titulo">Identidad visual</span>
+      <span class="detalle">Nombre, logo, colores y fotos</span>
+    </a>
+    <a class="acceso" href="{% url 'nucleo:ajustes' %}?tab=periodo">
+      <span class="ico-caja ico-azul">{% icono 'calendario' %}</span>
+      <span class="titulo">Periodo y matrículas</span>
+      <span class="detalle">Abrir o cerrar matrículas, aviso general</span>
+    </a>
+    <a class="acceso" href="{% url 'nucleo:ajustes' %}?tab=contacto">
+      <span class="ico-caja ico-verde">{% icono 'whatsapp' %}</span>
+      <span class="titulo">Contacto y soporte</span>
+      <span class="detalle">Teléfonos, WhatsApp y reglamento</span>
+    </a>
+    <a class="acceso" href="{% url 'academico:admin_cursos' %}">
+      <span class="ico-caja ico-ambar">{% icono 'estrella' %}</span>
+      <span class="titulo">Cursos</span>
+      <span class="detalle">Programas de estudios con sus módulos</span>
+    </a>
+    <a class="acceso" href="{% enlace 'cuentas:admin_personas' %}">
+      <span class="ico-caja ico-azul">{% icono 'usuarios' %}</span>
+      <span class="titulo">Personas</span>
+      <span class="detalle">Docentes, alumnos, claves y estado</span>
+    </a>
+    <a class="acceso" href="{% enlace 'cuentas:admin_importar' %}">
+      <span class="ico-caja ico-verde">{% icono 'subir' %}</span>
+      <span class="titulo">Cargar alumnos</span>
+      <span class="detalle">Lista de Excel o pegada</span>
+    </a>
+    <a class="acceso" href="{% url 'academico:admin_modulos' %}">
+      <span class="ico-caja ico-gris">{% icono 'cursos' %}</span>
+      <span class="titulo">Módulos</span>
+      <span class="detalle">Catálogo, docentes y archivado</span>
+    </a>
+    <a class="acceso" href="{% url 'nucleo:registro' %}">
+      <span class="ico-caja ico-rojo">{% icono 'alerta' %}</span>
+      <span class="titulo">Registro de actividad</span>
+      <span class="detalle">Accesos, claves y cambios</span>
+    </a>
+  </div>
+{% else %}
+  <h2 class="seccion-titulo">Módulos</h2>
+  {% if not modulos %}
+    <div class="tarjeta p texto-2">Todavía no hay módulos. Los docentes los crean desde su cuenta.</div>
+  {% else %}
+    <ul class="tarjeta lista-filas">
+      {% for c in modulos %}
+        {% color_curso c.especialidad as color_esp %}
+        <li>
+          <a class="fila" href="{% url 'academico:modulo' c.id %}">
+            <span class="ico-caja" style="background:{{ color_esp }};color:#fff">{% icono 'cursos' %}</span>
+            <span class="cuerpo">
+              <span class="titulo">{{ c.nombre }}</span>
+              <span class="detalle">{{ c.especialidad }} · Prof. {{ c.docente.nombre_completo }} · {{ c.total_alumnos|plural:"alumno,alumnos" }}</span>
+            </span>
+            {% if not c.activo %}<span class="chip chip-gris">Archivado</span>{% endif %}
+            <span class="flecha">{% icono 'derecha' %}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endif %}
+{% endblock %}

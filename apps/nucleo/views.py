@@ -9,17 +9,43 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from . import ajustes, archivos, color
-from .models import Registro
+from .models import Notificacion, Registro
 from .permisos import exigir, no_encontrado, prohibido
-from .utils import error, ok, pagina_error, vista
+from .utils import error, ok, pagina_error, vista, volver_con_error
 
 # ---------- Inicio ----------
 
 
 @exigir()
 def inicio(request):
-    # Las pantallas de inicio de cada rol (con sus módulos, tareas y avisos) llegan en la fase 2.
-    return vista(request, "nucleo/inicio.html", titulo="Inicio", sub=request.user.get_rol_display(), menu="inicio")
+    """Pantalla de inicio de cada rol (alumno, docente, administración o dirección)."""
+    from apps.academico.views_inicio import inicio as inicio_de_rol
+
+    plantilla, datos = inicio_de_rol(request)
+    return vista(request, plantilla, datos, titulo="Inicio", menu="inicio")
+
+
+@exigir()
+def avisos(request):
+    """La campana: avisos nuevos y, para el alumno, lo que vence pronto."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.academico import contenido
+
+    u = request.user
+    pronto = []
+    if u.rol == "alumno":
+        ahora = timezone.now()
+        limite = ahora + timedelta(hours=36)
+        pendientes, _grupos = contenido.pendientes_agrupados(u)
+        pronto = [p for p in pendientes if p.limite and ahora <= p.limite <= limite]
+    lista = list(Notificacion.objects.filter(usuario=u)[:40])
+    Notificacion.marcar_leidas(u)
+    return vista(
+        request, "nucleo/avisos.html", {"avisos": lista, "pronto": pronto}, titulo="Avisos", sub="Lo nuevo para ti", menu="avisos"
+    )
 
 
 # ---------- Tema claro / oscuro ----------
@@ -73,20 +99,35 @@ PESTANAS = {
     "identidad": "Identidad visual",
     "periodo": "Periodo y matrículas",
     "contacto": "Contacto y soporte",
+    "especialidades": "Cursos",
 }
 IMAGENES = {"logo": "Logo", "fondo_login": "Foto de la pantalla de entrada"}
 
 
 @exigir("admin")
 def ajustes_ver(request):
+    from apps.academico.models import Modulo
+
     tab = request.GET.get("tab", "")
     tab = tab if tab in PESTANAS else "identidad"
     a = ajustes.todas()
-    valores = {**a, **{k: v for k, v in request.session.get("_old", {}).items() if k in a}}
+    old = request.session.get("_old", {})
+    valores = {**a, **{k: v for k, v in old.items() if k in a}}
+    en_uso = Modulo.contar_por_especialidad()
+    filas = [dict(e, usa=en_uso.get(e["nombre"], 0)) for e in ajustes.especialidades()]
+    filas += [{"nombre": "", "color": "#1249A3", "usa": 0}, {"nombre": "", "color": "#166534", "usa": 0}]
     return vista(
         request,
         "nucleo/ajustes.html",
-        {"a": a, "v": valores, "tab": tab, "pestanas": PESTANAS, "especialidades": ajustes.especialidades()},
+        {
+            "a": a,
+            "v": valores,
+            "tab": tab,
+            "pestanas": PESTANAS,
+            "especialidades": ajustes.especialidades(),
+            "filas_especialidades": filas,
+            "conteos_modulos": Modulo.conteos_admin(),
+        },
         titulo="Ajustes del aula",
         sub=PESTANAS[tab],
         menu="ajustes",
@@ -94,9 +135,7 @@ def ajustes_ver(request):
 
 
 def _error_ajustes(request, volver, mensaje):
-    request.session["_old"] = {k: v for k, v in request.POST.items() if k != "csrfmiddlewaretoken"}
-    error(request, mensaje)
-    return redirect(volver)
+    return volver_con_error(request, volver, mensaje)
 
 
 @require_POST
@@ -221,6 +260,50 @@ def ajustes_foto(request):
     ajustes.guardar_especialidades(lista)
     archivos.borrar(anterior)
     ok(request, f"Foto de {nombre}" + (" quitada." if "quitar" in request.POST else " guardada."))
+    return redirect(volver)
+
+
+@require_POST
+@exigir("admin")
+def ajustes_especialidades(request):
+    """Agregar, renombrar, cambiar color o quitar cursos (especialidades)."""
+    from apps.academico.models import Modulo
+
+    volver = reverse("nucleo:ajustes") + "?tab=especialidades"
+    # Los campos llegan como nombre[0], nombre[1]… (igual que en el sistema anterior)
+    indices = sorted({int(m.group(1)) for k in request.POST for m in [re.fullmatch(r"nombre\[(\d+)\]", k)] if m})
+    en_uso = Modulo.contar_por_especialidad()
+    fotos = {e["nombre"]: e["foto"] for e in ajustes.especialidades() if e.get("foto")}  # se conservan al renombrar
+    lista, renombrar = [], {}
+    for i in indices:
+        nombre = request.POST.get(f"nombre[{i}]", "").strip()[:100]
+        original = request.POST.get(f"original[{i}]", "").strip()
+        c = request.POST.get(f"color[{i}]", "").strip().upper()
+        if f"quitar[{i}]" in request.POST:
+            if original and en_uso.get(original, 0) > 0:
+                return volver_con_error(
+                    request, volver, f"«{original}» tiene módulos: no se puede quitar. Puedes cambiarle el nombre."
+                )
+            continue
+        if not nombre:
+            if original:
+                return volver_con_error(request, volver, "Escribe el nombre de cada curso (o marca «Quitar»).")
+            continue
+        if not color.valido(c) or color.contraste(c, "#FFFFFF") < 4.5:
+            return volver_con_error(
+                request, volver, f"El color de «{nombre}» es muy claro para letra blanca. Elige uno más oscuro."
+            )
+        if nombre.lower() in (e["nombre"].lower() for e in lista):
+            return volver_con_error(request, volver, f"«{nombre}» está repetida.")
+        lista.append({"nombre": nombre, "color": c, **({"foto": fotos[original]} if original in fotos else {})})
+        if original and original != nombre:
+            renombrar[original] = nombre
+    if not lista:
+        return volver_con_error(request, volver, "Debe quedar al menos un curso.")
+    ajustes.guardar_especialidades(lista)
+    for de, a in renombrar.items():
+        Modulo.objects.filter(especialidad=de).update(especialidad=a)
+    ok(request, "Cursos guardados.")
     return redirect(volver)
 
 

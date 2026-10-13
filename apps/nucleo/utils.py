@@ -76,6 +76,25 @@ def por_metodo(**vistas):
     return despachar
 
 
+def recordar_formulario(request):
+    """Guarda lo que la persona escribió, para volver a mostrarlo si el formulario vuelve con un error
+    (en las plantillas: `{{ old.campo }}`). Los campos en lista (`nombre[]`) se guardan como lista."""
+    request.session["_old"] = {
+        k: (request.POST.getlist(k) if k.endswith("[]") else request.POST.get(k, ""))
+        for k in request.POST
+        if k not in ("csrfmiddlewaretoken",)
+    }
+
+
+def volver_con_error(request, ruta, mensaje):
+    """Vuelve al formulario con un mensaje de error, recordando lo escrito."""
+    from django.shortcuts import redirect
+
+    recordar_formulario(request)
+    messages.error(request, mensaje)
+    return redirect(ruta)
+
+
 def ok(request, texto):
     messages.success(request, texto)
 
@@ -109,6 +128,15 @@ def whatsapp_url(telefono):
 # ---------- Texto ----------
 
 
+def clave_segura(largo=10):
+    """Contraseña temporal segura: letras minúsculas y números sin confusiones (sin 0, o, 1, l, i).
+    La persona la cambia al entrar."""
+    import secrets
+
+    alfabeto = "abcdefghjkmnpqrstuvwxyz23456789"
+    return "".join(secrets.choice(alfabeto) for _ in range(largo))
+
+
 def plural(n, uno, varios):
     return f"{n} {uno if n == 1 else varios}"
 
@@ -124,11 +152,14 @@ def nota_fmt(nota):
 
 
 def _dt(valor):
+    """Fecha y hora con zona (de Lima), a partir de un datetime, una fecha o un texto ISO."""
     if isinstance(valor, datetime):
-        return timezone.localtime(valor) if timezone.is_aware(valor) else valor
-    if isinstance(valor, date):
-        return datetime(valor.year, valor.month, valor.day)
-    return datetime.fromisoformat(str(valor))
+        pass
+    elif isinstance(valor, date):
+        valor = datetime(valor.year, valor.month, valor.day)
+    else:
+        valor = datetime.fromisoformat(str(valor))
+    return timezone.localtime(valor) if timezone.is_aware(valor) else timezone.make_aware(valor)
 
 
 def fecha_larga(valor):
@@ -153,12 +184,44 @@ def es_hoy(valor):
     return _dt(valor).date() == timezone.localdate()
 
 
+def mes_corto(valor):
+    """«OCT»"""
+    return MESES_CORTO[_dt(valor).month]
+
+
+def vencimiento_texto(limite):
+    """Texto de vencimiento pensado para personas: «Vence hoy a las 11:59 de la noche»."""
+    lim = _dt(limite)
+    ahora = timezone.localtime()
+    if lim < ahora:
+        return f"La fecha fue el {fecha_larga(lim)}"
+    dif = (lim.date() - ahora.date()).days
+    if dif == 0:
+        return f"Vence hoy a las {hora_texto(lim)}"
+    if dif == 1:
+        return f"Vence mañana a las {hora_texto(lim)}"
+    return f"Vence el {fecha_larga(lim)}"
+
+
+def tiempo_restante(limite):
+    """Tiempo que falta, en palabras: «Faltan 2 horas», «Faltan 3 días», «Venció hace 1 día»."""
+    seg = int((_dt(limite) - timezone.localtime()).total_seconds())
+    absoluto = abs(seg)
+    if absoluto < 3600:
+        txt = plural(max(1, absoluto // 60), "minuto", "minutos")
+    elif absoluto < 86400:
+        txt = plural(absoluto // 3600, "hora", "horas")
+    else:
+        txt = plural(absoluto // 86400, "día", "días")
+    if seg >= 0:
+        return ("Falta " if txt.startswith("1 ") else "Faltan ") + txt
+    return "Venció hace " + txt
+
+
 def hace_tiempo(valor):
     """«Hace 5 minutos», «Hace 2 horas», «Ayer»; pasados unos días, la fecha corta."""
     d = _dt(valor)
-    ahora = timezone.localtime() if timezone.is_aware(timezone.now()) else datetime.now()
-    d_cmp = d if d.tzinfo else d.replace(tzinfo=ahora.tzinfo)
-    seg = max(0, int((ahora - d_cmp).total_seconds()))
+    seg = max(0, int((timezone.localtime() - d).total_seconds()))
     if seg < 60:
         return "Ahora"
     if seg < 3600:

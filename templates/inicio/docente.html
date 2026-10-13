@@ -1,0 +1,100 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Inicio del docente: lo que tiene que hacer hoy. Arriba cuatro números que son botones; a la izquierda sus módulos y próximas fechas; a la derecha la asistencia de hoy de cada módulo. #}
+{% block contenido %}
+<section class="hola">
+  <div class="fecha">{{ hoy_texto }}</div>
+  <h2>Hola, profe {{ user.primer_nombre }}</h2>
+  <p>{% if not modulos %}Crea tu primer módulo para empezar.{% elif por_calificar %}Tienes {{ por_calificar|plural:"trabajo por calificar,trabajos por calificar" }}.{% else %}¡Todo calificado! Buen trabajo.{% endif %}</p>
+  <div class="acciones">
+    {% if por_calificar %}<a class="btn btn-claro" href="{% enlace 'tareas:por_calificar' %}">{% icono 'calificar' 20 %} Calificar ahora</a>{% endif %}
+    {% if mensajes_sin_leer %}<a class="btn btn-claro" href="{% enlace 'mensajes:index' %}">{% icono 'mensaje' 20 %} {{ mensajes_sin_leer|plural:"mensaje nuevo de tus alumnos,mensajes nuevos de tus alumnos" }}</a>{% endif %}
+    <a class="btn {% if por_calificar %}btn-transparente{% else %}btn-claro{% endif %}" href="{% url 'academico:nuevo' %}">{% icono 'mas' 20 %} Crear un módulo</a>
+  </div>
+</section>
+
+{% if modulos %}
+  <nav class="kpis" aria-label="Resumen: toca un número para ir">
+    {% for ruta, num, texto, ico, clase in kpis %}
+      <a class="kpi {{ clase }}" href="{{ ruta }}">
+        <span class="kpi-ico" aria-hidden="true">{% icono ico 26 %}</span>
+        <span class="kpi-num">{{ num }}</span>
+        <span class="kpi-txt">{{ texto }}</span>
+        <span class="kpi-ir" aria-hidden="true">{% icono 'derecha' 20 %}</span>
+      </a>
+    {% endfor %}
+  </nav>
+
+  <div class="dos-columnas">
+    <div class="columna-principal">
+      <h2 class="seccion-titulo">Mis módulos <a class="ver-todo" href="{% url 'academico:modulos' %}">Ver todos</a></h2>
+      <div class="rejilla-modulos">
+        {% for c in modulos %}
+          <article class="tarjeta-curso tarjeta-curso-docente">
+            {% portada_modulo c.especialidad c.especialidad %}
+            <div class="cuerpo">
+              <h3 class="nombre"><a class="stretched-link" href="{% url 'academico:modulo' c.id %}">{{ c.nombre }}</a></h3>
+              <div class="texto-2">Turno {{ c.turno }} · {{ c.total_alumnos|plural:"alumno,alumnos" }}</div>
+              <div class="d-flex flex-wrap gap-2">
+                {% if c.codigo %}<span class="chip chip-info">Código {{ c.codigo_fmt }}</span>{% endif %}
+                {% if c.por_calificar %}<span class="chip chip-aviso">{{ c.por_calificar }} por calificar</span>{% endif %}
+              </div>
+              <div class="acciones-card">
+                <a class="btn btn-borde" href="{% url 'academico:alumnos' c.id %}">{% icono 'usuarios' 20 %} Lista de alumnos</a>
+                <a class="btn btn-borde" href="{% enlace 'academico:notas_modulo' c.id %}">{% icono 'notas' 20 %} Registro de notas</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <h2 class="seccion-titulo">Próximas fechas</h2>
+      {% if not proximas %}
+        <div class="tarjeta p d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+          <span class="texto-2 flex-grow-1">No hay tareas ni tests con fecha en las próximas semanas.</span>
+          <a class="btn btn-cetpro" href="{% url 'academico:nueva_actividad' primer_modulo.id %}">{% icono 'mas' 20 %} Crear tarea</a>
+        </div>
+      {% else %}
+        <ul class="tarjeta lista-filas">
+          {% for t in proximas %}
+            <li>
+              <a class="fila" href="{{ t.url }}">
+                <span class="fecha-bloque fecha-proxima" aria-hidden="true"><b>{{ t.limite|date:"d" }}</b><span>{{ t.limite|mes_corto }}</span></span>
+                <span class="cuerpo">
+                  <span class="titulo">{% if t.es_examen %}{{ t.detalle }}: {% endif %}{{ t.titulo }}</span>
+                  <span class="detalle">{{ t.modulo_nombre }} · {{ t.limite|vencimiento_texto }} · {{ t.extra.texto_entregas }}</span>
+                </span>
+                <span class="flecha">{% icono 'derecha' %}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <aside class="columna-lateral" aria-label="Asistencia de hoy">
+      <h2 class="seccion-titulo">Asistencia de hoy</h2>
+      {% for c in modulos %}
+        <section class="tarjeta p asistencia-hoy {% if c.asist.completa %}completa{% endif %}" aria-label="Asistencia de {{ c.nombre }}">
+          <div class="fw-bold">{{ c.nombre }}</div>
+          <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+            <span class="chip {% if c.asist.completa %}chip-ok{% else %}chip-aviso{% endif %}">{% if c.asist.completa %}{% icono 'check' 16 %}{% else %}{% icono 'reloj' 16 %}{% endif %} {{ c.asist.estado }}</span>
+            <span class="texto-2">Asistencia del día: {{ c.asist.estado }} ({{ c.registrados_hoy }} de {{ c.total_alumnos|plural:"alumno,alumnos" }})</span>
+          </div>
+          <div class="barra-p my-2" aria-hidden="true"><span style="width:{{ c.asist.pct }}%"></span></div>
+          {% if c.total_alumnos == 0 %}
+            <a class="btn btn-borde w-100" href="{% url 'academico:alumnos' c.id %}">{% icono 'usuarios' 20 %} Todavía no hay alumnos</a>
+          {% else %}
+            <a class="btn {% if c.asist.completa %}btn-borde{% else %}btn-cetpro btn-lg{% endif %} w-100" href="{% enlace 'asistencia:modulo' c.id %}?desde=inicio">
+              {% if c.asist.completa %}{% icono 'check' 22 %} Ver o corregir la asistencia{% else %}{% icono 'calendario' 22 %} Registrar asistencia de hoy{% endif %}
+            </a>
+          {% endif %}
+        </section>
+      {% endfor %}
+    </aside>
+  </div>
+{% else %}
+  {% url 'academico:nuevo' as url_nuevo %}
+  {% vacio 'cursos' 'Todavía no tienes módulos' 'Crea tu módulo, escribe los temas de tus clases y comparte el código con tus alumnos.' 'Crear un módulo' url_nuevo %}
+{% endif %}
+{% endblock %}

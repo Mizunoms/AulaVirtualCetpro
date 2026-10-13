@@ -164,11 +164,15 @@
         <h2 class="h4 mb-0">{% icono 'cursos' %} Módulos del periodo</h2>
         <p class="mb-0">Hay <b>{{ conteos_modulos.activos }}</b> módulos activos y <b>{{ conteos_modulos.archivados }}</b> archivados.</p>
         <p class="texto-2 mb-0">Cuando termina un periodo, archiva sus módulos para no acumular módulos viejos o de prueba. Archivar no borra nada: alumnos y docente dejan de verlos y se pueden reactivar cuando quieras.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-cetpro" href="{% url 'academico:admin_modulos' %}">{% icono 'cursos' 20 %} Archivar módulos en bloque</a>
+          <a class="btn btn-borde" href="{% url 'academico:admin_modulos' %}?estado=archivados">Ver los archivados</a>
+        </div>
       </section>
     {% endif %}
   </div>
 
-{% else %}
+{% elif tab == 'contacto' %}
   <form method="post" action="{% url 'nucleo:ajustes' %}" class="tarjeta p d-flex flex-column gap-3">
     {% csrf_token %}
     <input type="hidden" name="tab" value="contacto">
@@ -203,6 +207,31 @@
       </div>
     </div>
     <button type="submit" class="btn btn-cetpro align-self-start">Guardar</button>
+  </form>
+
+{% else %}
+  <form id="especialidades" method="post" action="{% url 'nucleo:ajustes_especialidades' %}" class="tarjeta p d-flex flex-column gap-3">
+    {% csrf_token %}
+    <h2 class="h4 mb-0">{% icono 'estrella' %} Cursos (programas de estudios)</h2>
+    <p class="texto-2 mb-0">Cada módulo pertenece a un curso (un programa de estudios, por ejemplo «Soporte Técnico»). El color se usa en sus tarjetas. Si cambias un nombre, se cambia también en sus módulos. Para agregar uno, escribe su nombre en una fila vacía.</p>
+    <div class="rejilla-especialidades">
+      {% for esp in filas_especialidades %}
+        <div class="fila-especialidad">
+          <input class="form-control form-control-color" type="color" name="color[{{ forloop.counter0 }}]" value="{{ esp.color }}" aria-label="Color de {% if esp.nombre %}{{ esp.nombre }}{% else %}el curso nuevo{% endif %}">
+          <div>
+            <input class="form-control" name="nombre[{{ forloop.counter0 }}]" maxlength="100" value="{{ esp.nombre }}" placeholder="Nuevo curso" aria-label="Nombre del curso">
+            <input type="hidden" name="original[{{ forloop.counter0 }}]" value="{{ esp.nombre }}">
+            {% if esp.nombre %}<div class="ayuda">{{ esp.usa|plural:"módulo,módulos" }}</div>{% endif %}
+          </div>
+          {% if esp.nombre and not esp.usa %}
+            <label class="interruptor-chico"><input type="checkbox" name="quitar[{{ forloop.counter0 }}]" value="1"> Quitar</label>
+          {% else %}
+            <span></span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-cetpro align-self-start">Guardar cursos</button>
   </form>
 {% endif %}
 {% endblock %}

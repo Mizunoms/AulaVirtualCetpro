@@ -1,0 +1,78 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Mis módulos (alumno). PC: 70 % la lista de módulos con buscador y filtro; 30 % fijo a la derecha las tareas pendientes. Celular: una columna. #}
+{% block contenido %}
+<div class="dos-columnas">
+  <div class="columna-principal d-flex flex-column gap-3">
+    {% if modulos %}
+      <div class="barra-filtros tarjeta p" role="search">
+        <div class="campo-buscar flex-grow-1">
+          <label class="visually-hidden" for="buscar-modulo">Buscar un módulo</label>
+          {% icono 'buscar' 20 %}
+          <input class="form-control" id="buscar-modulo" type="search" placeholder="Buscar un módulo" data-filtro="lista-modulos" autocomplete="off">
+        </div>
+        <div class="filtro-estado">
+          <label class="visually-hidden" for="estado-modulo">Mostrar</label>
+          <select class="form-select" id="estado-modulo" data-filtro-estado="lista-modulos">
+            <option value="">Todos los módulos</option>
+            <option value="abierto">Solo los abiertos</option>
+            <option value="finalizado">Solo los finalizados</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="lista-modulos" class="lista-modulos rejilla-doble">
+        {% for c in modulos %}
+          {% color_curso c.especialidad as color %}
+          {% with d=c.datos %}
+          <article class="curso-bb" style="--color:{{ color }}"
+                   data-buscar="{{ c.nombre|lower }} {{ c.especialidad|lower }} prof. {{ c.docente.nombre_completo|lower }}" data-estado="{% if d.finalizado %}finalizado{% else %}abierto{% endif %}">
+            <div class="curso-bb-cabeza">
+              <div class="curso-bb-esp">{{ c.especialidad }}</div>
+              <h2 class="curso-bb-titulo"><a href="{% url 'academico:modulo' c.id %}">{{ c.nombre }}</a></h2>
+              <div class="curso-bb-meta">
+                <span>Prof. {{ c.docente.nombre_completo }}</span>
+                <span class="chip {% if d.finalizado %}chip-gris{% else %}chip-ok{% endif %}">{% if d.finalizado %}Finalizado{% else %}Abierto{% endif %}</span>
+                {% if d.pendientes %}<span class="chip chip-aviso">{{ d.pendientes|plural:"pendiente,pendientes" }}</span>{% endif %}
+              </div>
+            </div>
+            <details class="curso-bb-mas">
+              <summary><span class="cerrado">Más información</span><span class="abierto">Menos información</span> {% icono 'abajo' 18 %}</summary>
+              <dl class="curso-bb-datos">
+                <div><dt>Turno</dt><dd>{{ c.turno|capfirst }}{% if c.horario %} · {{ c.horario }}{% endif %}</dd></div>
+                <div><dt>Periodo</dt><dd>{{ c.periodo }}</dd></div>
+                {% if d.actual %}<div><dt>{% if d.finalizado %}Última clase{% else %}Clase de ahora{% endif %}</dt><dd>{{ d.actual.titulo }}</dd></div>{% endif %}
+                <div><dt>Asistencia</dt><dd>{% if d.asistencia %}{{ d.asistencia.pct }}% · {{ d.asistencia.vino }} de {{ d.asistencia.total }} clases{% else %}Sin clases registradas aún{% endif %}</dd></div>
+                {% if d.avance is not None %}
+                  <div><dt>Tus tareas</dt><dd>
+                    <span class="progreso"><span class="barra-p" aria-hidden="true"><span style="width:{{ d.avance }}%"></span></span> {{ d.avance }}% hecho</span>
+                  </dd></div>
+                {% endif %}
+              </dl>
+              <a class="btn btn-cetpro" href="{% url 'academico:modulo' c.id %}">Entrar al módulo {% icono 'derecha' 20 %}</a>
+            </details>
+          </article>
+          {% endwith %}
+        {% endfor %}
+        <p class="texto-2" data-sin-resultados hidden>No hay módulos con ese nombre.</p>
+      </div>
+    {% else %}
+      {% vacio 'cursos' 'Todavía no estás en ningún módulo' 'Escribe abajo el código que te dio tu profesor.' %}
+    {% endif %}
+
+    <form method="post" action="{% url 'academico:unirse' %}" class="tarjeta p">
+      {% csrf_token %}
+      <label class="form-label fs-5" for="codigo">{% if modulos %}¿Te inscribiste en otro módulo?{% else %}Código del módulo{% endif %}</label>
+      <p class="texto-2 mb-2">Escribe el código que te dio tu profesor.</p>
+      <div class="d-flex flex-column flex-sm-row gap-2">
+        <input class="form-control campo-grande" id="codigo" name="codigo" maxlength="10" autocomplete="off" autocapitalize="characters" placeholder="PEL-4821" required value="{{ old.codigo }}">
+        <button type="submit" class="btn btn-cetpro btn-lg">Entrar al módulo</button>
+      </div>
+    </form>
+  </div>
+
+  <aside class="columna-lateral" aria-label="Tareas pendientes">
+    {% include "partials/pendientes_lateral.html" %}
+  </aside>
+</div>
+{% endblock %}

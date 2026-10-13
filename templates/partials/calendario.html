@@ -1,0 +1,25 @@
+{% load aula %}
+{# Calendario del mes con los días que tienen algo por entregar. #}
+<div class="tarjeta p calendario">
+  <table>
+    <caption>{% icono 'calendario' 20 %} <span class="text-capitalize">{{ calendario.mes }}</span> {{ calendario.anio }}</caption>
+    <thead><tr>{% for letra, nombre in calendario.dias_semana %}<th scope="col" abbr="{{ nombre }}">{{ letra }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for semana in calendario.semanas %}
+        <tr>
+          {% for celda in semana %}
+            {% if celda %}
+              <td class="{{ celda.clases }}"{% if celda.cosas %} title="{{ celda.titulo }}"{% endif %}>
+                <span>{{ celda.dia }}</span>
+                {% if celda.cosas %}<span class="visually-hidden">: {{ celda.cosas|length|plural:"entrega,entregas" }}</span>{% endif %}
+              </td>
+            {% else %}
+              <td></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="calendario-leyenda"><span class="punto-entrega" aria-hidden="true"></span> Día con algo por entregar <span class="punto-hoy" aria-hidden="true"></span> Hoy</div>
+</div>

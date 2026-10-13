@@ -1,0 +1,27 @@
+{% load aula %}
+{# Unidades didácticas del módulo: filas para escribir nombre, créditos y horas. Las filas vacías se ignoran. Lo usan el formulario del administrador y el del docente. #}
+<fieldset class="unidades-didacticas">
+  <legend class="form-label">Unidades didácticas <span class="fw-normal texto-2">(opcional)</span></legend>
+  <div class="ayuda mb-2">Si tu módulo tiene varias unidades, como en el plan de estudios, escribe una por fila. Los créditos y las horas son opcionales.</div>
+  <div id="lista-unidades" class="d-flex flex-column gap-2">
+    {% for f in ud_filas %}
+      <div class="fila-unidad" data-fila {% if f.oculta %}hidden{% endif %}>
+        <div class="flex-grow-1">
+          <label class="form-label" for="ud-n-{{ f.i }}">Unidad {{ forloop.counter }}</label>
+          <input class="form-control" id="ud-n-{{ f.i }}" name="ud_nombre[]" maxlength="150" value="{{ f.n }}" {% if f.i == 0 %}placeholder="Ej.: Organización del Área de Trabajo"{% endif %}>
+        </div>
+        <div class="campo-num">
+          <label class="form-label" for="ud-c-{{ f.i }}">Créditos</label>
+          <input class="form-control" id="ud-c-{{ f.i }}" name="ud_creditos[]" type="number" min="0" max="40" inputmode="numeric" value="{{ f.c }}">
+        </div>
+        <div class="campo-num">
+          <label class="form-label" for="ud-h-{{ f.i }}">Horas</label>
+          <input class="form-control" id="ud-h-{{ f.i }}" name="ud_horas[]" type="number" min="0" max="2000" inputmode="numeric" value="{{ f.h }}">
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  {% if ud_hay_mas %}
+    <button type="button" class="btn btn-borde mt-2" data-mas-filas="lista-unidades">{% icono 'mas' 20 %} Agregar otra unidad</button>
+  {% endif %}
+</fieldset>

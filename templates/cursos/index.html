@@ -1,0 +1,45 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Mis módulos del docente (y todos los módulos para administración y dirección), agrupados por curso. #}
+{% block contenido %}
+{% if rol == 'docente' %}
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-cetpro btn-lg" href="{% url 'academico:nuevo' %}">{% icono 'mas' 22 %} Crear un módulo</a>
+    <a class="btn btn-borde btn-lg" href="{% enlace 'academico:plan' %}">{% icono 'subir' 22 %} Cargar plan de estudios (Excel)</a>
+  </div>
+{% endif %}
+
+{% if not hay %}
+  <div class="tarjeta p text-center">
+    <span class="ico-caja ico-azul mx-auto mb-2">{% icono 'cursos' %}</span>
+    <p class="fs-5 fw-bold mb-1">Todavía no hay módulos.</p>
+    <p class="mb-0 texto-2">
+      {% if rol == 'docente' %}Crea tu primer módulo y comparte su código con tus alumnos.{% else %}Los docentes crean sus módulos, o puedes crearlos desde Módulos.{% endif %}
+    </p>
+  </div>
+{% endif %}
+
+{% for especialidad, delgrupo in grupos.items %}
+  {% color_curso especialidad as color_esp %}
+  <h2 class="seccion-titulo"><span class="ico-caja" style="width:36px;height:36px;background:{{ color_esp }};color:#fff">{% icono 'cursos' 20 %}</span> {{ especialidad }}</h2>
+  <div class="row g-3">
+    {% for c in delgrupo %}
+      <div class="col-12 col-md-6 col-xl-4">
+        <a class="tarjeta-curso" href="{% url 'academico:modulo' c.id %}">
+          {% portada_modulo c.especialidad c.modulo|default:c.especialidad %}
+          <div class="cuerpo">
+            <div class="nombre">{{ c.nombre }}</div>
+            {% if rol != 'docente' %}<div class="texto-2">Prof. {{ c.docente.nombre_completo }}</div>{% endif %}
+            <div class="texto-2">Turno {{ c.turno }}{% if c.horario %} · {{ c.horario }}{% endif %}</div>
+            <div class="texto-2">{{ c.total_alumnos|plural:"alumno,alumnos" }}{% if c.codigo %} · Código {{ c.codigo_fmt }}{% endif %}</div>
+            <div class="pie">
+              {% if not c.activo %}<span class="chip chip-gris">Cerrado</span>{% else %}<span></span>{% endif %}
+              <span class="entrar">Entrar {% icono 'derecha' 20 %}</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% endfor %}
+{% endblock %}

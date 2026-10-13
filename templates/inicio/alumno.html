@@ -1,0 +1,218 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Inicio del alumno. PC: 70 % lo que hay que hacer y sus módulos; 30 % fijo a la derecha con el calendario, los avisos, su asistencia y la ayuda. Celular: todo en una columna, lo urgente primero. #}
+{% block contenido %}
+<section class="hola hola-alumno">
+  <div class="hola-texto">
+    <div class="fecha">{{ hoy_texto }}</div>
+    <h2>¡Hola, {{ user.primer_nombre }}!</h2>
+    {% if not modulos %}
+      <p>Entra a tu módulo con el código de tu profesor.</p>
+    {% else %}
+      <p>{% if total %}Tienes <strong>{{ total|plural:"entrega pendiente,entregas pendientes" }}</strong>.{% else %}¡Estás al día! No tienes nada pendiente.{% endif %}
+        {% if asistencia_global is not None %} Tu asistencia: <strong>{{ asistencia_global }}%</strong>.{% endif %}</p>
+    {% endif %}
+    <div class="acciones">
+      {% if total %}<a class="btn btn-claro" href="#por-hacer">{% icono 'tarea' 20 %} Revisar pendientes</a>{% endif %}
+      {% if continuar %}
+        <a class="btn btn-transparente" href="{% url 'academico:clase' continuar.clase.id %}">{% icono 'play' 20 %} Continuar mi clase: {{ continuar.clase.titulo|truncatechars:28 }}</a>
+      {% endif %}
+      {% if mensajes_sin_leer %}<a class="btn btn-transparente" href="{% enlace 'mensajes:index' %}">{% icono 'mensaje' 20 %} {{ mensajes_sin_leer|plural:"mensaje nuevo,mensajes nuevos" }}</a>{% endif %}
+    </div>
+  </div>
+  {% if modulos %}
+    <div class="hola-datos" aria-label="Resumen">
+      <div><b>{{ total }}</b><span>por hacer</span></div>
+      <div><b>{% if asistencia_global is not None %}{{ asistencia_global }}%{% else %}—{% endif %}</b><span>asistencia</span></div>
+      <div><b>{{ modulos|length }}</b><span>{% if modulos|length == 1 %}módulo{% else %}módulos{% endif %}</span></div>
+    </div>
+  {% endif %}
+</section>
+
+{% if not modulos %}
+  <form method="post" action="{% url 'academico:unirse' %}" class="tarjeta p">
+    {% csrf_token %}
+    <label class="form-label fs-5" for="codigo">Código del módulo</label>
+    <p class="texto-2 mb-2">Te lo da tu profesor. Son 3 letras y 4 números.</p>
+    <div class="d-flex flex-column flex-sm-row gap-2">
+      <input class="form-control campo-grande" id="codigo" name="codigo" maxlength="10" autocomplete="off" autocapitalize="characters" placeholder="PEL-4821" required>
+      <button type="submit" class="btn btn-cetpro btn-lg">Entrar al módulo</button>
+    </div>
+  </form>
+{% else %}
+
+  <div class="dos-columnas">
+    <div class="columna-principal">
+      <h2 class="seccion-titulo" id="por-hacer">{% icono 'tarea' %} Por hacer {% if total %}<span class="chip chip-aviso">{{ total|plural:"pendiente,pendientes" }}</span>{% endif %}</h2>
+      {% if total == 0 %}
+        {% vacio 'check' '¡Estás al día!' 'No tienes tareas ni tests pendientes. Cuando tu profesor deje algo nuevo, aparecerá aquí.' None None True %}
+      {% endif %}
+
+      {% for clave, texto, clase_grupo, ico, clase_fecha, tareas in grupos_lista %}
+        {% if tareas %}
+          <h3 class="grupo-titulo {{ clase_grupo }}">{% icono ico 22 %} {{ texto }}</h3>
+          <div class="rejilla-tareas">
+            {% for t in tareas %}
+              <a class="tarjeta tarjeta-tarea {% if t.urgente %}urgente{% endif %}" href="{{ t.url }}?desde=inicio">
+                <div class="d-flex align-items-start gap-3">
+                  <div class="fecha-bloque {{ clase_fecha }}" aria-hidden="true"><b>{{ t.limite|date:"d" }}</b><span>{{ t.limite|mes_corto }}</span></div>
+                  <div class="flex-grow-1" style="min-width:0">
+                    <span class="chip {% if t.urgente %}chip-mal{% else %}chip-info{% endif %}">{% icono 'reloj' 16 %} {{ t.limite|tiempo_restante }}</span>
+                    <div class="fw-bold fs-5 lh-sm mt-1">{{ t.titulo }}</div>
+                    <div class="texto-2">{% if t.detalle %}{{ t.detalle }} · {% endif %}{{ t.modulo_nombre }}</div>
+                  </div>
+                </div>
+                <div class="boton-falso">{{ t.boton }} {% icono 'derecha' 20 %}</div>
+              </a>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="seccion-titulo"><h2 class="h5 fw-bold mb-0">{% icono 'cursos' %} Mis módulos</h2> <a class="ver-todo" href="{% url 'academico:modulos' %}">Ver todos {% icono 'derecha' 18 %}</a></div>
+      <div class="rejilla-modulos">
+        {% for c in modulos %}
+          <a class="tarjeta-curso" href="{% url 'academico:modulo' c.id %}">
+            {% if c.datos.pendientes %}
+              {% portada_modulo c.especialidad c.modulo|default:c.especialidad c.datos.pendientes|plural:"pendiente,pendientes" "chip-aviso" %}
+            {% else %}
+              {% portada_modulo c.especialidad c.modulo|default:c.especialidad "Al día" "chip-ok" %}
+            {% endif %}
+            <div class="cuerpo">
+              <div class="nombre">{{ c.nombre }}</div>
+              <div class="texto-2">Prof. {{ c.docente.primer_nombre }} {{ c.docente.apellidos|primera_palabra }}</div>
+              {% if c.datos.avance is not None %}
+                <div class="progreso">
+                  <span class="barra-p" aria-hidden="true"><span style="width:{{ c.datos.avance }}%"></span></span>
+                  <span>{{ c.datos.avance }}% hecho</span>
+                </div>
+              {% endif %}
+              <span class="entrar mt-auto pt-1">Entrar al módulo {% icono 'derecha' 20 %}</span>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+
+      <h2 class="seccion-titulo" id="recursos">{% icono 'carpeta' %} Recursos y horarios</h2>
+      <div class="rejilla-recursos">
+        <section class="tarjeta" aria-label="Horario de tus talleres">
+          <h3 class="lista-titulo">Horario de tus talleres</h3>
+          <ul class="lista-filas">
+            {% for c in modulos %}
+              <li>
+                <a class="fila" href="{% url 'academico:modulo' c.id %}" style="min-height:60px">
+                  <span class="ico-caja ico-azul" style="width:40px;height:40px">{% icono 'reloj' 20 %}</span>
+                  <span class="cuerpo"><span class="fw-bold">{{ c|nombre_corto_modulo }}</span><span class="detalle">Turno {{ c.turno }}{% if c.horario %} · {{ c.horario }}{% endif %}</span></span>
+                  <span class="flecha">{% icono 'derecha' 20 %}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+        {% if aj.reglamento_url or aj.horario_url %}
+          <section class="tarjeta" aria-label="Documentos del CETPRO">
+            <h3 class="lista-titulo">Documentos del CETPRO</h3>
+            <ul class="lista-filas">
+              {% if aj.reglamento_url %}
+                <li>
+                  <a class="fila" href="{{ aj.reglamento_url }}" target="_blank" rel="noopener" style="min-height:60px">
+                    <span class="ico-caja ico-rojo" style="width:40px;height:40px">{% icono 'examen' 20 %}</span>
+                    <span class="cuerpo"><span class="fw-bold">Reglamento del estudiante</span><span class="detalle">Se abre en otra pestaña</span></span>
+                    <span class="flecha">{% icono 'derecha' 20 %}</span>
+                  </a>
+                </li>
+              {% endif %}
+              {% if aj.horario_url %}
+                <li>
+                  <a class="fila" href="{{ aj.horario_url }}" target="_blank" rel="noopener" style="min-height:60px">
+                    <span class="ico-caja ico-ambar" style="width:40px;height:40px">{% icono 'calendario' 20 %}</span>
+                    <span class="cuerpo"><span class="fw-bold">Horario de clases</span><span class="detalle">Se abre en otra pestaña</span></span>
+                    <span class="flecha">{% icono 'derecha' 20 %}</span>
+                  </a>
+                </li>
+              {% endif %}
+            </ul>
+          </section>
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="columna-lateral" aria-label="Calendario, avisos y ayuda">
+      {% include "partials/calendario.html" %}
+
+      <section class="tarjeta p">
+        <h2 class="h6 fw-bold mb-3">{% icono 'aviso' 20 %} Avisos de tus profesores</h2>
+        {% if not avisos %}
+          <p class="texto-2 mb-0">No hay avisos nuevos.</p>
+        {% else %}
+          <ol class="linea-avisos">
+            {% for a in avisos %}
+              <li>
+                <span class="avatar" aria-hidden="true">{{ a.autor.iniciales }}</span>
+                <div style="min-width:0">
+                  <div class="fw-bold">Prof. {{ a.autor.primer_nombre }}</div>
+                  <div class="texto-2 small">{{ a.modulo.nombre }} · {{ a.creado|fecha_larga }}</div>
+                  <div id="aviso-{{ a.id }}" class="mt-1" style="white-space:pre-line;overflow-wrap:anywhere">{{ a.contenido }}</div>
+                  <button type="button" class="btn btn-borde btn-leer mt-2" data-leer="aviso-{{ a.id }}" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </section>
+
+      {% if notas_nuevas %}
+        <section class="tarjeta">
+          <h2 class="h6 fw-bold p-3 pb-0 mb-0">{% icono 'estrella' 20 %} Notas nuevas</h2>
+          <ul class="lista-filas">
+            {% for n in notas_nuevas %}
+              <li>
+                <a class="fila" href="{% enlace 'academico:mis_notas' %}" style="min-height:56px">
+                  <span class="cuerpo"><span class="fw-bold">{{ n.titulo }}</span><span class="detalle">{{ n.modulo_nombre }}</span></span>
+                  <span class="fs-5 fw-bold">{{ n.nota_texto }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+
+      <section class="tarjeta p">
+        <h2 class="h6 fw-bold mb-3">{% icono 'calendario' 20 %} Mi asistencia</h2>
+        <ul class="lista-asistencia">
+          {% for c in modulos %}
+            {% with a=c.datos.asistencia %}
+            <li>
+              <div class="d-flex justify-content-between align-items-center gap-2">
+                <span class="fw-bold">{{ c|nombre_corto_modulo }}</span>
+                {% if a %}<span class="chip {% if a.pct >= 70 %}chip-ok{% else %}chip-mal{% endif %}">{{ a.pct }}% asist.</span>{% endif %}
+              </div>
+              {% if a %}
+                <div class="barra-p" aria-hidden="true"><span style="width:{{ a.pct }}%;background:{% if a.pct >= 70 %}var(--ok){% else %}var(--mal){% endif %}"></span></div>
+                <div class="texto-2 small">Viniste a {{ a.vino }} de {{ a.total }} clases</div>
+              {% else %}
+                <div class="texto-2 small">Sin clases registradas aún</div>
+              {% endif %}
+            </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
+      </section>
+
+      {% if aj.whatsapp or aj.telefono %}
+        <section class="tarjeta p ayuda-lateral">
+          <h2 class="h6 fw-bold mb-1">¿Problemas con el aula?</h2>
+          <p class="texto-2 small mb-2">La secretaría te ayuda con tu cuenta, tu contraseña o tu matrícula.{% if aj.horario_atencion %} {{ aj.horario_atencion }}.{% endif %}</p>
+          {% if aj.whatsapp %}
+            <a class="btn btn-whatsapp w-100" href="{{ aj.whatsapp|whatsapp_url }}" target="_blank" rel="noopener">{% icono 'whatsapp' 20 %} Escribir por WhatsApp</a>
+          {% endif %}
+          {% if aj.telefono %}
+            <a class="btn btn-borde w-100 mt-2" href="tel:{{ aj.telefono }}">Llamar: {{ aj.telefono }}</a>
+          {% endif %}
+        </section>
+      {% endif %}
+    </aside>
+  </div>
+
+{% endif %}
+{% endblock %}

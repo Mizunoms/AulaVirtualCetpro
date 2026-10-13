@@ -1,0 +1,33 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Eliminar un módulo (de verdad): se muestra todo lo que se pierde y hay que marcar «Entiendo». #}
+{% block contenido %}
+<div class="d-flex flex-column gap-3" style="max-width:720px">
+  <section class="tarjeta p d-flex flex-column gap-3">
+    <div class="mensaje mensaje-error" role="alert">{% icono 'alerta' 26 %}<span>Vas a eliminar el módulo <b>«{{ modulo.nombre }}»</b>. <b>Esto no se puede deshacer.</b></span></div>
+    {% if resumen %}
+      <div>
+        <div class="fw-bold mb-1">Se borra también todo lo que tiene:</div>
+        <ul class="mb-0">
+          {% for texto in resumen %}<li>{{ texto }}</li>{% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      <p class="texto-2 mb-0">Está vacío: no tiene alumnos, clases ni trabajos.</p>
+    {% endif %}
+    <form method="post" action="{{ accion }}" class="d-flex flex-column gap-3">
+      {% csrf_token %}
+      {% if resumen %}
+        <label class="interruptor-chico">
+          <input type="checkbox" name="entiendo" value="1" required>
+          Entiendo que se borra todo eso, incluidos los trabajos y las notas de los alumnos, y que no se puede deshacer
+        </label>
+      {% endif %}
+      <div class="d-grid d-sm-flex gap-2">
+        <button type="submit" class="btn btn-acento">{% icono 'basura' 20 %} Sí, eliminar el módulo</button>
+        <a class="btn btn-borde" href="{{ cancelar }}">No, volver</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

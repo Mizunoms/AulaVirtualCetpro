@@ -1,0 +1,33 @@
+{% load aula %}
+{# Panel «Tareas pendientes» (lado derecho en PC): bloques que se abren y cierran — Vencidas, Vence hoy, Vence pronto. #}
+<section class="tarjeta pendientes-lateral" aria-labelledby="pendientes-titulo">
+  <h2 id="pendientes-titulo" class="h6 fw-bold mb-0">{% icono 'tarea' 20 %} Tareas pendientes
+    {% if total %}<span class="chip chip-aviso">{{ total }}</span>{% endif %}</h2>
+  {% if not total %}
+    <p class="texto-2 mb-0 mt-2">No tienes tareas pendientes. ¡Buen trabajo!</p>
+  {% endif %}
+  {% for clave, titulo, ico, clase_fecha, lista in bloques_pendientes %}
+    {% if lista %}
+      <details class="pend-bloque pend-{{ clave }}" {% if clave != 'proxima' or total <= 6 %}open{% endif %}>
+        <summary>{% icono ico 20 %} <span class="fw-bold">{{ titulo }}</span> <span class="pend-cuenta">{{ lista|length }}</span><span class="flecha">{% icono 'abajo' 18 %}</span></summary>
+        <ul class="pend-lista">
+          {% for t in lista|slice:":5" %}
+            <li>
+              <a class="pend-item" href="{{ t.url }}">
+                <span class="fecha-bloque fecha-mini {{ clase_fecha }}" aria-hidden="true"><b>{{ t.limite|date:"d" }}</b><span>{{ t.limite|mes_corto }}</span></span>
+                <span class="cuerpo">
+                  <span class="fw-bold">{{ t.titulo }}</span>
+                  <span class="detalle">Hasta las {{ t.limite|hora_texto }}</span>
+                  <span class="detalle">{{ t.modulo_nombre }}</span>
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if lista|length > 5 %}
+          <a class="pend-mas" href="{% url 'nucleo:inicio' %}#por-hacer">Ver las {{ lista|length }} en Inicio {% icono 'derecha' 16 %}</a>
+        {% endif %}
+      </details>
+    {% endif %}
+  {% endfor %}
+</section>

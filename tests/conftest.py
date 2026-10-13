@@ -11,6 +11,7 @@ CLAVE = "clave-prueba-1"
 def _entorno_de_prueba(settings, tmp_path):
     """Cada prueba empieza limpia: sin caché de ajustes, sin archivos reales y con css simple."""
     cache.clear()
+    settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # rápido; solo para pruebas
     settings.MEDIA_ROOT = tmp_path / "uploads"  # nunca se toca la carpeta real de archivos
     settings.STORAGES = {
         **settings.STORAGES,

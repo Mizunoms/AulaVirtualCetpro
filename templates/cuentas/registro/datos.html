@@ -1,0 +1,37 @@
+{% extends "layouts/publico.html" %}
+{% block contenido %}
+<div class="pasos-registro" aria-hidden="true"><span class="hecho"></span><span class="hecho"></span><span></span></div>
+<h1>Tus datos</h1>
+<p class="texto-2 mb-3">Paso 2 de 3. DNI <b>{{ dni }}</b> · <a href="{% url 'cuentas:registro' %}">cambiar</a></p>
+<form method="post" action="{% url 'cuentas:registro_datos' %}" class="d-flex flex-column gap-3">
+  {% csrf_token %}
+  <div>
+    <label class="form-label" for="codigo">Código del módulo</label>
+    <input class="form-control campo-grande" id="codigo" name="codigo" maxlength="10" autocomplete="off" autocapitalize="characters"
+           value="{{ old.codigo }}" required placeholder="PEL-4821">
+    <div class="ayuda">Te lo da tu profesor. Son 3 letras y 4 números.</div>
+  </div>
+  <div>
+    <label class="form-label" for="nombres">Tus nombres</label>
+    <input class="form-control" id="nombres" name="nombres" maxlength="100" autocomplete="given-name" value="{{ old.nombres }}" required placeholder="Ej.: Rosa María">
+  </div>
+  <div>
+    <label class="form-label" for="apellidos">Tus apellidos</label>
+    <input class="form-control" id="apellidos" name="apellidos" maxlength="100" autocomplete="family-name" value="{{ old.apellidos }}" required placeholder="Ej.: Paredes Quispe">
+  </div>
+  <div>
+    <label class="form-label" for="telefono">Tu celular <span class="fw-normal texto-2">(si tienes)</span></label>
+    <input class="form-control" id="telefono" name="telefono" inputmode="tel" maxlength="12" autocomplete="tel-national" value="{{ old.telefono }}" placeholder="987654321">
+    <div class="ayuda">Para que tu profesor pueda avisarte.</div>
+  </div>
+  <div>
+    <label class="form-label" for="fecha_nacimiento">Tu fecha de nacimiento <span class="fw-normal texto-2">(si quieres)</span></label>
+    <input class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" type="date" value="{{ old.fecha_nacimiento }}" max="{{ max_nacimiento }}">
+  </div>
+  <label class="interruptor tarjeta">
+    <span class="texto">Quiero ver la letra más grande</span>
+    <input type="checkbox" name="letra_grande" value="1" {% if old.letra_grande %}checked{% endif %}>
+  </label>
+  <button type="submit" class="btn btn-cetpro btn-lg w-100">Crear mi cuenta</button>
+</form>
+{% endblock %}

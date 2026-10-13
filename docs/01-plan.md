@@ -22,11 +22,14 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [ ] Pestaña «Cursos» (especialidades) de Ajustes — se hace con los módulos, en la fase 2
 
 ## Fase 2 — Académico
-- [ ] Cursos (programas) y módulos; unidades didácticas (nombre, créditos, horas)
-- [ ] Clases con fechas de apertura y cierre
-- [ ] Matrículas (1 o 2 módulos por alumno)
-- [ ] «Crear mi cuenta» (DNI + código del módulo, o DNI cargado en lista)
-- [ ] Panel del docente y del alumno (inicio)
+- [x] Cursos (programas) y módulos del administrador: catálogo con filtros, crear, editar, archivar, **eliminar de verdad**
+- [x] Unidades didácticas (nombre, créditos, horas) y pestaña «Cursos» de Ajustes (renombrar en cascada)
+- [x] Clases con fechas de apertura y cierre (se abren y cierran solas, o a mano), crear varias de una vez, mover, borrar
+- [x] Matrículas (1 o 2 módulos por alumno): lista pegada, código de inscripción, «Preparar accesos» por WhatsApp
+- [x] «Crear mi cuenta» (DNI + código del módulo, o DNI cargado en lista) con contraseña temporal
+- [x] Inicio del alumno, del docente, de administración y de dirección; «Mis módulos»; página del módulo y de la clase
+- [x] Avisos del módulo, preguntas de la clase y campana de notificaciones
+- [x] Contenido de las clases (materiales, tareas, formularios) conectado por `apps/academico/contenido.py` — lo llenan las fases 3 y 4
 
 ## Fase 3 — Contenido y trabajos
 - [ ] Materiales (archivo, enlace, video) con papelera

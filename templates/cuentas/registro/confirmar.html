@@ -1,0 +1,30 @@
+{% extends "layouts/publico.html" %}
+{% block contenido %}
+<div class="pasos-registro" aria-hidden="true"><span class="hecho"></span><span class="hecho"></span><span></span></div>
+<h1>¿Eres {{ nombre }}?</h1>
+<p class="texto-2 mb-3">Paso 2 de 3. El CETPRO ya te registró{% if modulos %} en:{% else %}.{% endif %}</p>
+{% if modulos %}
+  <ul class="mb-3 fw-bold">
+    {% for m in modulos %}<li>{{ m.nombre }}</li>{% endfor %}
+  </ul>
+{% endif %}
+<form method="post" action="{% url 'cuentas:registro_confirmar' %}" class="d-flex flex-column gap-3">
+  {% csrf_token %}
+  {% if pide_fecha %}
+    <div>
+      <label class="form-label" for="fecha_nacimiento">Para confirmar, escribe tu fecha de nacimiento</label>
+      <input class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" type="date" required>
+    </div>
+  {% endif %}
+  <div>
+    <label class="form-label" for="telefono">Tu celular <span class="fw-normal texto-2">(si tienes)</span></label>
+    <input class="form-control" id="telefono" name="telefono" inputmode="tel" maxlength="12" autocomplete="tel-national" placeholder="987654321">
+  </div>
+  <label class="interruptor tarjeta">
+    <span class="texto">Quiero ver la letra más grande</span>
+    <input type="checkbox" name="letra_grande" value="1">
+  </label>
+  <button type="submit" class="btn btn-cetpro btn-lg w-100">Sí, soy yo. Crear mi contraseña</button>
+</form>
+<a class="btn btn-borde w-100 mt-2" href="{% url 'cuentas:registro' %}">No soy yo, volver</a>
+{% endblock %}

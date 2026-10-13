@@ -1,0 +1,56 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{% block contenido %}
+<div class="tarjeta p d-flex flex-wrap align-items-center gap-3">
+  <span class="ico-caja ico-azul">{% icono 'usuarios' %}</span>
+  <div class="flex-grow-1">
+    <div class="texto-2 fw-bold">Código del módulo</div>
+    <div class="fs-4 fw-bold" style="letter-spacing:.08em">{% if modulo.codigo %}{{ modulo.codigo_fmt }}{% else %}—{% endif %}</div>
+  </div>
+  <span class="texto-2">Prof. {{ modulo.docente.nombre_completo }}</span>
+</div>
+
+{% if alumnos %}
+  <form method="post" action="{% url 'academico:admin_accesos' modulo.id %}" class="tarjeta p d-flex flex-wrap align-items-center gap-3"
+        data-confirmar="¿Dar una contraseña temporal a los alumnos que todavía no eligieron la suya? Si ya les habías dado una, esa dejará de servir.">
+    {% csrf_token %}
+    <span class="ico-caja ico-verde">{% icono 'whatsapp' %}</span>
+    <div class="flex-grow-1">
+      <div class="fw-bold">Enviar accesos por WhatsApp</div>
+      <div class="texto-2 small">Crea una contraseña temporal para los alumnos que todavía no eligieron la suya y te muestra el botón de WhatsApp de cada uno. Ellos la cambian al entrar. Por correo: próximamente.</div>
+    </div>
+    <button type="submit" class="btn btn-whatsapp">{% icono 'whatsapp' 20 %} Preparar accesos</button>
+  </form>
+{% endif %}
+
+<form method="post" action="{% url 'academico:admin_alumnos' modulo.id %}" class="tarjeta p d-flex flex-column gap-2">
+  {% csrf_token %}
+  <label class="form-label mb-0" for="lista">Agregar alumnos</label>
+  <div class="ayuda mt-0">
+    Un alumno por línea. Si ya tiene cuenta, basta con su <b>DNI</b>.<br>
+    Si es nuevo: <b>DNI, Nombres, Apellidos</b>. Después entra a «Crear mi cuenta» con su DNI y recibe su contraseña.<br>
+    Para listas grandes usa <a href="{% enlace 'cuentas:admin_importar' %}">Cargar alumnos desde Excel</a>.
+  </div>
+  <textarea class="form-control" id="lista" name="lista" rows="6" required placeholder="45678912, Ana María, Quispe Rojas&#10;41234567">{{ old.lista }}</textarea>
+  <button type="submit" class="btn btn-cetpro">Agregar al módulo</button>
+</form>
+
+<h2 class="seccion-titulo">{{ alumnos|length|plural:"alumno en el módulo,alumnos en el módulo" }}</h2>
+{% if alumnos %}
+  <ul class="tarjeta lista-filas">
+    {% for a in alumnos %}
+      <li class="fila" style="min-height:60px">
+        <span class="cuerpo">
+          <a class="fw-bold" href="{% enlace 'cuentas:admin_editar_persona' a.id %}">{{ a.apellidos }}, {{ a.nombres }}</a>
+          <span class="detalle">{{ a.identificador }}</span>
+        </span>
+        {% if a.pendiente %}<span class="chip chip-aviso">Sin contraseña aún</span>{% endif %}
+        <form method="post" action="{% url 'academico:admin_quitar' modulo.id a.id %}" data-confirmar="¿Quitar a {{ a.nombres }} de este módulo?">
+          {% csrf_token %}
+          <button type="submit" name="quitar" value="1" class="btn-texto">Quitar</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+{% endblock %}
