@@ -4,6 +4,8 @@ from django.test import Client
 
 from apps.cuentas.models import Rol, Usuario
 
+pytest_plugins = ["tests.formularios_comun"]
+
 CLAVE = "clave-prueba-1"
 
 

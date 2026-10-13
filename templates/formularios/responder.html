@@ -1,0 +1,135 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Responder un formulario (o vista previa del docente). Conserva lo ya escrito si vuelve con un error. #}
+{% block contenido %}
+{% if vista_previa %}
+  <div class="mensaje mensaje-ok">{% icono 'ojo' 24 %}<span>Vista previa: así lo verán tus alumnos. Aquí no se puede enviar.</span></div>
+{% endif %}
+
+{% if error %}
+  <div class="mensaje mensaje-error" role="alert">{% icono 'alerta' 24 %}<span>{{ error }}</span></div>
+{% endif %}
+
+{% if not vista_previa and segundos is not None and q.tiempo_minutos %}
+  <div class="reloj-examen" role="timer" aria-live="off" data-segundos="{{ segundos }}" data-form="form-examen">
+    {% icono 'reloj' 22 %} <span>Te quedan <b data-reloj>--:--</b></span>
+  </div>
+{% endif %}
+
+{% if q.instrucciones %}
+  <div class="tarjeta p cabecera-formulario" style="white-space:pre-line">{{ q.instrucciones }}</div>
+{% endif %}
+<p class="texto-2 mb-0"><span class="obligatorio">*</span> = obligatoria</p>
+
+<form id="form-examen" method="post" enctype="multipart/form-data" class="d-flex flex-column gap-3" style="max-width:760px"
+      action="{% if vista_previa %}#{% else %}{% url 'formularios:intento' i.id %}{% endif %}" {% if vista_previa %}data-vista-previa{% endif %} data-examen data-total="{{ total }}">
+  {% csrf_token %}
+  {% for p in preguntas %}
+    {% if p.es_seccion %}
+      <div class="tarjeta p tarjeta-seccion">
+        <h2 class="fs-4 fw-bold mb-1">{{ p.enunciado }}</h2>
+        {% if p.ayuda %}<div class="texto-2" style="white-space:pre-line">{{ p.ayuda }}</div>{% endif %}
+      </div>
+    {% else %}
+      <fieldset class="tarjeta p pregunta-examen" data-pregunta data-tipo="{{ p.tipo }}" {% if p.obligatoria %}data-obligatoria{% endif %}>
+        <legend class="w-100 mb-2">
+          <span class="d-flex justify-content-between align-items-center gap-2">
+            <span class="texto-2 fw-bold fs-6">Pregunta {{ p.num }} de {{ total }}</span>
+            {% if q.es_examen and p.puntos > 0 %}<span class="chip chip-info">{{ p.puntos|nota_fmt }} {% if p.puntos == 1 %}punto{% else %}puntos{% endif %}</span>{% endif %}
+          </span>
+          <span class="d-block fs-5 fw-bold mt-2" id="enun-{{ p.id }}" style="white-space:pre-line">{{ p.enunciado }}{% if p.obligatoria %} <span class="obligatorio" aria-label="obligatoria">*</span>{% endif %}</span>
+          <span class="d-block texto-2 fs-6 fw-normal mt-1">{{ p.indicacion }}</span>
+        </legend>
+        {% if p.imagen_ruta %}
+          <img src="{% url 'formularios:pregunta_imagen' p.id %}" alt="Imagen de la pregunta {{ p.num }}" class="imagen-pregunta mb-2">
+        {% endif %}
+        <button type="button" class="btn btn-borde btn-leer mb-2" data-leer="enun-{{ p.id }}" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+
+        {% if p.tipo == 'opcion' or p.tipo == 'vf' or p.tipo == 'multiple' %}
+          <div class="alternativas {% if p.es_multiple %}multiple{% endif %}">
+            {% for o in p.opciones %}
+              <input type="{% if p.es_multiple %}checkbox{% else %}radio{% endif %}" name="op[{{ p.id }}]{% if p.es_multiple %}[]{% endif %}" id="o{{ o.id }}" value="{{ o.id }}"
+                     {% if o.id|stringformat:"s" in p.prev_ops %}checked{% endif %} {% if p.obligatoria and not p.es_multiple and forloop.first %}required{% endif %}>
+              <label for="o{{ o.id }}">{% if p.tipo != 'vf' %}<span class="letra">{{ forloop.counter0|letra }}</span>{% endif %}<span>{{ o.texto }}</span></label>
+            {% endfor %}
+            {% if p.permite_otra %}
+              <input type="{% if p.es_multiple %}checkbox{% else %}radio{% endif %}" name="op[{{ p.id }}]{% if p.es_multiple %}[]{% endif %}" id="otra{{ p.id }}" value="otra" {% if 'otra' in p.prev_ops %}checked{% endif %} data-otra="otxt{{ p.id }}">
+              <label for="otra{{ p.id }}"><span class="letra">…</span><span>Otra</span></label>
+              <label class="visually-hidden" for="otxt{{ p.id }}">Escribe tu otra respuesta</label>
+              <input class="form-control" id="otxt{{ p.id }}" name="otra[{{ p.id }}]" maxlength="500" placeholder="Escribe aquí tu otra respuesta" value="{{ p.prev_otra }}">
+            {% endif %}
+          </div>
+
+        {% elif p.tipo == 'desplegable' %}
+          <label class="visually-hidden" for="sel{{ p.id }}">Elige una opción</label>
+          <select class="form-select" id="sel{{ p.id }}" name="op[{{ p.id }}]" {% if p.obligatoria %}required{% endif %}>
+            <option value="">Elige…</option>
+            {% for o in p.opciones %}<option value="{{ o.id }}" {% if o.id|stringformat:"s" in p.prev_ops %}selected{% endif %}>{{ o.texto }}</option>{% endfor %}
+          </select>
+
+        {% elif p.tipo == 'corta' %}
+          <label class="visually-hidden" for="t{{ p.id }}">Tu respuesta</label>
+          <input class="form-control" id="t{{ p.id }}" name="txt[{{ p.id }}]" maxlength="300" autocomplete="off" placeholder="Tu respuesta" value="{{ p.prev_txt }}" {% if p.obligatoria %}required{% endif %}>
+
+        {% elif p.tipo == 'abierta' %}
+          <label class="visually-hidden" for="t{{ p.id }}">Tu respuesta</label>
+          <textarea class="form-control" id="t{{ p.id }}" name="txt[{{ p.id }}]" rows="4" maxlength="5000" placeholder="Tu respuesta" {% if p.obligatoria %}required{% endif %}>{{ p.prev_txt }}</textarea>
+
+        {% elif p.tipo == 'escala' %}
+          <div class="escala">
+            {% if p.etiqueta_min %}<span class="escala-etiqueta">{{ p.etiqueta_min }}</span>{% endif %}
+            <div class="escala-numeros">
+              {% for n in p.rango %}
+                <input type="radio" name="txt[{{ p.id }}]" id="e{{ p.id }}-{{ n }}" value="{{ n }}" {% if p.prev_txt == n|stringformat:"s" %}checked{% endif %} {% if p.obligatoria and forloop.first %}required{% endif %}>
+                <label for="e{{ p.id }}-{{ n }}">{{ n }}</label>
+              {% endfor %}
+            </div>
+            {% if p.etiqueta_max %}<span class="escala-etiqueta text-end">{{ p.etiqueta_max }}</span>{% endif %}
+          </div>
+
+        {% elif p.tipo == 'fecha' or p.tipo == 'hora' %}
+          <label class="visually-hidden" for="t{{ p.id }}">Tu respuesta</label>
+          <input class="form-control" style="max-width:260px" type="{% if p.tipo == 'fecha' %}date{% else %}time{% endif %}" id="t{{ p.id }}" name="txt[{{ p.id }}]" value="{{ p.prev_txt }}" {% if p.obligatoria %}required{% endif %}>
+
+        {% elif p.tipo == 'archivo' %}
+          <label class="btn-subir position-relative">
+            {% icono 'subir' 32 %} Subir archivo o foto
+            <span class="small fw-normal texto-2">Foto, PDF, Word, Excel o PowerPoint · máximo {{ max_mb }} MB</span>
+            <input type="file" name="archivo_{{ p.id }}" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" data-previa="prev{{ p.id }}" data-nombre="nom{{ p.id }}" {% if p.obligatoria %}required{% endif %}>
+          </label>
+          <img id="prev{{ p.id }}" class="vista-previa mt-2" alt="Vista previa del archivo">
+          <div id="nom{{ p.id }}" class="fw-bold mt-1" aria-live="polite"></div>
+
+        {% elif p.tipo == 'cuadricula' or p.tipo == 'cuadricula_casillas' %}
+          <div class="cuadricula">
+            {% for f in p.filas %}
+              {% with marcadas=p.prev_grid|get_item:f.id %}
+              <div class="cuadricula-fila" role="group" aria-labelledby="fila{{ f.id }}" data-fila>
+                <div class="fw-bold" id="fila{{ f.id }}">{{ f.texto }}</div>
+                <div class="cuadricula-opciones">
+                  {% for col in p.columnas %}
+                    <input type="{% if p.es_multiple %}checkbox{% else %}radio{% endif %}" name="grid[{{ p.id }}][{{ f.id }}]{% if p.es_multiple %}[]{% endif %}" id="g{{ f.id }}-{{ col.id }}" value="{{ col.id }}"
+                           {% if col.id|stringformat:"s" in marcadas %}checked{% endif %}>
+                    <label for="g{{ f.id }}-{{ col.id }}">{{ col.texto }}</label>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endwith %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </fieldset>
+    {% endif %}
+  {% endfor %}
+
+  <div class="tarjeta p d-flex flex-column gap-2">
+    <div class="fw-bold" data-resumen aria-live="polite"></div>
+    {% if vista_previa %}
+      <button type="button" class="btn btn-borde btn-lg" disabled>Enviar (desactivado en la vista previa)</button>
+    {% else %}
+      <button type="submit" class="btn btn-cetpro btn-lg">Enviar</button>
+      <div class="ayuda mt-0">Revisa tus respuestas antes de enviar. Después ya no se pueden cambiar.</div>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

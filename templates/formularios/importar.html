@@ -1,0 +1,99 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Importar preguntas: pegar texto (por ejemplo, de una IA) o subir Excel / CSV / Word. Primero se revisa, luego se agrega. #}
+{% block contenido %}
+{% if not resultado %}
+
+  <div class="tarjeta p d-flex flex-column gap-2">
+    <h2 class="fs-5 fw-bold mb-0">1. Pide las preguntas a la IA (ChatGPT, Gemini, Copilot…)</h2>
+    <p class="mb-0 texto-2">Copia esta instrucción, pégala en la IA y cambia el tema. Así la IA escribe las preguntas como las entiende el aula.</p>
+    <textarea class="form-control small" id="instruccion-ia" rows="7" readonly aria-label="Instrucción para la IA">{{ instruccion }}</textarea>
+    <button type="button" class="btn btn-borde align-self-start" data-copiar="instruccion-ia">{% icono 'check' 20 %} Copiar instrucción</button>
+  </div>
+
+  <form method="post" action="{% url 'formularios:importar' q.id %}" enctype="multipart/form-data" class="d-flex flex-column gap-3">
+    {% csrf_token %}
+    <div class="tarjeta p d-flex flex-column gap-2">
+      <h2 class="fs-5 fw-bold mb-0">2. Pega aquí lo que te dio la IA</h2>
+      <label class="visually-hidden" for="texto">Texto con las preguntas</label>
+      <textarea class="form-control" id="texto" name="texto" rows="10" placeholder="1. ¿Qué herramienta se usa para desenredar el cabello?&#10;a) Navaja&#10;b) Peine de dientes anchos&#10;c) Secadora&#10;Respuesta: b">{{ texto }}</textarea>
+      <div class="ayuda mt-0">También sirve si marcas la correcta con un asterisco: «b) Peine de dientes anchos *».</div>
+    </div>
+
+    <div class="tarjeta p d-flex flex-column gap-2">
+      <h2 class="fs-5 fw-bold mb-0">O sube un archivo</h2>
+      <p class="mb-0 texto-2">Excel (.xlsx), CSV, Word (.docx) o texto (.txt). Para Excel, usa la plantilla: una pregunta por fila.</p>
+      <a class="btn btn-borde align-self-start" href="{% url 'formularios:plantilla' %}">{% icono 'bajar' 20 %} Descargar plantilla de Excel</a>
+      <label class="btn-subir position-relative" style="min-height:96px">
+        {% icono 'subir' 28 %} Elegir archivo
+        <input type="file" name="archivo" accept=".xlsx,.csv,.docx,.txt" data-nombre="nombre-import">
+      </label>
+      <div id="nombre-import" class="fw-bold" aria-live="polite"></div>
+    </div>
+
+    <button type="submit" class="btn btn-cetpro btn-lg">Ver las preguntas</button>
+    <p class="texto-2 mb-0">Primero verás cómo quedaron. Nada se guarda hasta que tú lo confirmes.</p>
+  </form>
+
+{% else %}
+
+  {% if resultado.errores %}
+    <div class="mensaje mensaje-error" role="alert">
+      {% icono 'alerta' 24 %}
+      <span>
+        {{ errores_titulo }}:
+        <ul class="mb-0 mt-1 fw-normal">{% for er in resultado.errores %}<li>{{ er }}</li>{% endfor %}</ul>
+      </span>
+    </div>
+  {% endif %}
+
+  {% if resultado.preguntas %}
+    <div class="mensaje mensaje-ok">{% icono 'check' 24 %}<span>Encontramos {{ cantidad }}. Revisa que estén bien.</span></div>
+  {% endif %}
+
+  {% for p in resultado.preguntas %}
+    <div class="tarjeta p d-flex flex-column gap-2">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-bold">{% if p.tipo == 'seccion' %}Título{% else %}Pregunta {{ p.numero }}{% endif %}</span>
+        <span class="chip chip-gris">{{ p.tipo_nombre }}</span>
+        {% if es_examen and p.tipo != 'seccion' %}<span class="chip chip-info">{{ p.puntos|nota_fmt }} {% if p.puntos == 1 %}punto{% else %}puntos{% endif %}</span>{% endif %}
+      </div>
+      <div class="fw-bold" style="white-space:pre-line">{{ p.enunciado }}</div>
+      {% if p.opciones %}
+        <ul class="list-unstyled mb-0 d-flex flex-column gap-1">
+          {% for o in p.opciones %}
+            <li class="d-flex align-items-center gap-2 {% if o.1 %}fw-bold{% endif %}" {% if o.1 %}style="color:var(--ok)"{% endif %}>
+              {% if o.1 %}{% icono 'check' 20 %}<span class="visually-hidden">Correcta:</span>{% else %}<span class="punto-opcion" aria-hidden="true"></span>{% endif %}
+              {% if p.tipo != 'vf' %}{{ forloop.counter0|letra }})&nbsp;{% endif %}{{ o.0 }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% elif p.aceptadas %}
+        <div><b style="color:var(--ok)">Respuesta correcta:</b> {{ p.aceptadas_texto }}</div>
+      {% endif %}
+      {% if p.explicacion %}<div class="small texto-2"><b>Explicación:</b> {{ p.explicacion }}</div>{% endif %}
+    </div>
+  {% endfor %}
+
+  {% if resultado.preguntas %}
+    <form method="post" action="{% url 'formularios:importar_confirmar' q.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-cetpro btn-lg w-100">Agregar {{ cantidad }} al formulario</button>
+    </form>
+  {% endif %}
+
+  {% if texto %}
+    <details class="tarjeta" {% if not resultado.preguntas %}open{% endif %}>
+      <summary class="fila" style="cursor:pointer;min-height:56px"><span class="cuerpo fw-bold">Corregir el texto y volver a leer</span><span class="flecha">{% icono 'derecha' %}</span></summary>
+      <form method="post" action="{% url 'formularios:importar' q.id %}" class="p-3 border-top d-flex flex-column gap-2">
+        {% csrf_token %}
+        <label class="visually-hidden" for="texto2">Texto con las preguntas</label>
+        <textarea class="form-control" id="texto2" name="texto" rows="10">{{ texto }}</textarea>
+        <button type="submit" class="btn btn-borde">Volver a leer</button>
+      </form>
+    </details>
+  {% endif %}
+  <a class="btn btn-borde" href="{% url 'formularios:importar' q.id %}">Empezar de nuevo</a>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,162 @@
+{% load aula %}
+{# Formulario de una pregunta (agregar o cambiar), al estilo Google Forms. Recibe `fp` (los datos), `accion` y `boton`. #}
+<form method="post" action="{{ accion }}" enctype="multipart/form-data" class="d-flex flex-column gap-3" data-form-pregunta data-examen="{% if fp.q.es_examen %}1{% else %}0{% endif %}">
+  {% csrf_token %}
+
+  <div>
+    <label class="form-label" for="tipo-{{ fp.uid }}">Tipo de pregunta</label>
+    <select class="form-select" id="tipo-{{ fp.uid }}" name="tipo" data-tipo-pregunta>
+      {% for grupo, tipos in fp.grupos %}
+        <optgroup label="{{ grupo }}">
+          {% for clave, nombre in tipos %}<option value="{{ clave }}" {% if fp.tipo == clave %}selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </optgroup>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div>
+    <label class="form-label" for="enunciado-{{ fp.uid }}" data-etiqueta-enunciado>Pregunta</label>
+    <textarea class="form-control" id="enunciado-{{ fp.uid }}" name="enunciado" rows="2" maxlength="3000" required placeholder="Escribe aquí la pregunta">{{ fp.enunciado }}</textarea>
+  </div>
+  <div>
+    <label class="form-label" for="ayuda-{{ fp.uid }}" data-etiqueta-ayuda>Descripción (opcional)</label>
+    <input class="form-control" id="ayuda-{{ fp.uid }}" name="ayuda" maxlength="500" value="{{ fp.ayuda }}" placeholder="Una ayuda corta debajo de la pregunta">
+  </div>
+
+  <!-- Opciones: varias opciones, casillas, lista desplegable -->
+  <div data-para="opcion multiple desplegable">
+    <div class="form-label mb-1">Opciones</div>
+    {% if fp.q.es_examen %}
+      <div class="ayuda mt-0 mb-2" data-ayuda-opcion>Escribe las opciones y marca <b>la correcta</b>.</div>
+    {% else %}
+      <div class="aviso-modo mb-2">
+        {% icono 'alerta' 20 %}
+        <span>
+          Este formulario es <b>{{ fp.q.nombre_modo }}</b>: no lleva respuestas correctas{% if fp.q.modo == 'trabajo' %} (tú pones la nota){% endif %}.
+          ¿Quieres marcar la correcta y que se califique solo?
+          <a href="{% url 'formularios:editar' fp.q.id %}">Cámbialo a <b>Examen</b></a>.
+        </span>
+      </div>
+    {% endif %}
+    <div class="d-flex flex-column gap-2" data-lista-opciones>
+      {% for i, o in fp.filas_opcion %}
+        <div class="fila-opcion">
+          {% if fp.q.es_examen %}
+            <label class="marca-correcta">
+              <input type="checkbox" name="correctas[]" value="{{ i }}" {% if o and o.correcta %}checked{% endif %}>
+              <span>Correcta</span>
+            </label>
+          {% else %}
+            <span class="punto-opcion" aria-hidden="true"></span>
+          {% endif %}
+          <label class="visually-hidden" for="op-{{ fp.uid }}-{{ i }}">Opción {{ i|add:1 }}</label>
+          <input class="form-control" id="op-{{ fp.uid }}-{{ i }}" name="opcion[{{ i }}]" maxlength="500" value="{% if o %}{{ o.texto }}{% endif %}" placeholder="Opción {{ i|add:1 }}">
+          <button type="button" class="btn-quitar-opcion" data-quitar-opcion aria-label="Quitar opción {{ i|add:1 }}" title="Quitar esta opción">{% icono 'x' 22 %}</button>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <button type="button" class="btn btn-borde" data-agregar-opcion>{% icono 'mas' 20 %} Agregar opción</button>
+      <label class="interruptor-chico" data-para="opcion multiple">
+        <input type="checkbox" name="permite_otra" value="1" {% if fp.p and fp.p.permite_otra %}checked{% endif %}>
+        Agregar «Otra…» (el alumno escribe)
+      </label>
+    </div>
+  </div>
+
+  <!-- Verdadero o falso -->
+  {% if fp.q.es_examen %}
+    <fieldset data-para="vf">
+      <legend class="form-label">¿Cuál es la respuesta correcta?</legend>
+      <div class="opciones">
+        <input type="radio" name="vf_correcta" id="vf-{{ fp.uid }}-v" value="v" {% if fp.vf_correcta == 'v' %}checked{% endif %}>
+        <label for="vf-{{ fp.uid }}-v">Verdadero</label>
+        <input type="radio" name="vf_correcta" id="vf-{{ fp.uid }}-f" value="f" {% if fp.vf_correcta == 'f' %}checked{% endif %}>
+        <label for="vf-{{ fp.uid }}-f">Falso</label>
+      </div>
+    </fieldset>
+
+    <!-- Respuesta corta (examen) -->
+    <div data-para="corta">
+      <label class="form-label" for="aceptadas-{{ fp.uid }}">Respuesta correcta (opcional)</label>
+      <textarea class="form-control" id="aceptadas-{{ fp.uid }}" name="aceptadas" rows="2" maxlength="2000" placeholder="Ej.: degrafilado">{% if fp.p %}{{ fp.p.respuestas_aceptadas }}{% endif %}</textarea>
+      <div class="ayuda">Una por línea si hay varias formas de decirlo. No importan mayúsculas ni tildes. Si la dejas vacía, la revisas tú.</div>
+    </div>
+  {% endif %}
+
+  <!-- Escala lineal -->
+  <div data-para="escala" class="row g-2">
+    <div class="col-6 col-sm-3">
+      <label class="form-label" for="emin-{{ fp.uid }}">Desde</label>
+      <select class="form-select" id="emin-{{ fp.uid }}" name="escala_min">
+        <option value="1" {% if fp.escala_min == '1' %}selected{% endif %}>1</option>
+        <option value="0" {% if fp.escala_min == '0' %}selected{% endif %}>0</option>
+      </select>
+    </div>
+    <div class="col-6 col-sm-3">
+      <label class="form-label" for="emax-{{ fp.uid }}">Hasta</label>
+      <select class="form-select" id="emax-{{ fp.uid }}" name="escala_max">
+        {% for n in fp.escala_maximos %}<option value="{{ n }}" {% if fp.escala_max == n %}selected{% endif %}>{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6">
+      <label class="form-label" for="etmin-{{ fp.uid }}">Texto del número menor</label>
+      <input class="form-control" id="etmin-{{ fp.uid }}" name="etiqueta_min" maxlength="60" value="{% if fp.p %}{{ fp.p.etiqueta_min }}{% endif %}" placeholder="Ej.: Nada">
+    </div>
+    <div class="col-6">
+      <label class="form-label" for="etmax-{{ fp.uid }}">Texto del número mayor</label>
+      <input class="form-control" id="etmax-{{ fp.uid }}" name="etiqueta_max" maxlength="60" value="{% if fp.p %}{{ fp.p.etiqueta_max }}{% endif %}" placeholder="Ej.: Mucho">
+    </div>
+  </div>
+
+  <!-- Cuadrículas -->
+  <div data-para="cuadricula cuadricula_casillas" class="row g-2">
+    <div class="col-12 col-sm-6">
+      <label class="form-label" for="filas-{{ fp.uid }}">Filas (una por línea)</label>
+      <textarea class="form-control" id="filas-{{ fp.uid }}" name="filas" rows="4" placeholder="Ej.:&#10;Puntualidad&#10;Limpieza&#10;Acabado">{{ fp.filas_cuadricula }}</textarea>
+    </div>
+    <div class="col-12 col-sm-6">
+      <label class="form-label" for="cols-{{ fp.uid }}">Columnas (una por línea)</label>
+      <textarea class="form-control" id="cols-{{ fp.uid }}" name="columnas" rows="4" placeholder="Ej.:&#10;Bien&#10;Regular&#10;Por mejorar">{{ fp.columnas_cuadricula }}</textarea>
+    </div>
+  </div>
+
+  <div data-para="abierta archivo fecha hora" class="tarjeta p texto-2 small">
+    <span data-para="abierta archivo">El alumno responde con sus palabras o sube su archivo{% if fp.q.es_examen %}; tú pones los puntos en «Por calificar»{% endif %}.</span>
+    <span data-para="fecha hora">El alumno elige la fecha u hora en un calendario o reloj.</span>
+  </div>
+
+  <!-- Imagen opcional -->
+  <div data-no-para="seccion">
+    <span class="form-label">Imagen (opcional)</span>
+    {% if fp.p and fp.p.imagen_ruta %}
+      <img src="{% url 'formularios:pregunta_imagen' fp.p.id %}" alt="Imagen actual de la pregunta" class="vista-previa visible mb-2" style="max-height:180px">
+      <label class="interruptor-chico mb-2"><input type="checkbox" name="quitar_imagen" value="1"> Quitar la imagen</label>
+    {% endif %}
+    <label class="btn btn-borde w-100 position-relative">
+      {% icono 'camara' 20 %} {% if fp.p and fp.p.imagen_ruta %}Cambiar imagen{% else %}Agregar una foto o imagen{% endif %}
+      <input type="file" name="imagen" class="position-absolute opacity-0" style="width:1px;height:1px" accept="image/jpeg,image/png,image/webp" data-nombre="nombre-img-{{ fp.uid }}">
+    </label>
+    <div id="nombre-img-{{ fp.uid }}" class="fw-bold mt-1" aria-live="polite"></div>
+  </div>
+
+  {% if fp.q.es_examen %}
+    <div data-no-para="seccion" class="row g-2">
+      <div class="col-5 col-sm-3">
+        <label class="form-label" for="puntos-{{ fp.uid }}">Puntos</label>
+        <input class="form-control" type="number" id="puntos-{{ fp.uid }}" name="puntos" min="0" max="100" step="0.5" required value="{{ fp.puntos }}">
+      </div>
+      <div class="col-12 col-sm-9">
+        <label class="form-label" for="expl-{{ fp.uid }}">Explicación al terminar (opcional)</label>
+        <input class="form-control" id="expl-{{ fp.uid }}" name="explicacion" maxlength="2000" value="{% if fp.p %}{{ fp.p.explicacion }}{% endif %}" placeholder="Ej.: El peine de dientes anchos no rompe el cabello.">
+      </div>
+    </div>
+  {% endif %}
+
+  <label class="interruptor tarjeta" data-no-para="seccion">
+    <span class="texto">Obligatoria<span class="d-block small texto-2 fw-normal">El alumno no puede enviar sin responderla</span></span>
+    <input type="checkbox" name="obligatoria" value="1" {% if fp.obligatoria %}checked{% endif %}>
+  </label>
+
+  <button type="submit" class="btn btn-cetpro btn-lg">{{ boton }}</button>
+</form>

@@ -1,0 +1,59 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Portada del formulario para el alumno: qué es, cuánto tiempo tiene, sus intentos y el botón para empezar. #}
+{% block contenido %}
+<div class="tarjeta p d-flex flex-column gap-3">
+  <div class="d-flex flex-wrap gap-2">
+    <span class="chip chip-info">{{ q.nombre_modo }}</span>
+    <span class="chip chip-info">{{ q.fecha_limite|vencimiento_texto }}</span>
+    <span class="chip chip-info">{{ total_preguntas|plural:"pregunta,preguntas" }}</span>
+    {% if q.tiempo_minutos %}<span class="chip chip-info">Tienes {{ q.tiempo_minutos }} minutos</span>{% endif %}
+    {% if q.intentos_max > 1 %}<span class="chip chip-info">{{ q.intentos_max }} intentos</span>{% endif %}
+  </div>
+  {% if q.instrucciones %}
+    <div id="indicaciones" class="fs-5" style="white-space:pre-line">{{ q.instrucciones }}</div>
+    <button type="button" class="btn btn-borde btn-leer align-self-start" data-leer="indicaciones" aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+  {% endif %}
+  <ul class="mb-0 texto-2">
+    <li>Responde las preguntas y al final toca <b>«Enviar»</b>. Las que tienen <span class="obligatorio">*</span> son obligatorias.</li>
+    {% if q.tiempo_minutos %}<li>Verás un reloj arriba. Si se acaba el tiempo, se envía solo.</li>{% endif %}
+    {% if q.intentos_max > 1 and not q.es_encuesta %}<li>Puedes responder {{ q.intentos_max }} veces. Vale tu mejor nota.</li>{% endif %}
+  </ul>
+</div>
+
+{% if mejor is not None %}
+  <div class="tarjeta p d-flex align-items-center justify-content-between gap-3">
+    <div><div class="texto-2">Tu mejor nota</div><div class="display-6 fw-bold">{{ mejor|nota_fmt }}<span class="fs-6 texto-2"> de 20</span></div></div>
+    <span class="chip {% if aprobo %}chip-ok{% else %}chip-mal{% endif %}">{% if aprobo %}Aprobado{% else %}Desaprobado{% endif %}</span>
+  </div>
+{% elif por_revisar %}
+  <div class="mensaje mensaje-ok">{% icono 'check' 24 %}<span>Ya enviaste {{ cosa }}. Tu profesor lo está revisando; luego verás tu nota.</span></div>
+{% elif q.es_encuesta and hechos %}
+  <div class="mensaje mensaje-ok">{% icono 'check' 24 %}<span>Ya respondiste esta encuesta. ¡Gracias!</span></div>
+{% endif %}
+
+{% if hechos %}
+  <ul class="tarjeta lista-filas">
+    {% for h in hechos %}
+      <li>
+        <a class="fila" href="{% url 'formularios:intento' h.id %}" style="min-height:60px">
+          <span class="cuerpo"><span class="fw-bold">{% if hechos|length > 1 %}Intento {{ forloop.counter }}{% else %}Mis respuestas{% endif %}</span><span class="detalle">{{ h.fin|fecha_larga|capfirst }}</span></span>
+          {% if not q.es_encuesta %}<span class="chip {% if h.revisado %}chip-info{% else %}chip-gris{% endif %}">{% if h.revisado %}Nota {{ h.nota_texto }}{% else %}Por revisar{% endif %}</span>{% endif %}
+          <span class="flecha">{% icono 'derecha' %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if en_curso %}
+  <a class="btn btn-cetpro btn-lg w-100" href="{% url 'formularios:intento' en_curso.id %}">Seguir respondiendo</a>
+{% elif abierto and quedan > 0 %}
+  <form method="post" action="{% url 'formularios:empezar' q.id %}" {% if q.tiempo_minutos %}data-confirmar="Al empezar corre el reloj: tienes {{ q.tiempo_minutos }} minutos. ¿Empezamos?"{% endif %}>
+    {% csrf_token %}
+    <button type="submit" class="btn btn-cetpro btn-lg w-100">{% if hechos %}Responder otra vez (te quedan {{ quedan }}){% elif q.es_examen %}Empezar el examen{% else %}Empezar a responder{% endif %}</button>
+  </form>
+{% elif not abierto and not hechos %}
+  <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>{{ mensaje_cerrado }}</span></div>
+{% endif %}
+{% endblock %}

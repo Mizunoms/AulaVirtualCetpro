@@ -1,0 +1,102 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Respuestas de un formulario, para el docente: el resumen por pregunta o la lista por persona. #}
+{% block contenido %}
+<div class="row g-2 text-center">
+  <div class="col-4"><div class="tarjeta p-2"><div class="fs-3 fw-bold">{{ dieron }}/{{ total_alumnos }}</div><div class="small fw-bold texto-2">Respondieron</div></div></div>
+  {% if con_nota %}
+    <div class="col-4"><div class="tarjeta p-2"><div class="fs-3 fw-bold">{% if promedio is not None %}{{ promedio|nota_fmt }}{% else %}—{% endif %}</div><div class="small fw-bold texto-2">Promedio</div></div></div>
+    <div class="col-4"><div class="tarjeta p-2"><div class="fs-3 fw-bold">{{ aprobados }}</div><div class="small fw-bold texto-2">Aprobaron</div></div></div>
+  {% endif %}
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+  <nav class="pestanas" aria-label="Ver respuestas">
+    <a href="{{ base }}" {% if ver == 'resumen' %}aria-current="page"{% endif %}>Resumen</a>
+    <a href="{{ base }}?ver=personas" {% if ver == 'personas' %}aria-current="page"{% endif %}>Por persona</a>
+  </nav>
+  <a class="btn btn-whatsapp ms-auto" href="{% url 'formularios:descargar' q.id %}">{% icono 'bajar' 20 %} Descargar para Excel</a>
+</div>
+
+{% if ver == 'personas' %}
+  {% if not filas %}
+    {% vacio 'usuarios' 'Este módulo todavía no tiene alumnos' 'Cuando respondan, aquí verás sus respuestas y notas.' %}
+  {% else %}
+    <ul class="tarjeta lista-filas">
+      {% for x in filas %}
+        <li>
+          {% if x.intento_id %}
+            <a class="fila" href="{% url 'formularios:intento' x.intento_id %}" style="min-height:64px">{% include "formularios/_fila_persona.html" %}</a>
+          {% else %}
+            <div class="fila" style="min-height:64px">{% include "formularios/_fila_persona.html" %}</div>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+{% else %}
+  {% if not dieron %}
+    <div class="tarjeta p texto-2">Todavía nadie respondió. Aquí verás un resumen de cada pregunta.</div>
+  {% endif %}
+  {% for p in preguntas %}
+    {% if not p.es_seccion %}
+      <div class="tarjeta p d-flex flex-column gap-2">
+        <div class="d-flex justify-content-between gap-2">
+          <span class="fw-bold">{{ p.num }}. {{ p.enunciado }}</span>
+          <span class="texto-2 small text-nowrap">{{ p.resumen.total|plural:"respuesta,respuestas" }}</span>
+        </div>
+
+        {% if p.es_grafico %}
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+            {% for etiqueta, cantidad, es_correcta, pct in p.barras %}
+              <li>
+                <div class="d-flex justify-content-between small fw-bold"><span>{% if es_correcta %}{% icono 'check' 16 %} {% endif %}{{ etiqueta }}</span><span>{{ cantidad }} ({{ pct }}%)</span></div>
+                <div class="barra" role="img" aria-label="{{ etiqueta }}: {{ pct }}%"><span style="width:{{ pct }}%" class="{% if es_correcta %}ok{% endif %}"></span></div>
+              </li>
+            {% endfor %}
+          </ul>
+          {% if p.resumen.otras %}
+            <details><summary class="small fw-bold" style="cursor:pointer">Ver respuestas «Otra»</summary>
+              <ul class="small mb-0">{% for quien, texto in p.resumen.otras %}<li>{{ texto }} <span class="texto-2">— {{ quien }}</span></li>{% endfor %}</ul>
+            </details>
+          {% endif %}
+
+        {% elif p.es_cuadricula %}
+          <div class="tabla-scroll">
+            <table class="tabla-notas">
+              <thead><tr><th scope="col"></th>{% for col in p.columnas %}<th scope="col" class="num">{{ col.texto }}</th>{% endfor %}</tr></thead>
+              <tbody>
+                {% for fila, conteos in p.tabla %}
+                  <tr><th scope="row" style="background:none;color:inherit">{{ fila.texto }}</th>
+                    {% for n in conteos %}<td class="num">{{ n }}</td>{% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        {% else %}
+          {% if not p.textos_mostrados %}
+            <div class="texto-2 small">Sin respuestas todavía.</div>
+          {% else %}
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-1 respuestas-texto">
+              {% for quien, texto, rid in p.textos_mostrados %}
+                <li>
+                  {% if p.tipo == 'archivo' %}
+                    <a href="{% url 'formularios:respuesta_archivo' rid %}" target="_blank" rel="noopener">{% icono 'bajar' 16 %} {{ texto }}</a>
+                  {% else %}
+                    {{ texto }}
+                  {% endif %}
+                  <span class="texto-2 small">— {{ quien }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+            {% if p.mas_textos %}<div class="small texto-2">Y {{ p.mas_textos }} más (descárgalas para Excel).</div>{% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% endblock %}

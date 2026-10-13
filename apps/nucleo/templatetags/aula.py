@@ -173,6 +173,12 @@ def plural(n, palabras):
 
 
 @register.filter
+def letra(posicion):
+    """{{ forloop.counter0|letra }} → A, B, C…"""
+    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[int(posicion) % 26]
+
+
+@register.filter
 def primera_palabra(texto):
     """«Quispe Mamani» → «Quispe»"""
     partes = (texto or "").split()

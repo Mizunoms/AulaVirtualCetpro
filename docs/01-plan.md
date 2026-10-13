@@ -41,7 +41,8 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Copiar el módulo para el siguiente periodo y papelera del módulo
 
 ## Fase 4 — Evaluación y comunicación
-- [ ] Formularios con nota (editor, responder con tiempo, resultados, importar Excel)
+- [x] Formularios con nota: examen, trabajo y encuesta; 12 tipos de pregunta; editor, vista previa, publicar, papelera, responder con reloj y varios intentos, corrección automática, revisión del docente, resultados, descarga a Excel
+- [x] Importar preguntas desde el texto de una IA, Excel, CSV o Word (`apps/nucleo/importador.py`; el Excel y el Word se leen con `defusedxml`)
 - [x] Asistencia (tomar lista del día, historial, % por alumno)
 - [x] Notas y evaluación del módulo (pesos 50/30/20, nota mínima 11), «Mis notas», Excel e impresión, consolidado
 - [x] Preguntas de la clase y notificaciones

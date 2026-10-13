@@ -1,0 +1,100 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Crear o cambiar los datos de un formulario (nombre, fecha, tiempo, intentos…). #}
+{% block contenido %}
+<form method="post" action="{{ accion }}" class="d-flex flex-column gap-3" style="max-width:720px">
+  {% csrf_token %}
+  {% if not q %}
+    <div class="tarjeta p texto-2">Es como un formulario de Google: primero pones el nombre y la fecha, y en el siguiente paso agregas las preguntas.</div>
+  {% endif %}
+
+  <fieldset>
+    <legend class="form-label">1. ¿Qué vas a crear?</legend>
+    <div class="tipos-formulario">
+      {% for clave, nombre, descripcion in modos %}
+        <input type="radio" name="modo" id="modo-{{ clave }}" value="{{ clave }}" {% if v.modo == clave %}checked{% endif %}>
+        <label for="modo-{{ clave }}"><b>{{ nombre }}</b><span>{{ descripcion }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div>
+    <label class="form-label" for="titulo">2. Nombre</label>
+    <input class="form-control" id="titulo" name="titulo" maxlength="150" required value="{{ v.titulo }}" placeholder="Ej.: Ficha de trabajo: tipos de tela">
+  </div>
+  <div>
+    <label class="form-label" for="instrucciones">Descripción o indicaciones (opcional)</label>
+    <textarea class="form-control" id="instrucciones" name="instrucciones" rows="3" maxlength="3000" placeholder="Ej.: Responde con calma. Puedes subir fotos de tu trabajo.">{{ v.instrucciones }}</textarea>
+  </div>
+  <div class="row g-2">
+    <div class="col-7">
+      <label class="form-label" for="fecha">3. ¿Hasta qué día?</label>
+      <input class="form-control" type="date" id="fecha" name="fecha" required value="{{ v.fecha }}">
+    </div>
+    <div class="col-5">
+      <label class="form-label" for="hora">¿Hasta qué hora?</label>
+      <input class="form-control" type="time" id="hora" name="hora" required value="{{ v.hora }}">
+    </div>
+  </div>
+  <div class="row g-2">
+    <div class="col-6">
+      <label class="form-label" for="tiempo_minutos">Tiempo para responder</label>
+      <select class="form-select" id="tiempo_minutos" name="tiempo_minutos">
+        {% for minutos, texto in tiempos %}<option value="{{ minutos }}" {% if v.tiempo == minutos %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-6">
+      <label class="form-label" for="intentos_max">Intentos</label>
+      <select class="form-select" id="intentos_max" name="intentos_max">
+        {% for valor, texto in intentos_lista %}<option value="{{ valor }}" {% if v.intentos == valor %}selected{% endif %}>{{ texto }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <details class="tarjeta" {% if abrir_mas %}open{% endif %}>
+    <summary class="fila" style="cursor:pointer;min-height:56px">
+      <span class="cuerpo"><span class="fw-bold">Más opciones</span><span class="detalle">Clase, desde cuándo, mezclar preguntas, mostrar respuestas</span></span>
+      <span class="flecha">{% icono 'derecha' %}</span>
+    </summary>
+    <div class="p-3 border-top d-flex flex-column gap-3">
+      {% if clases %}
+        <div>
+          <label class="form-label" for="unidad_id">¿En qué clase va?</label>
+          <select class="form-select" id="unidad_id" name="unidad_id">
+            {% for c in clases %}
+              <option value="{{ c.id }}" {% if v.unidad == c.id|stringformat:"s" %}selected{% endif %}>Clase {{ c.n }}: {{ c.titulo }} · {{ c.situacion_texto }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="row g-2">
+        <div class="col-7">
+          <label class="form-label" for="desde_fecha">Se puede dar desde (opcional)</label>
+          <input class="form-control" type="date" id="desde_fecha" name="desde_fecha" value="{{ v.desde_fecha }}">
+        </div>
+        <div class="col-5">
+          <label class="form-label" for="desde_hora">Hora</label>
+          <input class="form-control" type="time" id="desde_hora" name="desde_hora" value="{{ v.desde_hora }}">
+        </div>
+        <div class="col-12 ayuda">Si lo dejas vacío, se puede dar apenas lo publiques.</div>
+      </div>
+      <div class="tarjeta">
+        <label class="interruptor">
+          <span class="texto">Mezclar el orden<span class="d-block small texto-2 fw-normal">Cada alumno ve las preguntas y alternativas en distinto orden</span></span>
+          <input type="checkbox" name="mezclar" value="1" {% if v.mezclar %}checked{% endif %}>
+        </label>
+        <label class="interruptor">
+          <span class="texto">Mostrar respuestas al terminar<span class="d-block small texto-2 fw-normal">El alumno ve lo que respondió (y en exámenes, cuál era la correcta)</span></span>
+          <input type="checkbox" name="mostrar_respuestas" value="1" {% if v.mostrar_respuestas %}checked{% endif %}>
+        </label>
+      </div>
+      <div>
+        <label class="form-label" for="mensaje_final">Mensaje al enviar (opcional)</label>
+        <input class="form-control" id="mensaje_final" name="mensaje_final" maxlength="500" value="{{ v.mensaje_final }}" placeholder="Ej.: ¡Gracias! Revisaré tu trabajo esta semana.">
+      </div>
+    </div>
+  </details>
+
+  <button type="submit" class="btn btn-cetpro btn-lg">{% if q %}Guardar cambios{% else %}Siguiente: agregar preguntas{% endif %}</button>
+</form>
+{% endblock %}

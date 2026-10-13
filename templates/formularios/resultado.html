@@ -1,0 +1,145 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Respuestas enviadas: las ve el alumno (las suyas) y el docente (para revisar y calificar). #}
+{% block contenido %}
+{% if not q.es_encuesta %}
+  <div class="tarjeta p d-flex align-items-center justify-content-between gap-3 flex-wrap">
+    <div>
+      <div class="texto-2">{% if es_alumno %}Tu nota{% else %}Nota{% endif %}</div>
+      {% if i.revisado %}
+        <div class="display-5 fw-bold">{{ nota_texto }}<span class="fs-6 texto-2"> de 20</span></div>
+      {% else %}
+        <div class="fs-4 fw-bold">{% if es_alumno %}Tu profesor la está revisando{% else %}Falta que la revises{% endif %}</div>
+      {% endif %}
+      {% if q.es_examen %}
+        <div class="texto-2">{{ puntaje_texto }} de {{ puntaje_max_texto }} puntos{% if not i.revisado %} (sin contar lo que falta revisar){% endif %}</div>
+      {% endif %}
+    </div>
+    {% if i.revisado %}
+      <span class="chip {% if aprobo %}chip-ok{% else %}chip-mal{% endif %} fs-6">{% if aprobo %}Aprobado{% else %}Desaprobado{% endif %}</span>
+    {% endif %}
+  </div>
+  {% if i.comentario %}
+    <div class="tarjeta p"><b>Comentario del profesor:</b> {{ i.comentario }}</div>
+  {% endif %}
+{% elif es_alumno %}
+  <div class="mensaje mensaje-ok">{% icono 'check' 24 %}<span>{{ mensaje_final }}</span></div>
+{% endif %}
+
+{% if i.fuera_tiempo %}
+  <div class="mensaje mensaje-error">{% icono 'reloj' 24 %}<span>Se envió después del tiempo límite.</span></div>
+{% endif %}
+{% if es_alumno and quedan > 0 and i.revisado %}
+  <a class="btn btn-borde" href="{% url 'formularios:ver' q.id %}">Te quedan {{ quedan|plural:"intento,intentos" }}: responder otra vez</a>
+{% endif %}
+
+{% if not ver_detalle %}
+  <div class="tarjeta p texto-2">Tu profesor eligió no mostrar las respuestas.</div>
+{% else %}
+  {% if es_docente %}<form method="post" action="{% url 'formularios:revisar' i.id %}" class="d-flex flex-column gap-3">{% csrf_token %}{% endif %}
+
+  {% for p in preguntas %}
+    {% if p.es_seccion %}
+      <h2 class="fs-5 fw-bold mt-2 mb-0">{{ p.enunciado }}</h2>
+    {% else %}
+      <div class="tarjeta p d-flex flex-column gap-2">
+        <div class="d-flex justify-content-between align-items-center gap-2">
+          <span class="texto-2 fw-bold">Pregunta {{ p.num }}</span>
+          {% if p.con_puntos %}<span class="chip {{ p.chip_estado }}">{{ p.estado_puntos }}</span>{% endif %}
+        </div>
+        <div class="fw-bold" style="white-space:pre-line">{{ p.enunciado }}</div>
+        {% if p.imagen_ruta %}<img src="{% url 'formularios:pregunta_imagen' p.id %}" alt="Imagen de la pregunta {{ p.num }}" class="imagen-pregunta">{% endif %}
+
+        {% if p.tipo == 'opcion' or p.tipo == 'multiple' or p.tipo == 'desplegable' or p.tipo == 'vf' %}
+          <ul class="list-unstyled mb-0 d-flex flex-column gap-1">
+            {% for fr in p.filas_resultado %}
+              <li class="opcion-resultado {{ fr.clases }}">
+                {% if fr.mia %}{% icono fr.icono 20 %}{% else %}<span style="width:20px;display:inline-block"></span>{% endif %}
+                <span>{% if p.tipo != 'vf' and p.tipo != 'desplegable' %}{{ fr.k|letra }}) {% endif %}{{ fr.o.texto }}</span>
+                {% if fr.mia %}<span class="chip chip-gris ms-auto">{% if es_alumno %}Tu respuesta{% else %}Eligió{% endif %}</span>{% endif %}
+                {% if fr.correcta %}<span class="chip chip-ok {% if not fr.mia %}ms-auto{% endif %}">Correcta</span>{% endif %}
+              </li>
+            {% endfor %}
+            {% if p.otra_texto %}
+              <li class="opcion-resultado {% if q.es_examen and p.con_puntos %}es-error{% else %}es-elegida{% endif %}">{% icono 'check' 20 %}<span>Otra: {{ p.otra_texto }}</span></li>
+            {% endif %}
+          </ul>
+          {% if not p.tiene_algo %}<div class="texto-2">Sin responder.</div>{% endif %}
+
+        {% elif p.tipo == 'archivo' %}
+          {% if p.r and p.r.archivo_ruta %}
+            {% if p.r.es_imagen %}
+              <a href="{% url 'formularios:respuesta_archivo' p.r.id %}" target="_blank" rel="noopener">
+                <img src="{% url 'formularios:respuesta_archivo' p.r.id %}" alt="Archivo enviado en la pregunta {{ p.num }}" class="vista-previa visible">
+              </a>
+            {% else %}
+              <a class="btn btn-borde align-self-start" href="{% url 'formularios:respuesta_archivo' p.r.id %}" target="_blank" rel="noopener">{% icono 'bajar' 20 %} {{ p.r.archivo_nombre }}</a>
+            {% endif %}
+          {% else %}<div class="texto-2">Sin archivo.</div>{% endif %}
+
+        {% elif p.tipo == 'cuadricula' or p.tipo == 'cuadricula_casillas' %}
+          <ul class="list-unstyled mb-0">
+            {% for texto, elegidas in p.filas_grid %}
+              <li><b>{{ texto }}:</b> {% if elegidas %}{{ elegidas|join:", " }}{% else %}<span class="texto-2">sin responder</span>{% endif %}</li>
+            {% endfor %}
+          </ul>
+
+        {% else %}
+          <div class="p-2 rounded-3" style="background:var(--fondo);white-space:pre-line">{% if p.texto_mostrado %}{{ p.texto_mostrado }}{% else %}<span class="texto-2">Sin responder.</span>{% endif %}</div>
+          {% if p.tipo == 'corta' and q.es_examen and p.respuestas_aceptadas and not p.bien %}
+            <div><b style="color:var(--ok)">Respuesta correcta:</b> {{ p.respuestas_aceptadas_texto }}</div>
+          {% endif %}
+        {% endif %}
+
+        {% if q.es_examen and p.explicacion %}
+          <div class="small"><b>Explicación:</b> {{ p.explicacion }}</div>
+        {% endif %}
+        {% if p.r and p.r.comentario %}
+          <div><b>Comentario del profesor:</b> {{ p.r.comentario }}</div>
+        {% endif %}
+
+        {% if p.revisar_esta %}
+          <div class="row g-2 align-items-end border-top pt-2">
+            <div class="col-5 col-sm-3">
+              <label class="form-label" for="pts-{{ p.id }}">Puntos (0 a {{ p.puntos|nota_fmt }})</label>
+              <input class="form-control fs-5 fw-bold text-center" type="number" id="pts-{{ p.id }}" name="puntos[{{ p.id }}]" min="0" max="{{ p.puntos|nota_fmt }}" step="0.5" required value="{{ p.puntos_valor }}">
+            </div>
+            <div class="col-7 col-sm-9">
+              <label class="form-label" for="com-{{ p.id }}">Comentario (opcional)</label>
+              <input class="form-control" id="com-{{ p.id }}" name="comentario[{{ p.id }}]" maxlength="500" value="{% if p.r %}{{ p.r.comentario }}{% endif %}">
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {% if es_docente %}
+      {% if q.modo == 'trabajo' %}
+        <div class="tarjeta p d-flex flex-column gap-2" id="calificar">
+          <div class="fs-5 fw-bold">Calificar este trabajo</div>
+          <div class="row g-2">
+            <div class="col-5 col-sm-3">
+              <label class="form-label" for="nota">Nota (0 a 20)</label>
+              <input class="form-control fs-4 fw-bold text-center" type="number" id="nota" name="nota" min="0" max="20" step="0.5" inputmode="decimal" required value="{{ nota_texto }}">
+            </div>
+            <div class="col-12 col-sm-9">
+              <label class="form-label" for="comentario_general">Comentario para el alumno (opcional)</label>
+              <input class="form-control" id="comentario_general" name="comentario_general" maxlength="2000" value="{{ i.comentario }}">
+            </div>
+          </div>
+        </div>
+        <button type="submit" name="siguiente" value="1" class="btn btn-cetpro btn-lg">Guardar nota y ver el siguiente</button>
+        <button type="submit" name="siguiente" value="0" class="btn btn-borde">Guardar y volver a las respuestas</button>
+      {% elif hay_revisables %}
+        <div>
+          <label class="form-label" for="comentario_general">Comentario general (opcional)</label>
+          <input class="form-control" id="comentario_general" name="comentario_general" maxlength="2000" value="{{ i.comentario }}">
+        </div>
+        <button type="submit" name="siguiente" value="1" class="btn btn-cetpro btn-lg">Guardar y revisar el siguiente</button>
+        <button type="submit" name="siguiente" value="0" class="btn btn-borde">Guardar y volver a las respuestas</button>
+      {% endif %}
+    </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

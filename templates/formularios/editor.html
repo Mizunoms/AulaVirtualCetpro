@@ -1,0 +1,134 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# El docente arma las preguntas de un formulario (o lo mira, si es administración o dirección). #}
+{% block contenido %}
+<div class="tarjeta p d-flex flex-column gap-2 cabecera-formulario">
+  <div class="d-flex flex-wrap gap-2">
+    <span class="chip chip-info">{{ q.nombre_modo }}</span>
+    <span class="chip {% if q.publicado %}chip-ok{% else %}chip-gris{% endif %}">{% if q.publicado %}Publicado: tus alumnos lo ven{% else %}Borrador: tus alumnos todavía no lo ven{% endif %}</span>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <span class="chip chip-gris">{{ q.fecha_limite|vencimiento_texto }} · {{ q.fecha_limite|hora_texto }}</span>
+    {% if q.tiempo_minutos %}<span class="chip chip-gris">{{ q.tiempo_minutos }} minutos</span>{% endif %}
+    <span class="chip chip-gris">{{ q.intentos_max|plural:"intento,intentos" }}</span>
+    <span class="chip chip-gris">{{ q.total_preguntas|plural:"pregunta,preguntas" }}{% if es_examen %} · {{ q.total_puntos|nota_fmt }} puntos{% endif %}</span>
+  </div>
+  {% if q.instrucciones %}<div style="white-space:pre-line">{{ q.instrucciones }}</div>{% endif %}
+  <div class="ayuda mt-0">{{ q.descripcion_modo }}{% if es_examen %} La nota va de 0 a 20 según los puntos.{% endif %}</div>
+</div>
+
+<div class="row g-2">
+  {% if es_docente %}
+    <div class="col-12 col-md-6">
+      <form method="post" action="{% url 'formularios:publicar' q.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="publicar" value="{% if q.publicado %}0{% else %}1{% endif %}">
+        <button type="submit" class="btn {% if q.publicado %}btn-borde{% else %}btn-whatsapp{% endif %} btn-lg w-100">{% if q.publicado %}Ocultar{% else %}Publicar para mis alumnos{% endif %}</button>
+      </form>
+    </div>
+  {% endif %}
+  <div class="col-6 col-md-3"><a class="btn btn-borde btn-lg w-100" href="{% url 'formularios:resultados' q.id %}">{% icono 'notas' 20 %} Respuestas</a></div>
+  <div class="col-6 col-md-3"><a class="btn btn-borde btn-lg w-100" href="{% url 'formularios:vista_previa' q.id %}">{% icono 'ojo' 20 %} Vista previa</a></div>
+  {% if es_docente %}
+    <div class="col-12"><a class="btn btn-borde w-100" href="{% url 'formularios:editar' q.id %}">{% icono 'editar' 20 %} Cambiar nombre, fecha y opciones</a></div>
+  {% endif %}
+</div>
+
+{% if bloqueado and es_docente %}
+  <div class="mensaje mensaje-ok">{% icono 'alerta' 24 %}<span>Ya hay alumnos que respondieron. Las preguntas ya no se pueden cambiar.</span></div>
+{% endif %}
+
+<h2 class="seccion-titulo">Preguntas</h2>
+{% if not preguntas %}
+  {% vacio 'examen' 'Todavía no hay preguntas' 'Agrega la primera aquí abajo, o impórtalas desde el texto de una IA, Excel o Word.' %}
+{% endif %}
+
+{% for p in preguntas %}
+  <div class="tarjeta p d-flex flex-column gap-2 {% if p.es_seccion %}tarjeta-seccion{% endif %}" id="p{{ p.id }}">
+    {% if p.es_seccion %}
+      <div class="fs-5 fw-bold">{{ p.enunciado }}</div>
+      {% if p.ayuda %}<div class="texto-2" style="white-space:pre-line">{{ p.ayuda }}</div>{% endif %}
+    {% else %}
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-bold fs-5">Pregunta {{ p.num }}</span>
+        <span class="chip chip-gris">{{ p.nombre_tipo }}</span>
+        {% if es_examen %}<span class="chip chip-info">{{ p.puntos|nota_fmt }} {% if p.puntos == 1 %}punto{% else %}puntos{% endif %}</span>{% endif %}
+        {% if p.obligatoria %}<span class="chip chip-aviso">Obligatoria</span>{% endif %}
+        {% if p.pct is not None %}<span class="chip {% if p.pct >= 60 %}chip-ok{% else %}chip-mal{% endif %}">{{ p.pct }}% la respondió bien</span>{% endif %}
+      </div>
+      <div class="fs-6 fw-bold" style="white-space:pre-line">{{ p.enunciado }}</div>
+      {% if p.ayuda %}<div class="texto-2">{{ p.ayuda }}</div>{% endif %}
+      {% if p.imagen_ruta %}<img src="{% url 'formularios:pregunta_imagen' p.id %}" alt="Imagen de la pregunta {{ p.num }}" class="imagen-pregunta">{% endif %}
+
+      {% if p.opciones %}
+        <ul class="list-unstyled mb-0 d-flex flex-column gap-1">
+          {% for o in p.opciones %}
+            <li class="d-flex align-items-center gap-2 {% if es_examen and o.correcta %}fw-bold{% endif %}" {% if es_examen and o.correcta %}style="color:var(--ok)"{% endif %}>
+              {% if es_examen and o.correcta %}{% icono 'check' 20 %}<span class="visually-hidden">Correcta:</span>{% else %}<span class="punto-opcion {% if p.tipo == 'multiple' %}cuadrado{% endif %}" aria-hidden="true"></span>{% endif %}
+              {% if p.tipo != 'vf' and p.tipo != 'desplegable' %}{{ forloop.counter0|letra }})&nbsp;{% endif %}{{ o.texto }}
+            </li>
+          {% endfor %}
+          {% if p.permite_otra %}<li class="texto-2 d-flex align-items-center gap-2"><span class="punto-opcion" aria-hidden="true"></span> Otra: …</li>{% endif %}
+        </ul>
+      {% elif p.tipo == 'corta' and es_examen and p.respuestas_aceptadas %}
+        <div><b style="color:var(--ok)">Respuesta correcta:</b> {{ p.respuestas_aceptadas_texto }}</div>
+      {% elif p.tipo == 'escala' %}
+        <div class="texto-2">{{ p.escala_min }} {% if p.etiqueta_min %}({{ p.etiqueta_min }}){% endif %} → {{ p.escala_max }} {% if p.etiqueta_max %}({{ p.etiqueta_max }}){% endif %}</div>
+      {% elif p.filas %}
+        <div class="texto-2"><b>Filas:</b> {% for f in p.filas %}{{ f.texto }}{% if not forloop.last %} · {% endif %}{% endfor %}<br><b>Columnas:</b> {% for c in p.columnas %}{{ c.texto }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>
+      {% else %}
+        <div class="texto-2">
+          {% if p.tipo == 'corta' %}Respuesta corta{% elif p.tipo == 'abierta' %}Respuesta larga{% elif p.tipo == 'fecha' %}Elige una fecha{% elif p.tipo == 'hora' %}Elige una hora{% elif p.tipo == 'archivo' %}Sube un archivo o foto{% endif %}{% if es_examen and not p.es_automatica and p.puntos > 0 %} · la revisas tú{% endif %}
+        </div>
+      {% endif %}
+      {% if es_examen and p.explicacion %}<div class="small texto-2"><b>Explicación:</b> {{ p.explicacion }}</div>{% endif %}
+    {% endif %}
+
+    {% if editable %}
+      <div class="d-flex flex-wrap gap-2 pt-1 border-top mt-1 pt-2">
+        <a class="btn btn-borde" href="{% url 'formularios:pregunta_editar' p.id %}">{% icono 'editar' 18 %} Cambiar</a>
+        <form method="post" action="{% url 'formularios:pregunta_duplicar' p.id %}">
+          {% csrf_token %}
+          <button type="submit" name="duplicar" value="1" class="btn btn-borde">{% icono 'mas' 18 %} Duplicar</button>
+        </form>
+        <form method="post" action="{% url 'formularios:pregunta_mover' p.id %}">
+          {% csrf_token %}
+          <button type="submit" name="dir" value="arriba" class="btn btn-borde" {% if forloop.first %}disabled{% endif %} aria-label="Subir">{% icono 'arriba' 18 %}</button>
+        </form>
+        <form method="post" action="{% url 'formularios:pregunta_mover' p.id %}">
+          {% csrf_token %}
+          <button type="submit" name="dir" value="abajo" class="btn btn-borde" {% if forloop.last %}disabled{% endif %} aria-label="Bajar">{% icono 'abajo' 18 %}</button>
+        </form>
+        <form method="post" action="{% url 'formularios:pregunta_eliminar' p.id %}" data-confirmar="¿Borrar {% if p.es_seccion %}este título{% else %}la pregunta {{ p.num }}{% endif %}?">
+          {% csrf_token %}
+          <button type="submit" name="borrar" value="1" class="btn-texto">{% icono 'basura' 18 %} Borrar</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+{% endfor %}
+
+{% if editable %}
+  <a class="btn btn-cetpro btn-flotante" href="#nueva">{% icono 'mas' 24 %} Agregar pregunta</a>
+  <a class="tarjeta fila" href="{% url 'formularios:importar' q.id %}">
+    <span class="ico-caja ico-verde">{% icono 'subir' %}</span>
+    <span class="cuerpo">
+      <span class="titulo">Importar preguntas</span>
+      <span class="detalle">Pega lo que te dio la IA (ChatGPT…) o sube un Excel o Word, y se convierten en preguntas</span>
+    </span>
+    <span class="flecha">{% icono 'derecha' %}</span>
+  </a>
+  <div class="tarjeta p" id="nueva">
+    <h2 class="fs-5 fw-bold mb-3">{% icono 'mas' 22 %} Agregar pregunta {{ siguiente_numero }}</h2>
+    {% url 'formularios:agregar_pregunta' q.id as accion_nueva %}
+    {% include "formularios/_form_pregunta.html" with accion=accion_nueva boton="Guardar pregunta" %}
+  </div>
+{% endif %}
+
+{% if es_docente %}
+  <form method="post" action="{% url 'formularios:eliminar' q.id %}" data-confirmar="¿Borrar este formulario? Irá a la papelera con sus respuestas y podrás recuperarlo durante 30 días." class="text-center">
+    {% csrf_token %}
+    <button type="submit" name="borrar" value="1" class="btn-texto">{% icono 'basura' 18 %} Borrar este formulario</button>
+  </form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load aula %}
+<span class="ico-caja ico-azul rounded-circle">{{ x.alumno.iniciales }}</span>
+<span class="cuerpo">
+  <span class="fw-bold">{{ x.apellidos }}, {{ x.nombres }}</span>
+  <span class="detalle">{% if x.intentos %}{{ x.intentos|plural:"vez,veces" }}{% else %}Todavía no{% endif %}</span>
+</span>
+<span class="chip {{ x.chip }}">{{ x.texto }}</span>
+{% if x.intento_id %}<span class="flecha">{% icono 'derecha' %}</span>{% endif %}
