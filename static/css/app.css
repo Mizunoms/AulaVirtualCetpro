@@ -50,7 +50,7 @@ a:hover { color: var(--azul-oscuro); }
 h1, h2, h3 { font-weight: 800; letter-spacing: -.01em; }
 
 .visually-hidden-focusable:focus { position: static !important; }
-.saltar { position: absolute; left: -9999px; top: 0; background: #fff; padding: .75rem 1rem; z-index: 2000; border-radius: 0 0 12px 0; }
+.saltar { position: absolute; left: -9999px; top: 0; background: var(--superficie); color: var(--texto); font-weight: 700; padding: .75rem 1rem; z-index: 2000; border-radius: 0 0 12px 0; }
 .saltar:focus { left: 0; }
 
 /* ===== Estructura general ===== */
@@ -941,7 +941,7 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
   :where(html[data-tema="oscuro"]) .btn-cetpro:focus { background: var(--azul); border-color: rgba(255, 255, 255, .5); filter: brightness(1.18); }
   :where(html[data-tema="oscuro"]) .btn-acento:hover,
   :where(html[data-tema="oscuro"]) .btn-acento:focus { background: #A01810; border-color: #A01810; }
-  :where(html[data-tema="oscuro"]) .btn-whatsapp { background: #1E8A4C; border-color: #1E8A4C; }
+  :where(html[data-tema="oscuro"]) .btn-whatsapp { background: #1B8147; border-color: #1B8147; }
   :where(html[data-tema="oscuro"]) .btn-whatsapp:hover { background: #167240; }
 
   /* Formularios */
@@ -965,7 +965,7 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
   :where(html[data-tema="oscuro"]) .cuadricula-opciones label,
   :where(html[data-tema="oscuro"]) .marca-correcta,
   :where(html[data-tema="oscuro"]) .btn-quitar-opcion { background: var(--superficie); border-color: var(--borde-campo); }
-  :where(html[data-tema="oscuro"]) .asis-opciones input[value="presente"]:checked + label { background: #1E8A4C; border-color: #1E8A4C; }
+  :where(html[data-tema="oscuro"]) .asis-opciones input[value="presente"]:checked + label { background: #1B8147; border-color: #1B8147; }
   :where(html[data-tema="oscuro"]) .asis-opciones input[value="tarde"]:checked + label { background: #A16207; border-color: #A16207; }
   :where(html[data-tema="oscuro"]) .asis-opciones input[value="falta"]:checked + label { background: #B91C1C; border-color: #B91C1C; }
   :where(html[data-tema="oscuro"]) .zona-carga:hover,
