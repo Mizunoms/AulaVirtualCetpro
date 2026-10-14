@@ -57,4 +57,5 @@ Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones)
 - [CLAUDE.md](CLAUDE.md) — reglas del proyecto
 - [docs/00-decisiones.md](docs/00-decisiones.md) — por qué este stack
 - [docs/01-plan.md](docs/01-plan.md) — fases y avance
+- [docs/02-migracion-desde-php.md](docs/02-migracion-desde-php.md) — pasar los datos del piloto (PHP) a este sistema
 - [docs/heredados/](docs/heredados) — visión, requerimientos y análisis del sistema anterior

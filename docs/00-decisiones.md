@@ -28,7 +28,7 @@ muchas librerías listas (`pip`) y un framework que ya trae usuarios, permisos, 
 - Mismas direcciones (URL) donde se pueda: así las ~700 comprobaciones del sistema PHP (`tests/` del repositorio
   viejo, con cliente HTTP en Python) sirven como **pruebas de aceptación** de este.
 - Las contraseñas bcrypt del piloto (`$2y$…`) se pueden importar y funcionan con el hasher bcrypt de Django.
-- Los datos del piloto se pasan de MariaDB a PostgreSQL con un script (`scripts/migrar_desde_php.py`, fase 7).
+- Los datos del piloto se pasan de MariaDB a PostgreSQL con un script (`manage.py migrar_desde_php`, ver `docs/02-migracion-desde-php.md`).
 
 ## Seguridad y datos
 - Claves y configuración solo en `.env` (no se sube a Git).

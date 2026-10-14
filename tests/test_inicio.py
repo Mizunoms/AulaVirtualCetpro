@@ -33,6 +33,8 @@ def con_contenido(monkeypatch, modulo):
     """Un material y dos tareas (una por vencer, otra hecha) dentro de la clase de ahora."""
     clase = Clase.crear(modulo, "Armado de una PC")
     ahora = timezone.now()
+    # «Vence hoy»: a las 11:59 de la noche de hoy (no «dentro de 5 horas», que de noche ya cae mañana)
+    fin_de_hoy = timezone.localtime(ahora).replace(hour=23, minute=59, second=0, microsecond=0)
 
     def proveedor(m, usuario, acceso):
         if m.pk != modulo.pk:
@@ -41,7 +43,7 @@ def con_contenido(monkeypatch, modulo):
             ItemClase(clase.pk, "material", "Guía de armado", "/materiales/1", etiqueta="PDF", color="ico-rojo", accion="Descargar", detalle="Toca para abrir"),
             ItemClase(
                 clase.pk, "tarea", "Foto de la PC armada", "/tareas/7", icono="camara", color="ico-ambar", boton="Subir foto o archivo",
-                limite=ahora + timedelta(hours=5), chip="Por entregar", chip_clase="chip-aviso", cuenta_en_avance=True,
+                limite=fin_de_hoy, chip="Por entregar", chip_clase="chip-aviso", cuenta_en_avance=True,
                 clase_titulo=clase.titulo, modulo_nombre=m.nombre, modulo_id=m.pk, id=7, detalle="Entregar foto o archivo",
             ),
             ItemClase(
