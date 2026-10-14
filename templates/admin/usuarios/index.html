@@ -87,7 +87,7 @@
         {% for x in usuarios %}
           {% with wa=x.telefono|whatsapp_url %}
           <tr class="{% if not x.is_active %}inactiva{% endif %}">
-            <td class="col-marca" data-titulo="">{% if not x.es_yo %}<input type="checkbox" name="ids[]" value="{{ x.id }}" form="lote" aria-label="Marcar a {{ x.nombre_completo }}">{% endif %}</td>
+            <td class="col-marca" data-titulo="">{% if not x.es_yo %}<label class="marca-modulo"><input type="checkbox" name="ids[]" value="{{ x.id }}" form="lote" aria-label="Marcar a {{ x.nombre_completo }}"></label>{% endif %}</td>
             <td data-titulo="Usuario">
               <a class="persona" href="{% url 'cuentas:admin_editar_persona' x.id %}">
                 <span class="avatar" aria-hidden="true" style="background:var(--azul);width:40px;height:40px;font-size:.875rem">{{ x.iniciales }}</span>

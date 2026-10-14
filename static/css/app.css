@@ -162,7 +162,7 @@ h1, h2, h3 { font-weight: 800; letter-spacing: -.01em; }
 @media (min-width: 576px) { .tarjeta.p { padding: 1.375rem; } }
 .seccion-titulo { font-size: 1.25rem; font-weight: 800; margin: 1.75rem 0 .75rem; display: flex; align-items: center; gap: .5rem; }
 .seccion-titulo:first-child { margin-top: 0; }
-.seccion-titulo .ver-todo { margin-left: auto; font-size: 1rem; font-weight: 700; text-decoration: none; }
+.seccion-titulo .ver-todo { margin-left: auto; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
 .texto-2 { color: var(--texto-2); }
 .lista-filas { list-style: none; margin: 0; padding: 0; }
 .lista-filas > li + li { border-top: 1px solid #EDF0F5; }
@@ -315,7 +315,7 @@ a.dato:hover { color: var(--texto); box-shadow: var(--sombra-alta); }
 .btn-whatsapp:hover { background: #14532D; color: #fff; }
 .btn-peligro { background: #fff; border: 2px solid var(--rojo); color: var(--rojo-oscuro); }
 .btn-peligro:hover { background: var(--rojo-claro); color: var(--rojo-oscuro); }
-.btn-texto { background: none; border: 0; color: var(--rojo-oscuro); font-weight: 700; min-height: 44px; padding: 0 .5rem; font-size: .9375rem; }
+.btn-texto { background: none; border: 0; color: var(--rojo-oscuro); font-weight: 700; min-height: 44px; min-width: 44px; padding: 0 .5rem; font-size: .9375rem; }
 .btn-texto:hover { text-decoration: underline; color: var(--rojo-oscuro); }
 .btn-subir {
   width: 100%; min-height: 120px; border: 2px dashed #6B7A99; border-radius: var(--radio); background: #fff; color: var(--azul);
@@ -418,6 +418,7 @@ textarea.form-control { min-height: 96px; }
 .tabla-notas { width: 100%; border-collapse: collapse; font-size: 1rem; }
 .tabla-notas th { background: #F5F7FB; color: var(--texto-2); font-size: .875rem; font-weight: 800; text-align: left; padding: .625rem .75rem; white-space: nowrap; }
 .tabla-notas td { padding: .625rem .75rem; border-top: 1px solid #EDF0F5; vertical-align: middle; }
+.tabla-notas td a { display: inline-flex; align-items: center; min-height: 44px; }
 .tabla-notas .num { text-align: center; }
 .tabla-notas .bajo { color: var(--mal); font-weight: 800; }
 .tabla-scroll { overflow-x: auto; border-radius: var(--radio); }
@@ -767,7 +768,7 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .curso-bb[hidden] { display: none; }
 .curso-bb-esp { font-size: .8125rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--color, var(--navy)); }
 .curso-bb-titulo { font-size: 1.25rem; font-weight: 800; line-height: 1.25; margin: .125rem 0 .375rem; }
-.curso-bb-titulo a { color: var(--texto); text-decoration: none; }
+.curso-bb-titulo a { color: var(--texto); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
 .curso-bb-titulo a:hover { text-decoration: underline; }
 .curso-bb-meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; color: var(--texto-2); font-weight: 600; }
 .curso-bb-mas summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: .375rem; min-height: 44px; font-weight: 800; color: var(--azul-oscuro); }
@@ -858,6 +859,10 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .form-tema { margin: 0; }
 .tema-esquina { position: fixed; top: .75rem; right: .75rem; z-index: 50; }
 .tema-esquina .btn { min-height: 44px; font-size: .9375rem; box-shadow: var(--sombra); }
+@media (max-width: 991.98px) {
+  .tema-esquina { position: absolute; } /* en celular se va con la página: no queda tapando lo que se lee al bajar */
+  .publica-marca { padding-right: 10.75rem; } /* deja lugar al botón para que no tape el nombre del CETPRO */
+}
 
 /* ===== Modo oscuro =====
    Se activa con data-tema="oscuro" (botón «Modo oscuro» o Mi cuenta). Las reglas llevan :where() para no subir su
@@ -1091,14 +1096,14 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .tabla-gestion tr.inactiva td:not([data-titulo="Acciones"]) { opacity: .72; } /* el menú «Más» de la fila no se apaga */
 .tabla-gestion .col-marca { width: 44px; text-align: center; }
 .tabla-gestion .col-marca input { width: 22px; height: 22px; cursor: pointer; }
-.tabla-gestion .persona { display: flex; align-items: center; gap: .625rem; color: var(--texto); text-decoration: none; }
+.tabla-gestion .persona { display: flex; align-items: center; gap: .625rem; min-height: 44px; color: var(--texto); text-decoration: none; }
 .tabla-gestion .persona .cuerpo { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
 .tabla-gestion .persona .detalle { font-size: .875rem; color: var(--texto-2); }
 .acciones-fila { display: flex; flex-wrap: wrap; gap: .25rem; }
 .acciones-fila .btn { white-space: nowrap; }
 .acciones-fila form { margin: 0; }
-.acciones-fila .btn { min-height: 40px; font-size: .8125rem; padding: .25rem .5rem; gap: .25rem; }
-.btn-icono-chico { width: 36px; min-height: 36px; }
+.acciones-fila .btn { min-height: 44px; font-size: .8125rem; padding: .25rem .5rem; gap: .25rem; }
+.btn-icono-chico { width: 44px; min-height: 44px; }
 .pie-tabla { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem; }
 .paginador { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; }
 .paginador .pag { min-width: 44px; min-height: 44px; padding: 0 .75rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--borde-campo); background: var(--superficie); color: var(--texto); font-weight: 700; text-decoration: none; }
@@ -1130,7 +1135,7 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .modulo-admin.archivado > :not(.acciones-card) { opacity: .8; } /* los botones y el menú «Opciones» no se apagan */
 .modulo-admin-cabeza { display: flex; align-items: center; gap: .625rem; flex-wrap: wrap; }
 .modulo-admin-cabeza .curso-bb-esp { flex: 1; min-width: 0; }
-.marca-modulo { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: 0; cursor: pointer; }
+.marca-modulo { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 0; cursor: pointer; }
 .marca-modulo input { width: 22px; height: 22px; cursor: pointer; }
 .modulo-admin .curso-bb-titulo { margin: 0; }
 .modulo-admin-datos { margin: 0 0 .25rem; }
@@ -1201,7 +1206,7 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 
 /* Personas: «Más» abre hacia abajo (las últimas filas, hacia arriba) y no se corta dentro de la tabla */
 .acciones-fila .menu-opciones { flex: none; }
-.menu-fila > summary { min-height: 40px; font-size: .8125rem; padding: .25rem .625rem; gap: .25rem; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
+.menu-fila > summary { min-height: 44px; font-size: .8125rem; padding: .25rem .625rem; gap: .25rem; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
 .menu-fila[open] > summary .icono { transform: rotate(180deg); }
 .menu-fila .menu-opciones-lista { top: calc(100% + 6px); bottom: auto; right: 0; left: auto; min-width: 250px; }
 .tabla-gestion tbody tr:nth-last-child(-n+2) .menu-fila .menu-opciones-lista { top: auto; bottom: calc(100% + 6px); }
