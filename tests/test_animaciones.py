@@ -186,6 +186,31 @@ def test_el_javascript_del_fondo_respeta_el_aparato_el_dedo_y_la_eleccion_guarda
     assert "Poner el movimiento del fondo" in bloque and "Quitar el movimiento del fondo" in bloque
 
 
+def test_el_fondo_trae_el_lienzo_del_cielo_y_los_utiles_escolares_que_flotan(client):
+    html = client.get(reverse("cuentas:login")).content.decode()
+    assert html.count("<canvas") == 1 and "data-cielo" in html
+    assert html.count('class="figura"') == 7 and html.count('class="punto"') == 3  # cuaderno, lápiz, libro, regla…
+    assert html.index("<canvas") < html.index('class="figura"')  # las figuras quedan por encima del cielo
+
+
+def test_el_cielo_es_liviano_se_ve_igual_en_cada_visita_y_se_detiene_del_todo():
+    cielo = JS[JS.index("Cielo de galaxia de la entrada") : JS.index("Fondo vivo de la entrada")]
+    assert "Math.min(200" in cielo and "0.026" in cielo  # tope de estrellas y unos 38 cuadros por segundo
+    assert "shadowBlur" not in cielo and "filter" not in cielo  # el desenfoque pesa en computadoras viejas
+    assert "semilla = 20260; // la misma semilla" in cielo  # sin números al azar distintos en cada visita
+    assert "cancelAnimationFrame" in cielo and "dibujar(0)" in cielo  # al detenerlo queda una imagen fija
+    principal = JS[JS.index("Fondo vivo de la entrada") : JS.index("Al enviar fotos o archivos")]
+    assert "cielo.correr(visible && !quieto && !sinMovimiento())" in principal
+    assert "fondo.offsetWidth > 0" in principal  # en celular el fondo está escondido: el cielo no corre
+    assert "cielo.mover(px, py)" in principal and "cielo.mover(0, 0)" in principal  # el ratón también lo mueve un poco
+
+
+def test_el_lienzo_ocupa_todo_el_lado_de_la_marca_y_el_circulo_viejo_cede_su_lugar():
+    bloque = CSS[CSS.index("Entrada: fondo vivo") :]
+    assert re.search(r"\.estrellas \{[^}]*inset: 0[^}]*width: 100%[^}]*height: 100%", bloque)
+    assert ".publica-lado::after { display: none; }" in bloque
+
+
 def test_solo_se_animan_cosas_baratas_para_el_celular():
     """Las animaciones nuevas solo mueven transform y opacity (no width, height, top…): corren bien en celulares sencillos."""
     desde = CSS.index("/* ===== Animaciones")

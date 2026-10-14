@@ -700,15 +700,218 @@
     }
   } catch (e) { /* sin almacenamiento del navegador: no pasa nada */ }
 
-  // Fondo vivo de la entrada: las luces y figuras se mueven un poco al mover el ratón (solo con ratón y pantalla ancha).
+  // Cielo de galaxia de la entrada, dibujado en un lienzo: estrellas de tres profundidades que van pasando despacio y titilan,
+  // una galaxia en espiral que gira muy lento y, de vez en cuando, una estrella fugaz. Es ligero (unas 100 a 200 estrellas, unos
+  // 38 cuadros por segundo) y, mientras está detenido, deja dibujada una sola imagen fija.
+  var crearCielo = function (lienzo, caja) {
+    var ctx = lienzo.getContext && lienzo.getContext('2d');
+    if (!ctx) { return null; }
+    var TAU = Math.PI * 2;
+    var COLORES = ['255,255,255', '205,228,255', '165,203,255'];
+    var PROFUNDIDAD = [8, 16, 30]; // cuánto se corre cada capa con el ratón (px)
+    var VELOCIDAD = [3, 7, 13]; // cuánto avanza cada capa (px por segundo)
+    var estrellas = [];
+    var brazos = [];
+    var fugaz = null;
+    var ancho = 0;
+    var alto = 0;
+    var corriendo = false;
+    var cuadroId = 0;
+    var ultimo = 0;
+    var giro = 0;
+    var tiempo = 0;
+    var proxima = 0;
+    var mirandoX = 0;
+    var mirandoY = 0;
+    var ratonX = 0;
+    var ratonY = 0;
+    var semilla = 20260;
+    var azar = function () { semilla = (semilla * 16807) % 2147483647; return (semilla - 1) / 2147483646; };
+
+    var generar = function () {
+      semilla = 20260; // la misma semilla: el cielo se ve igual en cada visita
+      estrellas = [];
+      var cuantas = Math.max(50, Math.min(200, Math.round(ancho * alto / 5000)));
+      for (var i = 0; i < cuantas; i++) {
+        var capa = i % 10 === 0 ? 2 : (i % 3 === 0 ? 1 : 0); // pocas grandes, algunas medianas, muchas chicas
+        estrellas.push({
+          x: azar() * ancho, y: azar() * alto, capa: capa,
+          r: [0.7, 1.1, 1.7][capa] * (0.8 + azar() * 0.5),
+          alfa: [0.5, 0.7, 0.95][capa],
+          fase: azar() * TAU, ritmo: 0.6 + azar() * 1.6,
+          estilo: 'rgb(' + COLORES[Math.floor(azar() * COLORES.length)] + ')'
+        });
+      }
+      // Galaxia: dos brazos en espiral hechos de puntitos, y un centro más denso y cálido.
+      brazos = [];
+      for (var k = 0; k < 1100; k++) {
+        var nucleo = k < 200;
+        var t = nucleo ? azar() * 0.18 : 0.12 + azar() * 0.88;
+        brazos.push({
+          radio: nucleo ? t : Math.pow(t, 0.85),
+          angulo: (nucleo ? azar() * TAU : (k % 2) * Math.PI + t * 9.4 + (azar() - 0.5) * (0.9 - t * 0.5)),
+          r: 0.8 + azar() * (nucleo ? 1.2 : 1.3),
+          alfa: nucleo ? 0.8 : 0.85 * (1 - t * 0.55),
+          estilo: nucleo ? 'rgb(255,236,205)' : (azar() < 0.5 ? 'rgb(190,220,255)' : 'rgb(150,195,255)')
+        });
+      }
+    };
+
+    var dibujarGalaxia = function () {
+      var tam = Math.min(ancho, alto) * 0.58;
+      var cx = ancho * 0.72 - ratonX * 22;
+      var cy = alto * 0.82 - ratonY * 22;
+      var inclina = -0.42;
+      var c = Math.cos(inclina);
+      var s = Math.sin(inclina);
+      var brillo = ctx.createRadialGradient(cx, cy, 0, cx, cy, tam * 0.9);
+      brillo.addColorStop(0, 'rgba(255,238,210,.30)');
+      brillo.addColorStop(0.15, 'rgba(170,205,255,.15)');
+      brillo.addColorStop(1, 'rgba(120,170,255,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = brillo;
+      ctx.fillRect(cx - tam, cy - tam, tam * 2, tam * 2);
+      for (var i = 0; i < brazos.length; i++) {
+        var b = brazos[i];
+        var a = b.angulo + giro; // gira entera, muy despacio
+        var x = Math.cos(a) * b.radio * tam;
+        var y = Math.sin(a) * b.radio * tam * 0.42; // vista de lado
+        ctx.globalAlpha = b.alfa;
+        ctx.fillStyle = b.estilo;
+        ctx.fillRect(cx + x * c - y * s, cy + x * s + y * c, b.r, b.r);
+      }
+    };
+
+    var dibujar = function (dt) {
+      ctx.clearRect(0, 0, ancho, alto);
+      dibujarGalaxia();
+      for (var i = 0; i < estrellas.length; i++) {
+        var e = estrellas[i];
+        if (dt) {
+          e.x += 0.28 * VELOCIDAD[e.capa] * dt; // las estrellas van pasando hacia arriba y un poco a la derecha
+          e.y -= 0.96 * VELOCIDAD[e.capa] * dt;
+          if (e.y < -6) { e.y = alto + 6; e.x = azar() * ancho; }
+          if (e.x > ancho + 6) { e.x = -6; }
+        }
+        var x = e.x - ratonX * PROFUNDIDAD[e.capa];
+        var y = e.y - ratonY * PROFUNDIDAD[e.capa];
+        var brillo = e.alfa * (0.62 + 0.38 * Math.sin(tiempo * e.ritmo + e.fase));
+        ctx.globalAlpha = brillo;
+        ctx.fillStyle = e.estilo;
+        if (e.capa === 0) {
+          ctx.fillRect(x, y, e.r * 1.5, e.r * 1.5);
+        } else {
+          ctx.beginPath();
+          ctx.arc(x, y, e.r, 0, TAU);
+          ctx.fill();
+          if (e.capa === 2) { // las más grandes tienen destello en cruz
+            ctx.globalAlpha = brillo * 0.55;
+            ctx.fillRect(x - e.r * 4, y - 0.35, e.r * 8, 0.7);
+            ctx.fillRect(x - 0.35, y - e.r * 4, 0.7, e.r * 8);
+          }
+        }
+      }
+      if (fugaz) {
+        var f = fugaz;
+        var avance = f.edad / f.vida;
+        var hx = f.x + f.vx * f.edad;
+        var hy = f.y + f.vy * f.edad;
+        var cola = ctx.createLinearGradient(hx, hy, hx - f.vx * 0.22, hy - f.vy * 0.22);
+        cola.addColorStop(0, 'rgba(255,255,255,.95)');
+        cola.addColorStop(1, 'rgba(160,200,255,0)');
+        ctx.globalAlpha = Math.sin(avance * Math.PI);
+        ctx.strokeStyle = cola;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(hx, hy);
+        ctx.lineTo(hx - f.vx * 0.22, hy - f.vy * 0.22);
+        ctx.stroke();
+        if (dt) {
+          f.edad += dt;
+          if (f.edad >= f.vida) { fugaz = null; }
+        }
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    var paso = function (ahora) {
+      cuadroId = 0;
+      if (!corriendo) { return; }
+      var t = ahora / 1000;
+      if (t - ultimo >= 0.026) {
+        var dt = Math.min(0.1, t - ultimo);
+        ultimo = t;
+        tiempo += dt;
+        giro += dt * 0.04;
+        ratonX += (mirandoX - ratonX) * Math.min(1, dt * 4);
+        ratonY += (mirandoY - ratonY) * Math.min(1, dt * 4);
+        if (!fugaz && tiempo >= proxima) {
+          fugaz = { x: ancho * (0.45 + Math.random() * 0.5), y: alto * Math.random() * 0.35, vx: -520, vy: 290, edad: 0, vida: 0.9 };
+          proxima = tiempo + 7 + Math.random() * 8;
+        }
+        dibujar(dt);
+      }
+      cuadroId = window.requestAnimationFrame(paso);
+    };
+
+    return {
+      ajustar: function () {
+        ancho = caja.clientWidth;
+        alto = caja.clientHeight;
+        if (!ancho || !alto) { return false; }
+        var escala = Math.min(window.devicePixelRatio || 1, 1.5);
+        lienzo.width = Math.round(ancho * escala);
+        lienzo.height = Math.round(alto * escala);
+        ctx.setTransform(escala, 0, 0, escala, 0, 0);
+        generar();
+        if (!proxima) { proxima = 5; }
+        dibujar(0);
+        return true;
+      },
+      correr: function (si) {
+        if (si) {
+          if (!corriendo && ancho) {
+            corriendo = true;
+            ultimo = window.performance.now() / 1000;
+            cuadroId = window.requestAnimationFrame(paso);
+          }
+          return;
+        }
+        corriendo = false;
+        if (cuadroId) { window.cancelAnimationFrame(cuadroId); cuadroId = 0; }
+        mirandoX = 0;
+        mirandoY = 0;
+        ratonX = 0;
+        ratonY = 0;
+        fugaz = null;
+        if (ancho) { dibujar(0); } // queda una imagen fija del cielo
+      },
+      mover: function (x, y) { mirandoX = x; mirandoY = y; }
+    };
+  };
+
+  // Fondo vivo de la entrada: las luces, las figuras y el cielo se mueven un poco al mover el ratón (solo con ratón y pantalla ancha).
   // «Quitar el movimiento del fondo» lo detiene y se recuerda en este aparato.
   var lado = document.querySelector('.publica-lado');
   var fondo = lado && lado.querySelector('.fondo-vivo');
   if (fondo) {
     var pausa = lado.querySelector('[data-fondo-pausa]');
+    var cielo = null;
+    var lienzoCielo = fondo.querySelector('canvas[data-cielo]');
+    if (lienzoCielo) { cielo = crearCielo(lienzoCielo, lado); }
     var quieto = false;
     try { quieto = localStorage.getItem('fondo-quieto') === '1'; } catch (e) { /* sin almacenamiento */ }
-    var centrarFondo = function () { fondo.style.setProperty('--px', 0); fondo.style.setProperty('--py', 0); };
+    var centrarFondo = function () {
+      fondo.style.setProperty('--px', 0);
+      fondo.style.setProperty('--py', 0);
+      if (cielo) { cielo.mover(0, 0); }
+    };
+    // Mueve el cielo solo si hay lugar donde verlo, nadie pidió menos movimiento y no se quitó el movimiento del fondo.
+    var actualizarCielo = function () {
+      if (!cielo) { return; }
+      var visible = fondo.offsetWidth > 0 && cielo.ajustar();
+      cielo.correr(visible && !quieto && !sinMovimiento());
+    };
     var ponerQuieto = function (valor) {
       quieto = valor;
       lado.classList.toggle('fondo-quieto', valor);
@@ -716,10 +919,17 @@
       if (pausa) { pausa.textContent = valor ? 'Poner el movimiento del fondo' : 'Quitar el movimiento del fondo'; }
     };
     ponerQuieto(quieto);
+    actualizarCielo();
+    if (window.ResizeObserver) {
+      new window.ResizeObserver(actualizarCielo).observe(lado);
+    } else {
+      window.addEventListener('resize', actualizarCielo);
+    }
     if (pausa) {
       pausa.addEventListener('click', function () {
         ponerQuieto(!quieto);
         try { localStorage.setItem('fondo-quieto', quieto ? '1' : '0'); } catch (e) { /* vale solo en esta visita */ }
+        if (cielo) { cielo.correr(!quieto && !sinMovimiento()); }
       });
     }
     if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 992px)').matches) {
@@ -731,6 +941,7 @@
         var caja = lado.getBoundingClientRect();
         px = (ev.clientX - caja.left) / caja.width - 0.5;
         py = (ev.clientY - caja.top) / caja.height - 0.5;
+        if (cielo) { cielo.mover(px, py); }
         if (!cuadro) {
           cuadro = window.requestAnimationFrame(function () {
             cuadro = 0;
