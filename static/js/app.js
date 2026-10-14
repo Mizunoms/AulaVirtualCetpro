@@ -700,6 +700,49 @@
     }
   } catch (e) { /* sin almacenamiento del navegador: no pasa nada */ }
 
+  // Fondo vivo de la entrada: las luces y figuras se mueven un poco al mover el ratón (solo con ratón y pantalla ancha).
+  // «Quitar el movimiento del fondo» lo detiene y se recuerda en este aparato.
+  var lado = document.querySelector('.publica-lado');
+  var fondo = lado && lado.querySelector('.fondo-vivo');
+  if (fondo) {
+    var pausa = lado.querySelector('[data-fondo-pausa]');
+    var quieto = false;
+    try { quieto = localStorage.getItem('fondo-quieto') === '1'; } catch (e) { /* sin almacenamiento */ }
+    var centrarFondo = function () { fondo.style.setProperty('--px', 0); fondo.style.setProperty('--py', 0); };
+    var ponerQuieto = function (valor) {
+      quieto = valor;
+      lado.classList.toggle('fondo-quieto', valor);
+      if (valor) { centrarFondo(); }
+      if (pausa) { pausa.textContent = valor ? 'Poner el movimiento del fondo' : 'Quitar el movimiento del fondo'; }
+    };
+    ponerQuieto(quieto);
+    if (pausa) {
+      pausa.addEventListener('click', function () {
+        ponerQuieto(!quieto);
+        try { localStorage.setItem('fondo-quieto', quieto ? '1' : '0'); } catch (e) { /* vale solo en esta visita */ }
+      });
+    }
+    if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine) and (min-width: 992px)').matches) {
+      var cuadro = 0;
+      var px = 0;
+      var py = 0;
+      lado.addEventListener('pointermove', function (ev) {
+        if (quieto || sinMovimiento() || ev.pointerType === 'touch') { return; }
+        var caja = lado.getBoundingClientRect();
+        px = (ev.clientX - caja.left) / caja.width - 0.5;
+        py = (ev.clientY - caja.top) / caja.height - 0.5;
+        if (!cuadro) {
+          cuadro = window.requestAnimationFrame(function () {
+            cuadro = 0;
+            fondo.style.setProperty('--px', px.toFixed(3));
+            fondo.style.setProperty('--py', py.toFixed(3));
+          });
+        }
+      });
+      lado.addEventListener('pointerleave', centrarFondo);
+    }
+  }
+
   // Al enviar fotos o archivos el botón muestra «Enviando…» y un segundo toque no la manda dos veces.
   var restablecerBoton = function (form) {
     var boton = form.querySelector('.btn.ocupado');

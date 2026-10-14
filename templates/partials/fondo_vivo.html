@@ -1,0 +1,27 @@
+{% comment %}
+  Fondo vivo de la pantalla de entrada (solo en pantalla ancha): dos luces que respiran y unas figuras que flotan.
+  Es solo adorno: aria-hidden y sin foco. Con el ratón se mueven un poco (app.js, --px y --py); cada figura va dentro de una
+  «capa» porque el movimiento del ratón y el de flotar no pueden ir en el mismo elemento (uno pisaría al otro).
+  En celular, con «Reducir animaciones», con movimiento reducido del aparato y con alto contraste no se mueve o no se ve.
+{% endcomment %}
+<div class="fondo-vivo" aria-hidden="true">
+  <div class="fondo-capa capa-luz-1" style="--prof: -26"><span class="luz luz-1"></span></div>
+  <div class="fondo-capa capa-luz-2" style="--prof: 34"><span class="luz luz-2"></span></div>
+
+  <div class="fondo-capa fig-1" style="--prof: 42">
+    <svg class="figura" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h8M8 11h8"/></svg>
+  </div>
+  <div class="fondo-capa fig-2" style="--prof: -32">
+    <svg class="figura" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  </div>
+  <div class="fondo-capa fig-3" style="--prof: 22">
+    <svg class="figura" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.2-6.3-4.6-6.3 4.6 2.3-7.2-6-4.6h7.6z"/></svg>
+  </div>
+  <div class="fondo-capa fig-4" style="--prof: -20">
+    <svg class="figura" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </div>
+
+  <div class="fondo-capa punto-1" style="--prof: 16"><span class="punto"></span></div>
+  <div class="fondo-capa punto-2" style="--prof: -22"><span class="punto"></span></div>
+  <div class="fondo-capa punto-3" style="--prof: 30"><span class="punto"></span></div>
+</div>

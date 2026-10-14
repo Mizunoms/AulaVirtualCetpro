@@ -135,6 +135,57 @@ def test_el_javascript_respeta_menos_movimiento():
     assert "!sinMovimiento() && !sessionStorage.getItem('campana-sonada')" in JS
 
 
+# ===================================================================== Fondo vivo de la pantalla de entrada
+
+
+def test_la_entrada_trae_el_fondo_vivo_como_adorno_con_su_boton_para_quitarlo(client):
+    for url in (reverse("cuentas:login"), reverse("cuentas:registro")):
+        html = client.get(url).content.decode()
+        assert 'class="fondo-vivo" aria-hidden="true"' in html, url  # solo adorno: los lectores de pantalla no lo leen
+        assert html.count('class="fondo-capa') >= 9 and "Quitar el movimiento del fondo" in html, url
+        assert "data-fondo-pausa" in html and not re.findall(r"<script(?![^>]*\bsrc=)", html), url  # sin JS en línea
+
+
+def test_las_capas_del_fondo_se_mueven_en_sentidos_opuestos_con_distinta_profundidad():
+    html = (RAIZ / "templates" / "partials" / "fondo_vivo.html").read_text(encoding="utf-8")
+    profundidades = [int(p) for p in re.findall(r'class="fondo-capa[^"]*" style="--prof: (-?\d+)"', html)]
+    assert len(profundidades) == html.count('class="fondo-capa') >= 9  # todas traen su profundidad
+    assert any(p < 0 for p in profundidades) and any(p > 0 for p in profundidades) and len(set(profundidades)) >= 6
+
+
+def test_el_efecto_del_raton_y_el_de_flotar_no_van_en_el_mismo_elemento():
+    """Si los dos usan `transform` en el mismo elemento, la animación pisa al ratón y el efecto no se ve."""
+    desde = CSS.index("Entrada: fondo vivo")
+    bloque = CSS[desde:]
+    capa = re.search(r"\.fondo-capa \{([^}]*)\}", bloque).group(1)
+    assert "var(--px" in capa and "animation" not in capa
+    for clase in (".luz", ".figura", ".punto"):
+        regla = re.search(r"\n\s*" + re.escape(clase) + r" \{([^}]*)\}", bloque).group(1)
+        assert "animation:" in regla and "--px" not in regla, clase
+
+
+def test_el_fondo_vivo_solo_se_ve_en_pantalla_ancha_y_se_detiene_o_esconde_cuando_corresponde():
+    bloque = CSS[CSS.index("Entrada: fondo vivo") :]
+    assert ".fondo-vivo, .fondo-pausa { display: none; }" in bloque
+    assert bloque.index(".fondo-vivo, .fondo-pausa { display: none; }") < bloque.index("@media (min-width: 992px) {")
+    assert ".fondo-quieto .luz, .fondo-quieto .figura, .fondo-quieto .punto { animation-play-state: paused; }" in bloque
+    assert "@media (min-width: 992px) and (prefers-reduced-motion: reduce) { .fondo-pausa { display: none; } }" in bloque
+    assert (
+        "body.sin-animacion .fondo-pausa, body.alto-contraste .fondo-pausa, body.alto-contraste .fondo-vivo { display: none; }"
+        in bloque
+    )
+    assert "backdrop-filter: blur" not in bloque and "filter: blur" not in bloque  # el desenfoque pesa en computadoras viejas
+
+
+def test_el_javascript_del_fondo_respeta_el_aparato_el_dedo_y_la_eleccion_guardada():
+    bloque = JS[JS.index("Fondo vivo de la entrada") : JS.index("Al enviar fotos o archivos")]
+    assert "(hover: hover) and (pointer: fine) and (min-width: 992px)" in bloque  # solo ratón y pantalla ancha
+    assert "ev.pointerType === 'touch'" in bloque and "sinMovimiento()" in bloque and "requestAnimationFrame" in bloque
+    assert re.search(r"try \{ quieto = localStorage\.getItem\('fondo-quieto'\) === '1'; \} catch", bloque)
+    assert re.search(r"try \{ localStorage\.setItem\('fondo-quieto', quieto \? '1' : '0'\); \} catch", bloque)
+    assert "Poner el movimiento del fondo" in bloque and "Quitar el movimiento del fondo" in bloque
+
+
 def test_solo_se_animan_cosas_baratas_para_el_celular():
     """Las animaciones nuevas solo mueven transform y opacity (no width, height, top…): corren bien en celulares sencillos."""
     desde = CSS.index("/* ===== Animaciones")
