@@ -795,7 +795,7 @@ def unirse(request):
     if not m.inscripcion_abierta:
         return volver_con_error(request, volver, "Ese módulo ya no acepta alumnos nuevos. Habla con tu profesor.")
     m.matricular(u)
-    ok(request, f"¡Listo! Ya estás en {m.nombre}.")
+    ok(request, f"¡Listo! Ya estás en {m.nombre}.", celebrar=True)
     return redirect("academico:modulo", id=m.pk)
 
 

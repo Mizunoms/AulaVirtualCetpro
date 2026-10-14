@@ -252,7 +252,11 @@ def publicar(request, id):
     f.save(update_fields=["publicado"])
     if publicar_ and not era_publico and f.clase.situacion != "proxima":
         Notificacion.a_alumnos(modulo, f"Nuevo formulario para responder: {f.titulo}", reverse("formularios:ver", args=[id]))
-    ok(request, "¡Publicado! Tus alumnos ya lo ven en su Inicio." if publicar_ else "Oculto. Tus alumnos ya no lo ven.")
+    ok(
+        request,
+        "¡Publicado! Tus alumnos ya lo ven en su Inicio." if publicar_ else "Oculto. Tus alumnos ya no lo ven.",
+        celebrar=publicar_,
+    )
     return redirect("formularios:ver", id=id)
 
 

@@ -19,8 +19,8 @@ class Paso:
 _VER_Y_ESCUCHAR = Paso(
     "letra",
     "Para ver y escuchar mejor",
-    "En «Mi cuenta» puedes poner la letra más grande, usar colores de alto contraste o el modo oscuro, "
-    "y activar «Leer en voz alta» para que te lean los textos.",
+    "En «Mi cuenta» puedes poner la letra más grande, usar colores de alto contraste o el modo oscuro, reducir las "
+    "animaciones y activar «Leer en voz alta» para que te lean los textos.",
 )
 _DUDAS = Paso(
     "ayuda",

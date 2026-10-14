@@ -81,7 +81,7 @@
 
     <main id="contenido" class="app-main" tabindex="-1">
       {% for mensaje in messages %}
-        <div class="mensaje mensaje-{% if mensaje.tags == 'error' %}error{% else %}ok{% endif %}" role="{% if mensaje.tags == 'error' %}alert{% else %}status{% endif %}">
+        <div class="mensaje mensaje-{% if mensaje.tags == 'error' %}error{% else %}ok{% endif %}"{% if 'celebrar' in mensaje.tags %} data-celebrar{% endif %} role="{% if mensaje.tags == 'error' %}alert{% else %}status{% endif %}">
           {% if mensaje.tags == 'error' %}{% icono 'alerta' %}{% else %}{% icono 'check' %}{% endif %}
           <span>{{ mensaje }}</span>
         </div>

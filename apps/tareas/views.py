@@ -297,7 +297,7 @@ def guardar(request, id):
     t = Tarea.objects.create(**datos)
     if clase.situacion != "proxima":
         Notificacion.a_alumnos(m, f"Nueva tarea: {titulo}", reverse("tareas:ver", args=[t.pk]))
-    ok(request, "¡Tarea publicada! Tus alumnos ya la ven en su Inicio.")
+    ok(request, "¡Tarea publicada! Tus alumnos ya la ven en su Inicio.", celebrar=True)
     return redirect(reverse("tareas:ver", args=[t.pk]) + "?publicada=1")
 
 
@@ -415,7 +415,7 @@ def entregar(request, id):
     Entrega.objects.update_or_create(tarea=t, alumno=request.user, defaults={**datos, "fecha_entrega": timezone.now()})
     if anterior:
         archivos.borrar(anterior)
-    ok(request, "¡Tarea entregada! Te avisaremos cuando tenga nota.")
+    ok(request, "¡Tarea entregada! Te avisaremos cuando tenga nota.", celebrar=True)
     return redirect(volver)
 
 

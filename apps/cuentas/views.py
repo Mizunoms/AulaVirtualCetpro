@@ -123,6 +123,7 @@ def preferencias(request):
             "tamano_letra": letra if letra in TamanoLetra.values else TamanoLetra.NORMAL,
             "alto_contraste": "alto_contraste" in request.POST,
             "lectura_voz": "lectura_voz" in request.POST,
+            "reducir_movimiento": "reducir_movimiento" in request.POST,
         },
     )
     respuesta = redirect("cuentas:cuenta")
@@ -224,5 +225,5 @@ def _guardar_nueva_clave(request, u):
     Registro.anotar(u, "clave", f"{u.nombre_completo} eligió su contraseña nueva al entrar.", request)
     request.session.pop("_registro_listo", None)
     request.session.pop("_clave_despues", None)
-    ok(request, "¡Listo! Ya puedes usar el aula. Esta es tu contraseña desde ahora.")
+    ok(request, "¡Listo! Ya puedes usar el aula. Esta es tu contraseña desde ahora.", celebrar=True)
     return redirect("nucleo:inicio")

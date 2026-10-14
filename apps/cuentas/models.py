@@ -196,6 +196,7 @@ class Preferencia(models.Model):
     tamano_letra = models.CharField(max_length=10, choices=TamanoLetra.choices, default=TamanoLetra.NORMAL)
     alto_contraste = models.BooleanField(default=False)
     lectura_voz = models.BooleanField(default=False)
+    reducir_movimiento = models.BooleanField("reducir animaciones", default=False)
     modo_asistente = models.CharField(max_length=10, choices=[("escrito", "Escrito"), ("voz", "Voz")], default="escrito")
     actualizado = models.DateTimeField(auto_now=True)
 

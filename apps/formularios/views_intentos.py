@@ -316,7 +316,7 @@ def entregar(request, id):
                 archivos.borrar(ruta)
             return _responder(request, i, f, modulo, entrada, f"{ex} Vuelve a elegir tus archivos.")
     calificar.entregar(i, f, preguntas, entrada, guardados)
-    ok(request, f.mensaje_final or "¡Enviado! Tus respuestas se guardaron.")
+    ok(request, f.mensaje_final or "¡Enviado! Tus respuestas se guardaron.", celebrar=True)
     return redirect("formularios:intento", id=id)
 
 

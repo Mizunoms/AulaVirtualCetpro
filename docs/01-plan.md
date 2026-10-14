@@ -64,5 +64,6 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Pruebas de aceptación con el cliente HTTP del sistema anterior (`aceptacion/`, 536 comprobaciones, ver README)
 - [x] Guía de puesta en marcha con guion de prueba con un profesor y un celular (`docs/03-puesta-en-marcha.md`)
 - [x] Ayuda: tutorial que se abre solo UNA vez (la primera que la persona ve su Inicio; después solo con «Repetir tutorial») para alumno, docente, administración y dirección (un paso a la vez, con teclado, lector de pantalla y «Escuchar»), pantalla «Ayuda» con el resumen del sistema y botones «Repetir tutorial» (`apps/nucleo/ayuda.py`)
+- [x] Animaciones suaves (solo transform y opacidad): las pantallas aparecen con suavidad, los botones responden al toque, números y barras del Inicio suben, la campana suena una vez, «Enviando…» al subir fotos y confeti al lograr algo (entregar, publicar, terminar un examen o el tutorial). Se apagan con «Reducir animaciones» (Mi cuenta) o si el aparato pide menos movimiento
 - [x] Revisión de accesibilidad en celular (375 px): 113 pantallas de alumno, docente y administrador; modo oscuro, letra muy grande y alto contraste
 - [x] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/02-servidor-windows.md` (IIS y NSSM sin probar en un servidor real)

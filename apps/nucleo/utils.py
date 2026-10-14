@@ -95,8 +95,9 @@ def volver_con_error(request, ruta, mensaje):
     return redirect(ruta)
 
 
-def ok(request, texto):
-    messages.success(request, texto)
+def ok(request, texto, celebrar=False):
+    """Mensaje de «todo salió bien». Con `celebrar`, la pantalla lo festeja con una pequeña animación (un logro de la persona)."""
+    messages.success(request, texto, extra_tags="celebrar" if celebrar else "")
 
 
 def error(request, texto):

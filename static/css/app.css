@@ -1280,3 +1280,82 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .aviso-clave .btn { flex: 0 0 auto; }
 @media (min-width: 992px) { .aviso-clave { padding-inline: max(2rem, calc((100% - var(--ancho-max)) / 2 + 2rem)); } }
 @media print { .aviso-clave { display: none !important; } }
+
+/* ===== Animaciones (suaves, cortas, solo transform y opacity) =====
+   Se apagan con «Reducir animaciones» (Mi cuenta) o si el aparato del usuario pide menos movimiento. */
+@keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes aparecer-suave { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes sacudir { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+@keyframes trazo { from { stroke-dasharray: 24; stroke-dashoffset: 24; } to { stroke-dasharray: 24; stroke-dashoffset: 0; } }
+@keyframes llenar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes campanada { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(14deg); } 40% { transform: rotate(-12deg); } 60% { transform: rotate(8deg); } 80% { transform: rotate(-5deg); } }
+@keyframes respirar { 0%, 100% { box-shadow: 0 0 0 0 rgba(18, 73, 163, 0); } 50% { box-shadow: 0 0 0 7px rgba(18, 73, 163, .2); } }
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes confeti { to { transform: translate(var(--dx), 105vh) rotate(var(--giro)); opacity: .85; } }
+@keyframes paso-entra { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@keyframes dialogo-entra { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
+
+/* Cada pantalla aparece con suavidad: lo de arriba primero (solo se escalonan los primeros) */
+.app-main > *:not(.btn-flotante) { animation: aparecer .35s ease-out both; }
+.app-main > *:nth-child(2) { animation-delay: .05s; }
+.app-main > *:nth-child(3) { animation-delay: .1s; }
+.app-main > *:nth-child(4) { animation-delay: .15s; }
+.app-main > *:nth-child(5) { animation-delay: .2s; }
+.app-main > *:nth-child(n+6) { animation-delay: .25s; }
+
+/* Los botones responden al toque */
+.btn, .btn-texto, .zona-carga, .asis-opciones label, .opciones label, .interruptor, .interruptor-chico { transition: transform .12s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease; }
+.btn:active:not(:disabled), .btn-texto:active:not(:disabled), .zona-carga:active { transform: scale(.97); }
+@media (hover: hover) {
+  .btn-cetpro:hover:not(:disabled), .btn-whatsapp:hover:not(:disabled) { transform: translateY(-1px); }
+  a.dato:hover, a.acceso:hover { transform: translateY(-2px); box-shadow: var(--sombra-alta); }
+}
+a.dato, a.acceso { transition: transform .15s ease, box-shadow .2s ease; }
+
+/* Mensajes: entran con un pequeño rebote, el de error se sacude una vez y la palomita se dibuja */
+.mensaje, .app-main > .mensaje { animation: pop .4s ease-out both; }
+.mensaje-error, .app-main > .mensaje-error { animation: sacudir .45s ease-out both; }
+.mensaje-ok svg path[d="M5 12l5 5L20 7"] { animation: trazo .5s .15s ease-out backwards; }
+
+/* Barras de avance: se llenan desde la izquierda */
+.barra span, .barra-p > span, .progreso .barra-p span { transform-origin: left center; animation: llenar .9s .2s ease-out backwards; }
+
+/* Avisos pendientes: el número «salta» y la campana suena una vez por visita */
+.contador { animation: pop .4s .3s ease-out backwards; }
+.campana.campanada svg { animation: campanada .9s .5s ease-in-out; transform-origin: 50% 10%; }
+
+/* Asistencia y opciones: lo elegido se nota */
+.asis-opciones input:checked + label, .opciones input:checked + label { animation: pop .25s ease-out; }
+
+/* Tomar foto: la zona «respira» un par de veces para llamar la atención; la vista previa aparece */
+.zona-carga { animation: respirar 2.4s ease-in-out 2; }
+.vista-previa.visible { animation: aparecer .3s ease-out; }
+
+/* Al abrir un desplegable, lo de adentro aparece */
+details[open] > :not(summary) { animation: aparecer-suave .25s ease-out; }
+
+/* Tutorial */
+.tutorial[open] { animation: dialogo-entra .3s ease-out; }
+.tutorial[open]::backdrop { animation: aparecer-suave .3s ease-out; }
+.tutorial-paso:not([hidden]) { animation: paso-entra .28s ease-out; }
+.tutorial-paso:not([hidden]) .tutorial-icono { animation: pop .4s .05s ease-out backwards; }
+
+/* Enviando (fotos y archivos): el botón muestra que está trabajando */
+.btn.ocupado { pointer-events: none; opacity: .85; }
+.btn.ocupado::before { content: ""; width: 1.1em; height: 1.1em; border: 3px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: girar .7s linear infinite; flex-shrink: 0; }
+
+/* Celebración (confeti suave) */
+.confeti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 3000; }
+.confeti i { position: absolute; top: -16px; left: var(--x); width: 8px; height: 14px; border-radius: 2px; animation: confeti var(--t) var(--r) ease-in forwards; }
+
+/* Menos movimiento: si el aparato lo pide, o si la persona lo eligió en «Mi cuenta» */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+  dialog::backdrop { animation: none !important; }
+  .confeti { display: none !important; }
+}
+body.sin-animacion *, body.sin-animacion *::before, body.sin-animacion *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+body.sin-animacion dialog::backdrop { animation: none !important; }
+body.sin-animacion .confeti { display: none !important; }
+@media print { *, *::before, *::after { animation: none !important; transition: none !important; } }

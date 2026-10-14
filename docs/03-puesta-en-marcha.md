@@ -64,6 +64,7 @@ Si cambias el nombre de un botón del aula, cámbialo también en `apps/nucleo/a
 - [ ] Con **TalkBack** (Android → Accesibilidad) se puede entrar, ver la tarea y entregarla, y los botones «suenan» con su nombre.
 - [ ] Con **letra «muy grande»** y **alto contraste** (Mi cuenta) todo se sigue leyendo y tocando (en el navegador de una PC ya se revisó; falta verlo en un celular).
 - [ ] El **modo oscuro** se ve bien.
+- [ ] Las **animaciones** se ven fluidas en un celular sencillo (si van lentas o marean, activar **Reducir animaciones** en Mi cuenta).
 - [ ] El **tutorial** se lee bien, el botón **Escuchar** funciona y se puede cerrar con TalkBack.
 - [ ] Un alumno **no puede ver** los datos de otro (probar con dos cuentas).
 

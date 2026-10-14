@@ -67,6 +67,10 @@
       {% icono 'voz' 26 %}<span class="texto">Leer en voz alta<span class="d-block small texto-2 fw-normal">Aparece el botón «Escuchar» en tareas y avisos</span></span>
       <input type="checkbox" name="lectura_voz" value="1" {% if pref.lectura_voz %}checked{% endif %}>
     </label>
+    <label class="interruptor">
+      {% icono 'estrella' 26 %}<span class="texto">Reducir animaciones<span class="d-block small texto-2 fw-normal">Menos movimiento en la pantalla (si te marea o te distrae)</span></span>
+      <input type="checkbox" name="reducir_movimiento" value="1" {% if pref.reducir_movimiento %}checked{% endif %}>
+    </label>
   </div>
   <button type="submit" class="btn btn-cetpro w-100 mt-3">Guardar cambios</button>
 </form>

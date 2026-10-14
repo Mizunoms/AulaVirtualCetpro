@@ -44,7 +44,15 @@ def foto_especialidad(especialidad):
 
 
 def _clases(pref):
-    body = [c for c in ("alto-contraste" if pref.alto_contraste else "", "voz" if pref.lectura_voz else "") if c]
+    body = [
+        c
+        for c in (
+            "alto-contraste" if pref.alto_contraste else "",
+            "voz" if pref.lectura_voz else "",
+            "sin-animacion" if pref.reducir_movimiento else "",
+        )
+        if c
+    ]
     return (f"letra-{pref.tamano_letra}" if pref.tamano_letra != "normal" else ""), " ".join(body)
 
 

@@ -622,6 +622,92 @@
     });
   });
 
+  // ---------- Animaciones ----------
+  // Todo se apaga con «Reducir animaciones» (Mi cuenta) o si el aparato pide menos movimiento.
+  var sinMovimiento = function () {
+    return document.body.classList.contains('sin-animacion') ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  };
+
+  // Confeti suave para festejar un logro (entregar una tarea, terminar un examen…).
+  var celebrar = function () {
+    if (sinMovimiento() || document.querySelector('.confeti')) { return; }
+    var colores = ['#1249A3', '#C8231B', '#F5B301', '#166534', '#7C3AED', '#0EA5E9'];
+    var caja = document.createElement('div');
+    caja.className = 'confeti';
+    caja.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < 36; i++) {
+      var pieza = document.createElement('i');
+      pieza.style.setProperty('--x', Math.round(Math.random() * 100) + '%');
+      pieza.style.setProperty('--dx', Math.round(Math.random() * 120 - 60) + 'px');
+      pieza.style.setProperty('--giro', Math.round(Math.random() * 720 - 360) + 'deg');
+      pieza.style.setProperty('--t', (1.5 + Math.random()).toFixed(2) + 's');
+      pieza.style.setProperty('--r', (Math.random() * 0.4).toFixed(2) + 's');
+      pieza.style.background = colores[i % colores.length];
+      caja.appendChild(pieza);
+    }
+    document.body.appendChild(caja);
+    setTimeout(function () { caja.remove(); }, 3400);
+  };
+  if (document.querySelector('.mensaje[data-celebrar]')) { setTimeout(celebrar, 250); }
+
+  // Los números del resumen del Inicio (por hacer, asistencia, módulos…) suben desde cero.
+  if (!sinMovimiento()) {
+    document.querySelectorAll('.hola-datos b').forEach(function (el) {
+      var m = /^(\d+)(\D*)$/.exec(el.textContent.trim());
+      if (!m || parseInt(m[1], 10) === 0) { return; }
+      var meta = parseInt(m[1], 10);
+      var sufijo = m[2];
+      var inicio = null;
+      var paso = function (t) {
+        if (inicio === null) { inicio = t; }
+        var avance = Math.min(1, (t - inicio) / 700);
+        el.textContent = Math.round(meta * (1 - Math.pow(1 - avance, 3))) + sufijo; // frena al llegar
+        if (avance < 1) { window.requestAnimationFrame(paso); }
+      };
+      el.textContent = '0' + sufijo;
+      window.requestAnimationFrame(paso);
+    });
+  }
+
+  // La campana suena una sola vez por visita si hay avisos nuevos.
+  try {
+    var campana = document.querySelector('.campana');
+    if (campana && campana.querySelector('.contador') && !sinMovimiento() && !sessionStorage.getItem('campana-sonada')) {
+      campana.classList.add('campanada');
+      sessionStorage.setItem('campana-sonada', '1');
+    }
+  } catch (e) { /* sin almacenamiento del navegador: no pasa nada */ }
+
+  // Al enviar fotos o archivos el botón muestra «Enviando…» y un segundo toque no la manda dos veces.
+  var restablecerBoton = function (form) {
+    var boton = form.querySelector('.btn.ocupado');
+    if (boton && boton.dataset.original !== undefined) {
+      boton.innerHTML = boton.dataset.original;
+      boton.classList.remove('ocupado');
+      boton.removeAttribute('aria-disabled');
+    }
+    form.removeAttribute('aria-busy');
+    delete form.dataset.ocupado;
+  };
+  document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(function (form) {
+    form.addEventListener('submit', function (ev) {
+      var boton = ev.submitter || form.querySelector('button[type="submit"]');
+      if (!boton || boton.name === 'despues') { return; }
+      if (form.dataset.ocupado === '1') { ev.preventDefault(); return; }
+      form.dataset.ocupado = '1';
+      form.setAttribute('aria-busy', 'true');
+      boton.dataset.original = boton.innerHTML;
+      boton.classList.add('ocupado');
+      boton.setAttribute('aria-disabled', 'true');
+      boton.textContent = 'Enviando…';
+      setTimeout(function () { restablecerBoton(form); }, 60000); // si no hubo respuesta (sin internet), se puede volver a intentar
+    });
+  });
+  window.addEventListener('pageshow', function (ev) { // al volver atrás, el botón no se queda en «Enviando…»
+    if (ev.persisted) { document.querySelectorAll('form[data-ocupado]').forEach(restablecerBoton); }
+  });
+
   // Tutorial de primera vez («Repetir tutorial» lo vuelve a abrir): un paso a la vez. Funciona con teclado y lector de pantalla.
   var tutorial = document.getElementById('tutorial');
   if (tutorial) {
@@ -657,7 +743,7 @@
     };
 
     botonSiguiente.addEventListener('click', function () {
-      if (pasoActual >= pasos.length - 1) { cerrarTutorial(); } else { mostrarPaso(pasoActual + 1); }
+      if (pasoActual >= pasos.length - 1) { cerrarTutorial(); celebrar(); } else { mostrarPaso(pasoActual + 1); }
     });
     botonAnterior.addEventListener('click', function () { mostrarPaso(pasoActual - 1); });
     tutorial.querySelector('[data-saltar]').addEventListener('click', cerrarTutorial);
