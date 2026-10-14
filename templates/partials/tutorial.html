@@ -5,11 +5,14 @@
 {% endcomment %}
 <dialog id="tutorial" class="tutorial" aria-labelledby="tutorial-nombre" data-abrir="1">
   <div class="tutorial-caja">
-    <div class="tutorial-cabecera">
-      <span id="tutorial-nombre">Tutorial del aula virtual</span>
-      <span>Paso <b data-paso>1</b> de {{ tutorial.pasos|length }}</span>
+    <div class="tutorial-cielo">
+      <canvas data-cielo-banner="tutorial" aria-hidden="true"></canvas>
+      <div class="tutorial-cabecera">
+        <span id="tutorial-nombre">Tutorial del aula virtual</span>
+        <span>Paso <b data-paso>1</b> de {{ tutorial.pasos|length }}</span>
+      </div>
+      <div class="tutorial-puntos" aria-hidden="true">{% for p in tutorial.pasos %}<span data-punto></span>{% endfor %}</div>
     </div>
-    <div class="tutorial-puntos" aria-hidden="true">{% for p in tutorial.pasos %}<span data-punto></span>{% endfor %}</div>
 
     {% for p in tutorial.pasos %}
       <section class="tutorial-paso" data-slide {% if not forloop.first %}hidden{% endif %}>

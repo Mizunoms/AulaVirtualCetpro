@@ -2,7 +2,8 @@
 {% load aula %}
 {# Inicio del docente: lo que tiene que hacer hoy. Arriba cuatro números que son botones; a la izquierda sus módulos y próximas fechas; a la derecha la asistencia de hoy de cada módulo. #}
 {% block contenido %}
-<section class="hola">
+<section class="hola hola-cielo">
+  {% include "partials/cielo_banner.html" with iconos=True %}
   <div class="fecha">{{ hoy_texto }}</div>
   <h2>Hola, profe {{ user.primer_nombre }}</h2>
   <p>{% if not modulos %}Crea tu primer módulo para empezar.{% elif por_calificar %}Tienes {{ por_calificar|plural:"trabajo por calificar,trabajos por calificar" }}.{% else %}¡Todo calificado! Buen trabajo.{% endif %}</p>

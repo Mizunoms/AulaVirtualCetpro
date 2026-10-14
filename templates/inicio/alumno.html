@@ -2,7 +2,8 @@
 {% load aula %}
 {# Inicio del alumno. PC: 70 % lo que hay que hacer y sus módulos; 30 % fijo a la derecha con el calendario, los avisos, su asistencia y la ayuda. Celular: todo en una columna, lo urgente primero. #}
 {% block contenido %}
-<section class="hola hola-alumno">
+<section class="hola hola-alumno hola-cielo">
+  {% include "partials/cielo_banner.html" %}
   <div class="hola-texto">
     <div class="fecha">{{ hoy_texto }}</div>
     <h2>¡Hola, {{ user.primer_nombre }}!</h2>

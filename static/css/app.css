@@ -601,7 +601,7 @@ body.alto-contraste .hola, body.alto-contraste .cabecera-modulo, body.alto-contr
 .hola-datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
 .hola-datos > div { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .2); border-radius: 16px; padding: .625rem .75rem; text-align: center; }
 .hola-datos b { display: block; font-size: 1.75rem; line-height: 1.1; }
-.hola-datos span { font-size: .875rem; font-weight: 700; color: rgba(255, 255, 255, .85); }
+.hola-datos span { font-size: .875rem; font-weight: 700; color: rgba(255, 255, 255, .96); }
 @media (min-width: 768px) {
   .hola-alumno { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .hola-datos { grid-template-columns: repeat(3, 104px); }
@@ -1509,3 +1509,29 @@ body.alto-contraste .publica-lado .puntos li { background: #000; border-color: #
 @media (min-width: 992px) and (prefers-reduced-motion: reduce) { .fondo-pausa { display: none; } }
 body.sin-animacion .fondo-pausa, body.alto-contraste .fondo-pausa, body.alto-contraste .fondo-vivo { display: none; }
 body.alto-contraste .publica-lado .puntos li:hover { background: #000; box-shadow: none; }
+
+/* ===== Cielo de galaxia dentro del programa: banners de bienvenida del Inicio y encabezado del tutorial =====
+   El mismo cielo de la entrada, más chico y calmado. Solo va donde hay un fondo azul grande con poco texto; el resto del programa
+   (listas, tablas, formularios, módulos) queda limpio. Se detiene con «Reducir animaciones» y se esconde con alto contraste. */
+.cielo-banner { position: absolute; inset: 0; z-index: 0; overflow: hidden; border-radius: inherit; pointer-events: none; }
+.hola > .cielo-banner { position: absolute; z-index: 0; }
+.cielo-banner canvas, .tutorial-cielo canvas { display: block; width: 100%; height: 100%; }
+.hola-cielo::before, .hola-cielo::after { display: none; } /* los círculos claros de antes ceden su lugar a la galaxia */
+.cielo-banner .figura { display: none; }
+@media (min-width: 992px) {
+  .cielo-banner .figura { display: block; position: absolute; }
+  .figura-b1 { top: 12%; right: 33%; animation-duration: 17s; animation-delay: -2s; }
+  .figura-b2 { bottom: 10%; right: 17%; animation: flotar 8s ease-in-out infinite alternate; animation-delay: -3s; }
+  .figura-b3 { top: 16%; right: 7%; animation-duration: 21s; animation-delay: -8s; }
+}
+
+.tutorial-cielo { position: relative; overflow: hidden; margin: -1.25rem -1.25rem 0; padding: 1rem 1.25rem .875rem; display: flex; flex-direction: column; gap: .625rem; color: #fff; background: linear-gradient(135deg, var(--navy) 0%, var(--azul) 100%); }
+.tutorial-cielo canvas { position: absolute; inset: 0; z-index: 0; }
+.tutorial-cielo .tutorial-cabecera, .tutorial-cielo .tutorial-puntos { position: relative; z-index: 1; }
+.tutorial-cielo .tutorial-cabecera { color: rgba(255, 255, 255, .94); }
+.tutorial-cielo .tutorial-puntos span { background: rgba(255, 255, 255, .5); opacity: 1; }
+.tutorial-cielo .tutorial-puntos span.activo { background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, .75); }
+
+body.alto-contraste .cielo-banner, body.alto-contraste .tutorial-cielo canvas { display: none; }
+body.alto-contraste .tutorial-cielo { background: #0B1B35; }
+@media print { .cielo-banner, .tutorial-cielo canvas { display: none !important; } }

@@ -194,8 +194,10 @@ def test_el_fondo_trae_el_lienzo_del_cielo_y_los_utiles_escolares_que_flotan(cli
 
 
 def test_el_cielo_es_liviano_se_ve_igual_en_cada_visita_y_se_detiene_del_todo():
-    cielo = JS[JS.index("Cielo de galaxia de la entrada") : JS.index("Fondo vivo de la entrada")]
-    assert "Math.min(200" in cielo and "0.026" in cielo  # tope de estrellas y unos 38 cuadros por segundo
+    cielo = JS[JS.index("Cielo de galaxia, dibujado") : JS.index("Fondo vivo de la entrada")]
+    assert "tope: 200" in cielo and "fps: 38" in cielo  # la entrada: tope de estrellas y unos 38 cuadros por segundo
+    assert "tope: 110" in cielo and "fps: 28" in cielo  # los banners y el tutorial: más calmados
+    assert "1 / cfg.fps" in cielo
     assert "shadowBlur" not in cielo and "filter" not in cielo  # el desenfoque pesa en computadoras viejas
     assert "semilla = 20260; // la misma semilla" in cielo  # sin números al azar distintos en cada visita
     assert "cancelAnimationFrame" in cielo and "dibujar(0)" in cielo  # al detenerlo queda una imagen fija
@@ -209,6 +211,77 @@ def test_el_lienzo_ocupa_todo_el_lado_de_la_marca_y_el_circulo_viejo_cede_su_lug
     bloque = CSS[CSS.index("Entrada: fondo vivo") :]
     assert re.search(r"\.estrellas \{[^}]*inset: 0[^}]*width: 100%[^}]*height: 100%", bloque)
     assert ".publica-lado::after { display: none; }" in bloque
+
+
+# ===================================================================== El mismo cielo dentro del programa (solo donde se ve bien)
+
+
+@pytest.fixture
+def direccion(db):
+    from apps.cuentas.models import Rol, Usuario
+
+    from .conftest import CLAVE
+
+    return Usuario.objects.create_user(correo="direccion@cetpro.com", nombres="Dirección", password=CLAVE, rol=Rol.DIRECCION)
+
+
+def con_tutorial_visto(*personas):
+    for p in personas:
+        p.tutorial_visto = timezone.now()
+        p.save(update_fields=["tutorial_visto"])
+
+
+def test_los_banners_de_bienvenida_del_inicio_llevan_el_cielo(cliente_de, alumno, docente, admin, direccion):
+    con_tutorial_visto(alumno, docente, admin, direccion)
+    for persona, con_utiles in ((alumno, False), (docente, True), (admin, True), (direccion, True)):
+        html = cliente_de(persona).get(reverse("nucleo:inicio")).content.decode()
+        assert 'class="hola hola-cielo' in html or 'class="hola hola-alumno hola-cielo"' in html, persona.rol
+        assert html.count("<canvas") == 1 and 'class="cielo-banner" aria-hidden="true"' in html, persona.rol
+        assert ('class="figura figura-b1"' in html) is con_utiles, persona.rol  # el alumno ya tiene números a la derecha
+
+
+def test_el_tutorial_lleva_una_franja_de_cielo_arriba(cliente_de, alumno):
+    html = cliente_de(alumno).get(reverse("nucleo:inicio")).content.decode()  # la primera vez trae el tutorial
+    assert 'id="tutorial"' in html and 'data-cielo-banner="tutorial"' in html and 'class="tutorial-cielo"' in html
+    assert html.count("<canvas") == 2  # el del banner y el del tutorial
+    assert "Paso <b data-paso>1</b>" in html and "data-punto" in html  # lo de siempre sigue ahí, encima del cielo
+
+
+def test_el_cielo_no_va_en_listas_modulos_formularios_ni_ajustes(cliente_de, docente, alumno, modulo, clase):
+    """Solo donde hay un fondo azul grande con poco texto: el resto del programa queda limpio."""
+    con_tutorial_visto(alumno, docente)
+    paginas = [
+        (cliente_de(docente), reverse("academico:modulos")),
+        (cliente_de(docente), reverse("academico:modulo", args=[modulo.pk])),
+        (cliente_de(docente), reverse("academico:clase", args=[clase.pk])),
+        (cliente_de(alumno), reverse("cuentas:cuenta")),
+        (cliente_de(alumno), reverse("nucleo:ayuda")),
+    ]
+    for cliente, url in paginas:
+        html = cliente.get(url).content.decode()
+        assert "<canvas" not in html and "cielo-banner" not in html, url
+
+
+def test_el_cielo_de_los_banners_se_detiene_se_esconde_y_se_adapta_al_celular():
+    bloque = CSS[CSS.index("Cielo de galaxia dentro del programa") :]
+    assert ".hola-cielo::before, .hola-cielo::after { display: none; }" in bloque
+    assert ".cielo-banner .figura { display: none; }" in bloque  # los útiles solo en pantalla ancha
+    assert bloque.index(".cielo-banner .figura { display: none; }") < bloque.index("@media (min-width: 992px)")
+    assert "body.alto-contraste .cielo-banner, body.alto-contraste .tutorial-cielo canvas { display: none; }" in bloque
+    assert "@media print { .cielo-banner, .tutorial-cielo canvas { display: none !important; } }" in bloque
+    assert re.search(r"\.hola > \.cielo-banner \{[^}]*position: absolute[^}]*z-index: 0", bloque)  # detrás del texto
+
+
+def test_el_javascript_de_los_banners_corre_solo_si_se_ve_y_respeta_menos_movimiento():
+    bloque = JS[JS.index("Cielo de los banners de bienvenida") : JS.index("Al enviar fotos o archivos")]
+    assert "sinMovimiento()" in bloque and "IntersectionObserver" in bloque and "ResizeObserver" in bloque
+    assert "enPantalla" in bloque and "lienzo.dataset.cieloBanner === 'tutorial'" in bloque
+    assert "estrecho" in JS and "ancho < 560" in JS  # en celular la galaxia se corre para no tapar el texto
+
+
+def test_la_etiqueta_pequena_del_resumen_se_lee_sobre_el_azul():
+    regla = re.search(r"\.hola-datos span \{[^}]*color: rgba\(255, 255, 255, ([.\d]+)\)", CSS)
+    assert float(regla.group(1)) >= 0.95
 
 
 def test_solo_se_animan_cosas_baratas_para_el_celular():

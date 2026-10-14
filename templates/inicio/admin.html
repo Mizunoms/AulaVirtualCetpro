@@ -2,7 +2,8 @@
 {% load aula %}
 {# Inicio de administración y dirección: números clave, reportes de la semana, exportación para la UGEL, actividad reciente (solo admin) y accesos para configurar el aula (solo admin). #}
 {% block contenido %}
-<section class="hola">
+<section class="hola hola-cielo">
+  {% include "partials/cielo_banner.html" with iconos=True %}
   <div class="fecha">{{ hoy_texto }}</div>
   <h2>Hola, {{ user.primer_nombre }}</h2>
   <p>Panel de {% if es_admin %}administración{% else %}dirección{% endif %} del {{ aj.aula_nombre }}.</p>

@@ -700,12 +700,19 @@
     }
   } catch (e) { /* sin almacenamiento del navegador: no pasa nada */ }
 
-  // Cielo de galaxia de la entrada, dibujado en un lienzo: estrellas de tres profundidades que van pasando despacio y titilan,
-  // una galaxia en espiral que gira muy lento y, de vez en cuando, una estrella fugaz. Es ligero (unas 100 a 200 estrellas, unos
-  // 38 cuadros por segundo) y, mientras está detenido, deja dibujada una sola imagen fija.
-  var crearCielo = function (lienzo, caja) {
+  // Cielo de galaxia, dibujado en un lienzo: estrellas de tres profundidades que van pasando despacio y titilan,
+  // una galaxia en espiral que gira muy lento y, de vez en cuando, una estrella fugaz. Es ligero (decenas o pocos cientos de
+  // estrellas, entre 24 y 38 cuadros por segundo) y, mientras está detenido, deja dibujada una sola imagen fija.
+  // Lo usan la pantalla de entrada (grande, con ratón), los banners de bienvenida del Inicio y el tutorial (chicos, más calmados).
+  var CIELO_ENTRADA = { area: 5000, minimo: 50, tope: 200, fps: 38, raton: true, galaxia: { x: 0.72, y: 0.82, tam: 0.58, puntos: 1100 }, fugaz: [5, 7, 8] };
+  // «estrecho»: dónde queda la galaxia (y de qué tamaño) cuando la caja mide menos de 560 px de ancho (celular), para no taparle el texto.
+  var CIELO_BANNER = { area: 4200, minimo: 28, tope: 110, fps: 28, raton: false, galaxia: { x: 0.84, y: 0.5, tam: 1.15, puntos: 380, estrecho: { x: 0.82, y: 0.16, tam: 0.3 } }, fugaz: [9, 20, 25] };
+  // En el tutorial la galaxia va en el centro de la franja, entre «Tutorial del aula virtual» y «Paso 1 de 10», para no tapar el texto.
+  var CIELO_TUTORIAL = { area: 4200, minimo: 28, tope: 110, fps: 28, raton: false, galaxia: { x: 0.6, y: 0.55, tam: 1.15, puntos: 380, estrecho: { x: 0.62, y: 0.62, tam: 0.22 } }, fugaz: [9, 20, 25] };
+  var crearCielo = function (lienzo, caja, cfg) {
     var ctx = lienzo.getContext && lienzo.getContext('2d');
     if (!ctx) { return null; }
+    cfg = cfg || CIELO_ENTRADA;
     var TAU = Math.PI * 2;
     var COLORES = ['255,255,255', '205,228,255', '165,203,255'];
     var PROFUNDIDAD = [8, 16, 30]; // cuánto se corre cada capa con el ratón (px)
@@ -731,7 +738,7 @@
     var generar = function () {
       semilla = 20260; // la misma semilla: el cielo se ve igual en cada visita
       estrellas = [];
-      var cuantas = Math.max(50, Math.min(200, Math.round(ancho * alto / 5000)));
+      var cuantas = Math.max(cfg.minimo, Math.min(cfg.tope, Math.round(ancho * alto / cfg.area)));
       for (var i = 0; i < cuantas; i++) {
         var capa = i % 10 === 0 ? 2 : (i % 3 === 0 ? 1 : 0); // pocas grandes, algunas medianas, muchas chicas
         estrellas.push({
@@ -744,8 +751,9 @@
       }
       // Galaxia: dos brazos en espiral hechos de puntitos, y un centro más denso y cálido.
       brazos = [];
-      for (var k = 0; k < 1100; k++) {
-        var nucleo = k < 200;
+      var puntos = cfg.galaxia ? cfg.galaxia.puntos : 0;
+      for (var k = 0; k < puntos; k++) {
+        var nucleo = k < puntos * 0.18;
         var t = nucleo ? azar() * 0.18 : 0.12 + azar() * 0.88;
         brazos.push({
           radio: nucleo ? t : Math.pow(t, 0.85),
@@ -758,9 +766,18 @@
     };
 
     var dibujarGalaxia = function () {
-      var tam = Math.min(ancho, alto) * 0.58;
-      var cx = ancho * 0.72 - ratonX * 22;
-      var cy = alto * 0.82 - ratonY * 22;
+      if (!cfg.galaxia) { return; }
+      var g = cfg.galaxia;
+      var tam = Math.min(Math.min(ancho, alto) * g.tam, ancho * 0.5);
+      var gx = g.x;
+      var gy = g.y;
+      if (g.estrecho && ancho < 560) {
+        gx = g.estrecho.x;
+        gy = g.estrecho.y;
+        tam = Math.min(tam, ancho * g.estrecho.tam);
+      }
+      var cx = ancho * gx - ratonX * 22;
+      var cy = alto * gy - ratonY * 22;
       var inclina = -0.42;
       var c = Math.cos(inclina);
       var s = Math.sin(inclina);
@@ -838,7 +855,7 @@
       cuadroId = 0;
       if (!corriendo) { return; }
       var t = ahora / 1000;
-      if (t - ultimo >= 0.026) {
+      if (t - ultimo >= 1 / cfg.fps - 0.001) {
         var dt = Math.min(0.1, t - ultimo);
         ultimo = t;
         tiempo += dt;
@@ -847,7 +864,7 @@
         ratonY += (mirandoY - ratonY) * Math.min(1, dt * 4);
         if (!fugaz && tiempo >= proxima) {
           fugaz = { x: ancho * (0.45 + Math.random() * 0.5), y: alto * Math.random() * 0.35, vx: -520, vy: 290, edad: 0, vida: 0.9 };
-          proxima = tiempo + 7 + Math.random() * 8;
+          proxima = tiempo + cfg.fugaz[1] + Math.random() * cfg.fugaz[2];
         }
         dibujar(dt);
       }
@@ -864,7 +881,7 @@
         lienzo.height = Math.round(alto * escala);
         ctx.setTransform(escala, 0, 0, escala, 0, 0);
         generar();
-        if (!proxima) { proxima = 5; }
+        if (!proxima) { proxima = cfg.fugaz[0]; }
         dibujar(0);
         return true;
       },
@@ -953,6 +970,29 @@
       lado.addEventListener('pointerleave', centrarFondo);
     }
   }
+
+  // Cielo de los banners de bienvenida (Inicio) y del encabezado del tutorial: más chico y calmado que el de la entrada.
+  // Corre solo mientras se ve en pantalla (y el del tutorial, solo mientras está abierto); con «Reducir animaciones» o con el
+  // aviso del aparato queda una imagen fija. Si no hay lienzo en la página, no hace nada.
+  document.querySelectorAll('canvas[data-cielo-banner]').forEach(function (lienzo) {
+    var caja = lienzo.parentElement;
+    var cieloBanner = crearCielo(lienzo, caja, lienzo.dataset.cieloBanner === 'tutorial' ? CIELO_TUTORIAL : CIELO_BANNER);
+    if (!cieloBanner) { return; }
+    var enPantalla = true;
+    var refrescar = function () { cieloBanner.correr(cieloBanner.ajustar() && enPantalla && !sinMovimiento()); };
+    refrescar();
+    if (window.ResizeObserver) {
+      new window.ResizeObserver(refrescar).observe(caja);
+    } else {
+      window.addEventListener('resize', refrescar);
+    }
+    if (window.IntersectionObserver) {
+      new window.IntersectionObserver(function (cambios) {
+        enPantalla = cambios[cambios.length - 1].isIntersecting;
+        cieloBanner.correr(enPantalla && !sinMovimiento());
+      }).observe(caja);
+    }
+  });
 
   // Al enviar fotos o archivos el botón muestra «Enviando…» y un segundo toque no la manda dos veces.
   var restablecerBoton = function (form) {
