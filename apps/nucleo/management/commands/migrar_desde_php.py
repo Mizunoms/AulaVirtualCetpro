@@ -32,6 +32,11 @@ class Command(BaseCommand):
         )
         parser.add_argument("--solo-revisar", action="store_true", help="Ensayo: hace todo, cuenta y deshace; no guarda nada.")
         parser.add_argument(
+            "--desactivar-claves-desconocidas",
+            action="store_true",
+            help="Pasa desactivadas las cuentas cuya contraseña no es bcrypt (por defecto, la migración se detiene y las lista).",
+        )
+        parser.add_argument(
             "--con-cuentas-de-prueba",
             action="store_true",
             help="Pasa también las cuentas del antiguo «modo prueba» (quedan desactivadas).",
@@ -46,6 +51,7 @@ class Command(BaseCommand):
                     origen,
                     carpeta_archivos=opciones["archivos"] or None,
                     con_cuentas_de_prueba=opciones["con_cuentas_de_prueba"],
+                    desactivar_claves_desconocidas=opciones["desactivar_claves_desconocidas"],
                     solo_revisar=opciones["solo_revisar"],
                 ).correr()
             finally:

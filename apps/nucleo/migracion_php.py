@@ -14,6 +14,7 @@ Qué NO pasa (a propósito): las cuentas del antiguo «modo prueba» (salvo que 
 
 from __future__ import annotations
 
+import re
 import shutil
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -261,11 +262,23 @@ class Informe:
 # ===================================================================== Pequeñas conversiones
 
 
+class ClaveDesconocida(Exception):
+    """La contraseña guardada no está en un formato que se sepa pasar (no es bcrypt)."""
+
+    def __init__(self, formato):
+        super().__init__(formato)
+        self.formato = formato
+
+
 def clave_django(hash_php):
-    """Contraseña bcrypt del sistema anterior → formato de Django. Vacía = alumno que aún no creó su contraseña."""
-    if hash_php and hash_php[:4] in ("$2y$", "$2a$", "$2b$") and len(hash_php) == 60:
+    """Contraseña bcrypt del sistema anterior → formato de Django. Vacía = alumno que aún no creó su contraseña.
+    Un formato que no se reconoce NO se trata como «sin contraseña»: así cualquiera podría reclamar la cuenta con el DNI."""
+    if not hash_php:
+        return make_password(None)
+    if hash_php[:4] in ("$2y$", "$2a$", "$2b$") and len(hash_php) == 60:
         return "bcrypt$$2b$" + hash_php[4:]  # $2y$ y $2b$ son el mismo algoritmo
-    return make_password(None)
+    marca = re.match(r"\$[A-Za-z0-9-]{1,20}\$", hash_php)
+    raise ClaveDesconocida(marca.group(0) if marca else "sin formato conocido")
 
 
 @contextmanager
@@ -288,11 +301,22 @@ def _sin_fechas_automaticas(modelo):
 
 
 class Migrador:
-    def __init__(self, origen, carpeta_archivos=None, zona=None, con_cuentas_de_prueba=False, solo_revisar=False, salida=None):
+    def __init__(
+        self,
+        origen,
+        carpeta_archivos=None,
+        zona=None,
+        con_cuentas_de_prueba=False,
+        desactivar_claves_desconocidas=False,
+        solo_revisar=False,
+        salida=None,
+    ):
         self.origen = origen
         self.carpeta = Path(carpeta_archivos).resolve() if carpeta_archivos else None
         self.zona = ZoneInfo(zona or settings.TIME_ZONE)
         self.con_cuentas_de_prueba = con_cuentas_de_prueba
+        self.desactivar_claves_desconocidas = desactivar_claves_desconocidas
+        self.claves_desconocidas = []  # (id, rol, formato) de quienes tienen una contraseña que no se sabe pasar
         self.solo_revisar = solo_revisar
         self.salida = salida or (lambda texto: None)
         self.informe = Informe(solo_revisar=solo_revisar)
@@ -434,6 +458,11 @@ class Migrador:
                 perfil.get("origen") or Origen.ADMIN, Origen.values, Origen.ADMIN, f"av_perfiles #{f['id']} origen"
             )
             es_admin = rol == Rol.ADMIN
+            try:
+                password, desconocida = clave_django(f["password_hash"]), False
+            except ClaveDesconocida as e:
+                password, desconocida = make_password(None), True
+                self.claves_desconocidas.append((f["id"], rol, e.formato))
             return dict(
                 id=f["id"],
                 dni=(f["dni"] or "").strip() or None,
@@ -444,19 +473,39 @@ class Migrador:
                 fecha_nacimiento=perfil.get("fecha_nacimiento"),
                 rol=rol,
                 origen=origen,
-                debe_cambiar_clave=bool(perfil.get("cambiar_clave")),
+                debe_cambiar_clave=bool(perfil.get("cambiar_clave")) or desconocida,
                 activado=self._hora(perfil.get("activado_at")),
-                is_active=bool(f["activo"]) and not es_prueba,
+                is_active=bool(f["activo"]) and not es_prueba and not desconocida,
                 is_staff=es_admin,
                 is_superuser=es_admin,
-                password=clave_django(f["password_hash"]),
+                password=password,
                 creado=self._creado(f["created_at"]),
             )
 
         self._tabla("usuarios", Usuario, construir)
+        self._revisar_claves_desconocidas()
         self.ids["av_perfiles"] = set(self._perfiles) & self.ids["usuarios"]
         self.informe.importadas["av_perfiles"] = len(self.ids["av_perfiles"])  # se juntaron con la persona
         self.informe.leidas["av_perfiles"] = len(self._perfiles)
+
+    def _revisar_claves_desconocidas(self):
+        """Sin contraseña conocida una cuenta activa podría ser reclamada con solo el DNI: o se frena, o pasa desactivada."""
+        if not self.claves_desconocidas:
+            return
+        lista = ", ".join(f"#{i} ({rol}, {formato})" for i, rol, formato in self.claves_desconocidas[:20])
+        if len(self.claves_desconocidas) > 20:
+            lista += f" … y {len(self.claves_desconocidas) - 20} más"
+        if not self.desactivar_claves_desconocidas:
+            raise MigracionError(
+                f"Hay {len(self.claves_desconocidas)} cuenta(s) con una contraseña en un formato que no reconozco (no es bcrypt): "
+                f"{lista}. Si se pasaran así, quedarían como «alumno sin contraseña» y cualquiera que sepa su DNI podría "
+                "reclamarlas. No se guardó nada. Opciones: restablece esas contraseñas en la base anterior y repite, o corre con "
+                "--desactivar-claves-desconocidas para pasarlas desactivadas (después las reactivas con una contraseña nueva)."
+            )
+        self.informe.avisos.append(
+            f"{len(self.claves_desconocidas)} cuenta(s) tenían una contraseña en un formato desconocido y pasaron DESACTIVADAS: "
+            f"{lista}. Pon una contraseña nueva a cada una y actívala."
+        )
 
     def _importar_preferencias(self):
         self._tabla(

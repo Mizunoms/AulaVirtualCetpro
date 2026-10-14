@@ -53,7 +53,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Importar plan de estudios (Excel del Ministerio): leer, revisar y crear o completar módulos con sus unidades didácticas
 - [x] Cargar alumnos desde Excel, CSV o lista pegada (títulos de columna, módulos por 1, 2, «1 y 2» o código)
 - [x] Claves temporales y envío por WhatsApp (una sola vez)
-- [ ] Respaldo desde el panel
+- [x] Respaldo: `manage.py respaldo [--archivos]` (como en el sistema anterior, que solo lo tenía por comando; sin botón en el panel)
 
 ## Fase 6 — Asistente IA y API
 - [ ] API REST con permisos por rol
@@ -62,4 +62,4 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 ## Fase 7 — Datos del piloto y servidor
 - [x] Migración MariaDB → PostgreSQL: `manage.py migrar_desde_php` (guía en `docs/02-migracion-desde-php.md`)
 - [x] Pruebas de aceptación con el cliente HTTP del sistema anterior (`aceptacion/`, 536 comprobaciones, ver README)
-- [ ] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/`
+- [x] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/03-servidor-windows.md` (IIS y NSSM sin probar en un servidor real)

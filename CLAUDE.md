@@ -18,6 +18,8 @@ las mismas pantallas, textos y reglas; luego se migran los datos del piloto (Mar
 ## Documentación
 - `docs/00-decisiones.md` — por qué este stack y cómo se organiza
 - `docs/01-plan.md` — fases y checklist (marcar al terminar)
+- `docs/02-migracion-desde-php.md` — pasar los datos del piloto (PHP + MariaDB) a este sistema
+- `docs/03-servidor-windows.md` — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
 - `docs/heredados/` — documentos del sistema anterior que siguen valiendo: visión, requerimientos (RF/RNF),
   análisis de Blackboard, asistente IA, prototipo/colores, entrevistas, y el esquema SQL de la base vieja
   (`schema-php.sql`, para el script de migración de datos).
@@ -107,4 +109,7 @@ tests/
 .venv\Scripts\python -m pytest                  # pruebas
 .venv\Scripts\ruff check . ; .venv\Scripts\ruff format .
 powershell -ExecutionPolicy Bypass -File scripts\crear-base-postgres.ps1   # primera vez: crea la base y .env
+.venv\Scripts\python aceptacion\correr.py     # pruebas de aceptación: guiones HTTP del sistema anterior (base propia, puerto 8090)
+.venv\Scripts\python manage.py migrar_desde_php --solo-revisar   # ensayo de la migración desde el sistema PHP
+.venv\Scripts\python manage.py respaldo [--archivos]   # respaldo de la base (y de los archivos subidos)
 ```

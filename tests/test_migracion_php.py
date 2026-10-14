@@ -17,7 +17,7 @@ from apps.cuentas.models import Origen, Preferencia, Rol, Usuario
 from apps.evaluacion.models import Asistencia, SesionAsistencia
 from apps.formularios.models import Formulario, Intento, Opcion, Pregunta, Respuesta
 from apps.mensajes.models import Conversacion, Mensaje
-from apps.nucleo.migracion_php import COLUMNAS, MigracionError, Migrador, OrigenMemoria, clave_django
+from apps.nucleo.migracion_php import COLUMNAS, ClaveDesconocida, MigracionError, Migrador, OrigenMemoria, clave_django
 from apps.nucleo.models import Ajuste, Notificacion, Registro
 from apps.tareas.models import Entrega, Material, Tarea
 
@@ -83,8 +83,40 @@ def test_las_preferencias_pasan_y_las_de_cuentas_de_prueba_no(pasado):
 
 def test_clave_django_convierte_bcrypt_de_php():
     assert clave_django("$2y$10$" + "a" * 53) == "bcrypt$$2b$10$" + "a" * 53
-    assert not Usuario(password=clave_django("")).has_usable_password()
-    assert not Usuario(password=clave_django("no-es-bcrypt")).has_usable_password()
+    assert not Usuario(password=clave_django("")).has_usable_password()  # vacía: alumno que aún no crea su contraseña
+    assert not Usuario(password=clave_django(None)).has_usable_password()
+    with pytest.raises(ClaveDesconocida) as e:  # otro formato: NO se confunde con «sin contraseña»
+        clave_django("$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$aGFzaA")
+    assert e.value.formato == "$argon2id$"
+    with pytest.raises(ClaveDesconocida, match="sin formato conocido"):
+        clave_django("texto-suelto")
+
+
+def datos_con_clave_rara():
+    datos = copy.deepcopy(datos_origen())
+    datos["usuarios"][4]["password_hash"] = "$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$aGFzaA"  # Ana, alumna activa
+    return datos
+
+
+def test_una_contrasena_de_formato_desconocido_frena_la_migracion():
+    # Si pasara como «sin contraseña», cualquiera que supiera el DNI de Ana podría reclamar su cuenta.
+    with pytest.raises(MigracionError, match=r"formato que no reconozco.*#10 \(alumno, \$argon2id\$\)") as e:
+        migrar(datos_con_clave_rara())
+    assert "argon2id$v=19" not in str(e.value)  # la contraseña guardada no se muestra
+    assert "--desactivar-claves-desconocidas" in str(e.value) and "No se guardó nada" in str(e.value)
+    assert not Usuario.objects.exists()
+
+
+def test_con_la_opcion_esas_cuentas_pasan_desactivadas_y_nadie_las_puede_reclamar(client):
+    informe = migrar(datos_con_clave_rara(), desactivar_claves_desconocidas=True)
+    ana = Usuario.objects.get(pk=10)
+    assert not ana.is_active and ana.debe_cambiar_clave and not ana.has_usable_password()
+    assert any("DESACTIVADAS" in a and "#10" in a for a in informe.avisos)
+    # «Crear mi cuenta» con su DNI no la deja reclamar
+    r = client.post(reverse("cuentas:registro"), {"dni": "71234567"}, follow=True)
+    assert "no se puede crear una cuenta" in r.content.decode()
+    ana.refresh_from_db()
+    assert not ana.has_usable_password() and not ana.is_active
 
 
 def test_las_contrasenas_de_php_siguen_sirviendo_y_se_vuelven_a_guardar(client, settings):

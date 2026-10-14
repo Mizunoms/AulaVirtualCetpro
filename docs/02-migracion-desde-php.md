@@ -58,11 +58,12 @@ La primera vez que alguien entra, su contraseña se vuelve a guardar con el form
 - «La base nueva ya tiene personas»: crea otra base vacía, o bórrala y vuelve a crearla; la migración no mezcla datos.
 - «Hay datos que chocan»: dos personas con el mismo DNI o correo, por ejemplo. No se guardó nada; corrige el dato en la
   base anterior y repite.
+- «Contraseña en un formato que no reconozco»: solo se reconocen las contraseñas bcrypt (las que usaba el sistema anterior). Si hubiera otra, la migración se detiene y lista esas cuentas, porque pasadas «sin contraseña» cualquiera que sepa el DNI podría reclamarlas. Restablece esas contraseñas allá, o agrega `--desactivar-claves-desconocidas` para pasarlas desactivadas y reactivarlas después con una contraseña nueva.
 - Faltan archivos: pasa cuando una foto se borró a mano de la carpeta. El registro se pasa igual; ese archivo se verá
   como «ya no está disponible».
 
 ## Cómo se probó
 
-- 31 pruebas automáticas (`tests/test_migracion_php.py`) con datos de todas las tablas.
+- 33 pruebas automáticas (`tests/test_migracion_php.py`) con datos de todas las tablas.
 - Ensayo con una MariaDB real (10.4, la de XAMPP) con el esquema original, pasando a una base PostgreSQL nueva.
 - Una contraseña hecha por el `password_hash` de PHP de verdad entra en este sistema.

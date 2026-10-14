@@ -58,4 +58,5 @@ Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones)
 - [docs/00-decisiones.md](docs/00-decisiones.md) — por qué este stack
 - [docs/01-plan.md](docs/01-plan.md) — fases y avance
 - [docs/02-migracion-desde-php.md](docs/02-migracion-desde-php.md) — pasar los datos del piloto (PHP) a este sistema
+- [docs/03-servidor-windows.md](docs/03-servidor-windows.md) — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
 - [docs/heredados/](docs/heredados) — visión, requerimientos y análisis del sistema anterior
