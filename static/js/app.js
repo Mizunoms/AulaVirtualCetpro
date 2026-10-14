@@ -643,6 +643,36 @@
     aplicar();
   });
 
+  // Formulario de curso: las muestras ponen el color, la vista previa sigue al nombre y al color, y se avisa si el color es muy claro
+  // (encima va letra blanca). Sin JavaScript queda el selector de color del navegador y el servidor revisa lo mismo.
+  var campoColor = document.querySelector('[data-campo-color]');
+  if (campoColor) {
+    var campoNombre = document.querySelector('[data-campo-nombre]');
+    var vistaCurso = document.querySelector('[data-vista-curso]');
+    var avisoColor = document.querySelector('[data-aviso-color]');
+    var muestras = document.querySelectorAll('[data-poner-color]');
+    var luminancia = function (hex) {
+      var c = [1, 3, 5].map(function (i) {
+        var v = parseInt(hex.substr(i, 2), 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    var actualizarCurso = function () {
+      var valor = campoColor.value;
+      vistaCurso.style.setProperty('--color', valor);
+      vistaCurso.querySelector('[data-vista-nombre]').textContent = campoNombre.value.trim() || 'Nombre del curso';
+      avisoColor.hidden = 1.05 / (luminancia(valor) + 0.05) >= 4.5; // contraste con el blanco
+      muestras.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.ponerColor.toLowerCase() === valor.toLowerCase() ? 'true' : 'false'); });
+    };
+    muestras.forEach(function (b) {
+      b.addEventListener('click', function () { campoColor.value = b.dataset.ponerColor; actualizarCurso(); });
+    });
+    campoColor.addEventListener('input', actualizarCurso);
+    campoNombre.addEventListener('input', actualizarCurso);
+    actualizarCurso();
+  }
+
   // ---------- Animaciones ----------
   // Todo se apaga con «Reducir animaciones» (Mi cuenta) o si el aparato pide menos movimiento.
   var sinMovimiento = function () {

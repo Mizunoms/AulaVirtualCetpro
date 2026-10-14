@@ -120,8 +120,8 @@ PASOS = {
         Paso(
             "cursos",
             "Cursos y módulos",
-            "Crea los módulos a mano o cargando el Excel del plan de estudios. "
-            "Cada módulo tiene su docente, su turno y sus alumnos.",
+            "Primero crea el curso con «Nuevo curso» (por ejemplo, Soporte Técnico). Dentro del curso agrega sus módulos con "
+            "«Agregar módulo» o cargando el Excel del plan de estudios. Cada módulo tiene su docente, su turno y sus alumnos.",
         ),
         Paso(
             "ajustes",
@@ -216,6 +216,11 @@ PREGUNTAS = {
             "Tengo una lista en Excel. ¿Cómo la cargo?",
             "En «Personas» toca «Cargar lista de alumnos» o «Cargar lista de docentes». Sube el Excel o pega la lista; en cada "
             "pantalla puedes descargar un modelo para llenar. Las contraseñas temporales se muestran una sola vez.",
+        ),
+        (
+            "¿Cómo creo un curso y sus módulos?",
+            "En «Cursos» toca «Nuevo curso», escribe el nombre y elige un color. Se abre el curso: ahí toca «Agregar módulo» y "
+            "elige su docente, su turno y su periodo.",
         ),
         (
             "¿Cómo creo una cuenta?",

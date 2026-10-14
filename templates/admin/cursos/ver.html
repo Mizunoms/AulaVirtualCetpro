@@ -1,0 +1,68 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Un curso del administrador: su encabezado de color, lo que se puede hacer desde aquí (agregar módulo, cargar el plan, editar) y sus módulos. #}
+{% block contenido %}
+<section class="cabecera-modulo" style="{% if foto %}background:linear-gradient(135deg, rgba(11,27,53,.8) 0%, rgba(11,27,53,.35) 100%), url('{{ foto }}') center/cover{% else %}background:linear-gradient(135deg, {{ curso.color }} 0%, var(--navy) 130%){% endif %}">
+  <div class="especialidad">Curso</div>
+  <div class="datos mt-1">
+    <span>{{ resumen.modulos|plural:"módulo,módulos" }}</span>
+    <span>{{ resumen.alumnos|plural:"alumno,alumnos" }}</span>
+    <span>{{ resumen.docentes|plural:"docente,docentes" }}</span>
+  </div>
+</section>
+
+<div class="d-grid d-sm-flex flex-wrap gap-2">
+  <a class="btn btn-cetpro" href="{% url 'academico:admin_nuevo' %}?especialidad={{ curso.nombre|urlencode }}">{% icono 'mas' 22 %} Agregar módulo</a>
+  <a class="btn btn-borde" href="{% enlace 'academico:plan' %}">{% icono 'subir' 22 %} Cargar plan de estudios (Excel)</a>
+  <a class="btn btn-borde" href="{% url 'academico:admin_curso_editar' curso.slug %}">{% icono 'editar' 22 %} Editar curso</a>
+</div>
+
+{% if not modulos %}
+  <section class="tarjeta p d-flex flex-column gap-3">
+    <h2 class="h4 mb-0">{% icono 'cursos' %} Este curso todavía no tiene módulos</h2>
+    <p class="mb-0">Un curso se divide en <b>módulos</b> (Módulo 1 y Módulo 2). Cada módulo tiene su docente, su turno y sus alumnos. Empieza por el primero:</p>
+    <div class="d-grid d-sm-flex gap-2">
+      <a class="btn btn-cetpro btn-lg" href="{% url 'academico:admin_nuevo' %}?especialidad={{ curso.nombre|urlencode }}&amp;modulo={{ 'Módulo 1'|urlencode }}">{% icono 'mas' 22 %} Crear Módulo 1</a>
+      <a class="btn btn-borde btn-lg" href="{% url 'academico:admin_nuevo' %}?especialidad={{ curso.nombre|urlencode }}&amp;modulo={{ 'Módulo 2'|urlencode }}">{% icono 'mas' 22 %} Crear Módulo 2</a>
+    </div>
+    <p class="texto-2 mb-0">¿Tienes el plan de estudios en Excel? Con «Cargar plan de estudios» se llenan solos los módulos y sus unidades didácticas.</p>
+  </section>
+{% else %}
+  <h2 class="seccion-titulo">{% icono 'cursos' %} Módulos de este curso</h2>
+  <div class="rejilla-catalogo">
+    {% for c in modulos %}
+      <article class="modulo-admin" style="--color:{{ curso.color }}">
+        <div class="modulo-admin-cabeza">
+          <div class="curso-bb-esp">{% if c.codigo %}{{ c.codigo_fmt }} · {% endif %}{% if c.modulo %}{{ c.modulo }}{% else %}{{ c.especialidad }}{% endif %}</div>
+          <span class="chip chip-ok">Activo</span>
+        </div>
+        <h3 class="curso-bb-titulo h5"><a href="{% url 'academico:modulo' c.id %}">{{ c.nombre }}</a></h3>
+        <ul class="lista-datos modulo-admin-datos">
+          <li>{% icono 'cuenta' 18 %} Prof. {{ c.docente.nombre_completo }}</li>
+          <li>{% icono 'usuarios' 18 %} {{ c.total_alumnos|plural:"alumno matriculado,alumnos matriculados" }}</li>
+          <li>{% icono 'reloj' 18 %} Turno {{ c.turno }}{% if c.horario %} · {{ c.horario }}{% endif %} · {{ c.periodo }}</li>
+        </ul>
+        <div class="acciones-card">
+          <a class="btn btn-borde" href="{% url 'academico:modulo' c.id %}">{% icono 'cursos' 18 %} Abrir</a>
+          <a class="btn btn-borde" href="{% url 'academico:admin_alumnos' c.id %}">{% icono 'usuarios' 18 %} Ver alumnos</a>
+          <a class="btn btn-borde" href="{% url 'academico:admin_editar' c.id %}">{% icono 'editar' 18 %} Editar módulo</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if archivados %}
+  <p class="texto-2 mb-0">Este curso tiene {{ archivados|plural:"módulo archivado,módulos archivados" }} (no se ven aquí). <a href="{% url 'academico:admin_modulos' %}?estado=archivados&amp;especialidad={{ curso.nombre|urlencode }}">Verlos</a></p>
+{% endif %}
+
+<section class="tarjeta p d-flex flex-column gap-2">
+  <h2 class="h5 mb-0">Eliminar este curso</h2>
+  {% if motivo_no_eliminar %}
+    <p class="texto-2 mb-0">{{ motivo_no_eliminar }}</p>
+  {% else %}
+    <p class="texto-2 mb-0">Como no tiene módulos, se puede eliminar sin perder trabajos ni notas.</p>
+  {% endif %}
+  <a class="btn btn-borde align-self-start" href="{% url 'academico:admin_curso_eliminar' curso.slug %}">{% icono 'basura' 20 %} Eliminar curso…</a>
+</section>
+{% endblock %}

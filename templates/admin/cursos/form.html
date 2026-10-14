@@ -1,0 +1,44 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Formulario de curso (nuevo o editar): nombre, color y foto del taller. Al crearlo, la pantalla siguiente es el curso, para agregar sus módulos. #}
+{% block contenido %}
+<form method="post" enctype="multipart/form-data" action="{% if nuevo %}{% url 'academico:admin_curso_nuevo' %}{% else %}{% url 'academico:admin_curso_editar' curso.slug %}{% endif %}" class="d-flex flex-column gap-3" style="max-width:640px">
+  {% csrf_token %}
+  {% if nuevo %}
+    <p class="texto-2 mb-0">Un curso es un programa de estudios, por ejemplo «Soporte Técnico». Después de crearlo podrás agregarle sus módulos.</p>
+  {% endif %}
+  <div>
+    <label class="form-label" for="nombre">Nombre del curso</label>
+    <input class="form-control" id="nombre" name="nombre" maxlength="100" required value="{{ v.nombre }}" placeholder="Ej.: Soporte Técnico" data-campo-nombre {% if nuevo %}autofocus{% endif %}>
+    {% if not nuevo %}<div class="ayuda">Si lo cambias, se cambia también en sus módulos.</div>{% endif %}
+  </div>
+
+  <fieldset>
+    <legend class="form-label">Color del curso</legend>
+    <div class="muestras-color">
+      {% for hexa, nombre_color in colores %}
+        <button type="button" class="muestra-color" data-poner-color="{{ hexa }}" style="--c:{{ hexa }}" aria-label="{{ nombre_color }}"></button>
+      {% endfor %}
+      <label class="visually-hidden" for="color">Otro color</label>
+      <input class="form-control form-control-color" type="color" id="color" name="color" value="{{ v.color }}" data-campo-color>
+    </div>
+    <div class="ayuda">Se ve en las tarjetas de sus módulos. Elige un color oscuro: encima va letra blanca.</div>
+    <div class="vista-curso" data-vista-curso style="--color:{{ v.color }}"><span data-vista-nombre>{{ v.nombre|default:"Nombre del curso" }}</span></div>
+    <div class="mensaje mensaje-error mt-2" data-aviso-color hidden role="alert">{% icono 'alerta' 24 %}<span>Ese color es muy claro: la letra blanca no se leería bien. Elige uno más oscuro.</span></div>
+  </fieldset>
+
+  <div>
+    <label class="form-label" for="foto">Foto del taller <span class="fw-normal texto-2">(opcional)</span></label>
+    {% if foto %}
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <img src="{{ foto }}" alt="Foto actual del curso" width="120" height="80" style="object-fit:cover;border-radius:12px">
+        <label class="interruptor-chico"><input type="checkbox" name="quitar_foto" value="1"> Quitar la foto</label>
+      </div>
+    {% endif %}
+    <input class="form-control" type="file" id="foto" name="foto" accept="image/jpeg,image/png,image/webp">
+    <div class="ayuda">Una foto real del taller (mejor horizontal). Se ve en las tarjetas de sus módulos.</div>
+  </div>
+
+  <button type="submit" class="btn btn-cetpro btn-lg">{% if nuevo %}Crear curso{% else %}Guardar cambios{% endif %}</button>
+</form>
+{% endblock %}

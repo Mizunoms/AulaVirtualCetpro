@@ -15,6 +15,7 @@ from apps.nucleo.models import Registro
 from apps.nucleo.permisos import exigir, no_encontrado
 from apps.nucleo.utils import clave_segura, error, ok, plural, por_metodo, vista, volver_con_error
 
+from . import cursos as cursos_
 from .models import Matricula, Modulo, Turno, UnidadDidactica
 
 
@@ -55,12 +56,12 @@ def cursos(request):
     por_curso = {}
     for m in Modulo.objects.activos().con_alumnos().order_by("especialidad", "nombre"):
         por_curso.setdefault(m.especialidad, []).append(m)
-    lista = [dict(e) for e in ajustes.especialidades()]
-    # Un módulo cuyo curso ya no está en la lista de Ajustes no debe quedar escondido.
+    lista = cursos_.lista()
+    # Un módulo cuyo curso ya no está en la lista no debe quedar escondido.
     conocidos = {e["nombre"] for e in lista}
     for otro in por_curso:
         if otro not in conocidos:
-            lista.append({"nombre": otro, "color": ajustes.color_curso(otro), "foto": None})
+            lista.append({"nombre": otro, "color": ajustes.color_curso(otro), "foto": None, "slug": cursos_.slug_de(otro)})
     resumen = Modulo.resumen_por_especialidad()
     for c in lista:
         c["resumen"] = resumen.get(c["nombre"], {"modulos": 0, "docentes": 0, "alumnos": 0})
@@ -277,14 +278,15 @@ def _modulos_opciones(valor_actual):
     return seleccion, opciones
 
 
-def formulario_modulo(request, modulo, esp_inicial, didacticas):
-    """Contexto del formulario de módulo (nuevo o editar) del administrador."""
+def formulario_modulo(request, modulo, esp_inicial, didacticas, modulo_inicial=""):
+    """Contexto del formulario de módulo (nuevo o editar) del administrador. `modulo_inicial` es «Módulo 1» o «Módulo 2»
+    cuando se llega desde un curso con el botón de uno de ellos."""
     old = request.session.get("_old", {})
 
     def v(campo, defecto=""):
         return old.get(campo, str(getattr(modulo, campo, defecto) or defecto) if modulo else defecto)
 
-    seleccion, opciones = _modulos_opciones(v("modulo"))
+    seleccion, opciones = _modulos_opciones(v("modulo") or modulo_inicial)
     return {
         "modulo": modulo,
         "nuevo": modulo is None,
@@ -309,13 +311,17 @@ def formulario_modulo(request, modulo, esp_inicial, didacticas):
 def nuevo(request):
     esp = request.GET.get("especialidad", "")
     esp = esp if esp in ajustes.nombres_especialidades() else ""
+    modulo_inicial = request.GET.get("modulo", "")
+    modulo_inicial = modulo_inicial if modulo_inicial in ("Módulo 1", "Módulo 2") else ""
+    # Si se llegó desde un curso, «Volver» regresa a ese curso
+    volver = reverse("academico:admin_curso", args=[cursos_.slug_de(esp)]) if esp else reverse("academico:admin_cursos")
     return vista(
         request,
         "admin/modulos/form.html",
-        formulario_modulo(request, None, esp, []),
+        formulario_modulo(request, None, esp, [], modulo_inicial),
         titulo="Nuevo módulo",
         sub=esp or "Elige el curso al que pertenece",
-        volver=reverse("academico:admin_cursos"),
+        volver=volver,
         menu="admin-cursos",
     )
 

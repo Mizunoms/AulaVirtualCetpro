@@ -23,6 +23,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 
 ## Fase 2 — Académico
 - [x] Cursos (programas) y módulos del administrador: catálogo con filtros, crear, editar, archivar, **eliminar de verdad**
+- [x] **Crear cursos** desde «Cursos → Nuevo curso» (nombre, color y foto) y, desde la página del curso, agregar sus módulos (también «Editar curso» y «Eliminar curso», este solo cuando ya no tiene módulos)
 - [x] Unidades didácticas (nombre, créditos, horas) y pestaña «Cursos» de Ajustes (renombrar en cascada)
 - [x] Clases con fechas de apertura y cierre (se abren y cierran solas, o a mano), crear varias de una vez, mover, borrar
 - [x] Matrículas (1 o 2 módulos por alumno): lista pegada, código de inscripción, «Preparar accesos» por WhatsApp

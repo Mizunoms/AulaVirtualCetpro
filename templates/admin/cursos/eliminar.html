@@ -1,0 +1,31 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Eliminar un curso de verdad: dice qué se pierde. Si todavía tiene módulos, no deja eliminarlo y muestra cuáles son. #}
+{% block contenido %}
+<section class="tarjeta p d-flex flex-column gap-3" style="max-width:640px">
+  <h2 class="h4 mb-0">{% icono 'alerta' %} ¿Eliminar el curso «{{ curso.nombre }}»?</h2>
+  {% if motivo %}
+    <p class="mb-0"><b>Todavía no se puede eliminar.</b> {{ motivo }}</p>
+    {% if modulos %}
+      <ul class="lista-modulos-curso">
+        {% for m in modulos %}
+          <li>
+            <a href="{% url 'academico:admin_eliminar' m.id %}">
+              <span class="fw-bold">{{ m.nombre }}{% if not m.activo %} (archivado){% endif %}</span>
+              <span class="detalle">Eliminar este módulo…</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <a class="btn btn-cetpro align-self-start" href="{% url 'academico:admin_curso' curso.slug %}">Volver al curso</a>
+  {% else %}
+    <p class="mb-0">Se borra el curso{% if foto %} y su foto{% endif %}. No tiene módulos, así que no se pierde ningún trabajo, nota ni asistencia. Esto no se puede deshacer.</p>
+    <form method="post" action="{% url 'academico:admin_curso_eliminar' curso.slug %}" class="d-flex flex-wrap gap-2">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-acento">{% icono 'basura' 20 %} Sí, eliminar el curso</button>
+      <a class="btn btn-borde" href="{% url 'academico:admin_curso' curso.slug %}">No, volver</a>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

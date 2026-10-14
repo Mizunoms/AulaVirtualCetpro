@@ -48,7 +48,7 @@ tests/
 ```
 
 ## Palabras (igual que en el sistema anterior)
-- **Curso** = programa de estudios (la especialidad, ej. Soporte Técnico).
+- **Curso** = programa de estudios (la especialidad, ej. Soporte Técnico). Se crea en «Cursos → Nuevo curso» (nombre, color y foto) y desde su página se agregan sus módulos; la lista vive en los Ajustes y la lógica en `apps/academico/cursos.py` (cada módulo guarda el nombre de su curso: al renombrar un curso se cambia en sus módulos). Un curso solo se elimina cuando ya no tiene módulos.
 - **Módulo** = Módulo 1 o 2 de un curso, con su docente, turno y alumnos.
 - **Unidad didáctica** = lista informativa del módulo (nombre, créditos y horas).
 - **Clase** = lo que el docente abre con fechas de apertura y cierre.

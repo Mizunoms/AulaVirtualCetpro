@@ -1,20 +1,20 @@
 {% extends "layouts/app.html" %}
 {% load aula %}
-{# Cursos del administrador: cada curso (programa de estudios) con sus módulos. De aquí se crean y se ven los módulos. #}
+{# Cursos del administrador: cada curso (programa de estudios) con sus módulos. Aquí se crea un curso nuevo; dentro de cada curso se agregan sus módulos. #}
 {% block contenido %}
 <div class="d-grid d-sm-flex flex-wrap gap-2">
-  <a class="btn btn-cetpro" href="{% url 'academico:admin_nuevo' %}">{% icono 'mas' 22 %} Nuevo módulo</a>
+  <a class="btn btn-cetpro" href="{% url 'academico:admin_curso_nuevo' %}">{% icono 'mas' 22 %} Nuevo curso</a>
+  <a class="btn btn-borde" href="{% url 'academico:admin_nuevo' %}">{% icono 'mas' 22 %} Nuevo módulo</a>
   <a class="btn btn-borde" href="{% url 'academico:admin_modulos' %}">{% icono 'cursos' 22 %} Ver todos los módulos</a>
   <a class="btn btn-borde" href="{% enlace 'academico:plan' %}">{% icono 'subir' 22 %} Cargar plan de estudios (Excel)</a>
-  <a class="btn btn-borde" href="{% url 'nucleo:ajustes' %}?tab=especialidades">{% icono 'ajustes' 22 %} Agregar o cambiar cursos</a>
 </div>
-<p class="texto-2 mb-0">Un <b>curso</b> es un programa de estudios, por ejemplo «Soporte Técnico». Dentro tiene sus <b>módulos</b>; cada módulo tiene su docente, sus alumnos, sus unidades didácticas y sus clases.</p>
+<p class="texto-2 mb-0">Un <b>curso</b> es un programa de estudios, por ejemplo «Soporte Técnico». Primero se crea el curso y dentro se agregan sus <b>módulos</b>; cada módulo tiene su docente, sus alumnos, sus unidades didácticas y sus clases.</p>
 
 <div class="rejilla-catalogo">
   {% for curso in cursos %}
     <article class="modulo-admin" style="--color:{{ curso.color }}">
       <div class="modulo-admin-cabeza">
-        <h2 class="curso-bb-titulo flex-grow-1">{{ curso.nombre }}</h2>
+        <h2 class="curso-bb-titulo flex-grow-1"><a href="{% url 'academico:admin_curso' curso.slug %}">{{ curso.nombre }}</a></h2>
       </div>
       <div class="d-flex flex-wrap gap-2">
         <span class="chip chip-info">{{ curso.resumen.modulos|plural:"módulo,módulos" }}</span>
@@ -22,7 +22,7 @@
         <span class="chip chip-gris">{{ curso.resumen.docentes|plural:"docente,docentes" }}</span>
       </div>
       {% if not curso.modulos %}
-        <p class="texto-2 mb-0">Todavía no tiene módulos. Crea el primero con el botón de abajo.</p>
+        <p class="texto-2 mb-0">Todavía no tiene módulos. Abre el curso para crear el primero.</p>
       {% else %}
         <ul class="lista-modulos-curso">
           {% for m in curso.modulos %}
@@ -37,8 +37,8 @@
         {% if curso.mas %}<p class="texto-2 small mb-0">y {{ curso.mas }} más…</p>{% endif %}
       {% endif %}
       <div class="acciones-card">
-        <a class="btn btn-borde" href="{% url 'academico:admin_modulos' %}?especialidad={{ curso.nombre|urlencode }}">{% icono 'cursos' 18 %} Ver módulos</a>
-        <a class="btn btn-cetpro" href="{% url 'academico:admin_nuevo' %}?especialidad={{ curso.nombre|urlencode }}">{% icono 'mas' 18 %} Nuevo módulo</a>
+        <a class="btn btn-borde" href="{% url 'academico:admin_curso' curso.slug %}">{% icono 'cursos' 18 %} Abrir curso</a>
+        <a class="btn btn-cetpro" href="{% url 'academico:admin_nuevo' %}?especialidad={{ curso.nombre|urlencode }}">{% icono 'mas' 18 %} Agregar módulo</a>
       </div>
     </article>
   {% endfor %}

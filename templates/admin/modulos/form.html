@@ -21,7 +21,7 @@
         <option {% if esp == c %}selected{% endif %}>{{ c }}</option>
       {% endfor %}
     </select>
-    <div class="ayuda">¿No está? Agrégalo en <a href="{% url 'nucleo:ajustes' %}?tab=especialidades">Ajustes → Cursos</a>.</div>
+    <div class="ayuda">¿No está? Créalo con <a href="{% url 'academico:admin_curso_nuevo' %}">Nuevo curso</a>.</div>
   </div>
   <fieldset>
     <legend class="form-label">¿Qué módulo es?</legend>

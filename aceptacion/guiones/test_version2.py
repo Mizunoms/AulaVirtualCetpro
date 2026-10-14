@@ -1115,12 +1115,14 @@ ok(
     "Administrador: «Cursos» en el menú y cada curso con sus módulos",
 )
 ok(
-    "Nuevo módulo" in t
-    and "Ver módulos" in t
+    "Nuevo curso" in t
+    and "Nuevo módulo" in t
+    and "Abrir curso" in t
+    and "Agregar módulo" in t
     and "Ver todos los módulos" in t
-    and "Agregar o cambiar cursos" in t
-    and "/admin/modulos?especialidad=" in t,
-    "Cursos: botones para ver y crear módulos de cada curso",
+    and "/admin/cursos/nuevo" in t
+    and "/admin/modulos/nuevo?especialidad=" in t,
+    "Cursos: «Nuevo curso», y en cada curso abrirlo y agregarle módulos",
 )
 ok(
     re.search(r"\d+ módulos?</span>", t) and re.search(r"\d+ alumnos?</span>", t),

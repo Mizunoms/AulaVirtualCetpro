@@ -213,6 +213,7 @@
   <form id="especialidades" method="post" action="{% url 'nucleo:ajustes_especialidades' %}" class="tarjeta p d-flex flex-column gap-3">
     {% csrf_token %}
     <h2 class="h4 mb-0">{% icono 'estrella' %} Cursos (programas de estudios)</h2>
+    <p class="mb-0">Para crear un curso nuevo y agregarle sus módulos, entra a <a class="fw-bold" href="{% url 'academico:admin_cursos' %}">Cursos</a> y toca «Nuevo curso». Aquí puedes cambiar rápido los nombres y colores de todos a la vez.</p>
     <p class="texto-2 mb-0">Cada módulo pertenece a un curso (un programa de estudios, por ejemplo «Soporte Técnico»). El color se usa en sus tarjetas. Si cambias un nombre, se cambia también en sus módulos. Para agregar uno, escribe su nombre en una fila vacía.</p>
     <div class="rejilla-especialidades">
       {% for esp in filas_especialidades %}

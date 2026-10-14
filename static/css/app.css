@@ -1535,3 +1535,10 @@ body.alto-contraste .publica-lado .puntos li:hover { background: #000; box-shado
 body.alto-contraste .cielo-banner, body.alto-contraste .tutorial-cielo canvas { display: none; }
 body.alto-contraste .tutorial-cielo { background: #0B1B35; }
 @media print { .cielo-banner, .tutorial-cielo canvas { display: none !important; } }
+
+/* ===== Formulario de curso: muestras de color y vista previa ===== */
+.muestras-color { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.muestra-color { width: 44px; height: 44px; padding: 0; border-radius: 12px; border: 3px solid var(--superficie); background: var(--c); box-shadow: 0 0 0 1px var(--borde-campo); cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+.muestra-color:hover { transform: scale(1.06); }
+.muestra-color[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--texto); }
+.vista-curso { margin-top: .75rem; border-radius: var(--radio); padding: 1rem 1.125rem; color: #fff; font-weight: 800; font-size: 1.125rem; background: linear-gradient(135deg, var(--color) 0%, var(--navy) 130%); }
