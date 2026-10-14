@@ -704,3 +704,55 @@ def test_copiar_con_fecha_mala_o_sin_permiso(cliente_de, docente, alumno_en_modu
     assert "Revisa la fecha de la primera clase" in c.get(r["Location"]).content.decode() and Modulo.objects.count() == 1
     for p in (alumno_en_modulo, otro_docente):
         assert cliente_de(p).post(reverse("academico:copiar", args=[modulo.pk]), {"nombre": "x"}).status_code == 403
+
+
+# ===================================================================== Que no confunda: ficha del alumno y formulario del docente
+
+
+def test_la_ficha_antes_de_entregar_muestra_el_plazo_y_el_formulario_de_entrega(cliente_de, alumno_en_modulo, clase):
+    t = tarea_en(clase, fecha_limite=timezone.now() + timedelta(days=2))
+    html = cliente_de(alumno_en_modulo).get(reverse("tareas:ver", args=[t.pk])).content.decode()
+    assert "Vence" in html and "Entrega tu trabajo" in html and "Tomar foto" in html
+    assert "Entregada" not in html and "Envíala otra vez" not in html
+    assert "<b>Calificación:</b>" in html and "<b>Nota:</b>" not in html  # sin «Nota: Nota de 0 a 20»
+    assert "<b>Si entregas tarde:</b>" not in html and "Después de la fecha ya no se acepta." in html  # sin repetir la frase
+
+
+def test_despues_de_entregar_lo_primero_que_se_ve_es_que_esta_hecho(cliente_de, alumno_en_modulo, clase):
+    t = tarea_en(clase, fecha_limite=timezone.now() - timedelta(days=1), politica_tardia="acepta")
+    entrega_de(alumno_en_modulo, t, tardia=True)
+    html = cliente_de(alumno_en_modulo).get(reverse("tareas:ver", args=[t.pk])).content.decode()
+    assert "Entregada · fuera de fecha" in html and "Ya entregaste esta tarea" in html
+    assert "Venció" not in html  # ya no sale el aviso rojo de que se pasó la fecha
+    # Enviarla otra vez sigue disponible, pero plegado: no parece que falte algo por hacer
+    assert "¿Te equivocaste? Envíala otra vez" in html and "<details" in html and "Entrega tu trabajo" not in html
+    assert 'name="foto"' in html
+
+
+def test_una_tarea_ya_calificada_no_ofrece_enviarla_otra_vez(cliente_de, alumno_en_modulo, clase):
+    t = tarea_en(clase)
+    entrega_de(alumno_en_modulo, t, nota=Decimal("15"), calificado=timezone.now())
+    html = cliente_de(alumno_en_modulo).get(reverse("tareas:ver", args=[t.pk])).content.decode()
+    assert "Entregada y calificada" in html and "Tu nota" in html and "Envíala otra vez" not in html
+
+
+def criterios_abiertos(html):
+    """¿El bloque «Criterios de evaluación (opcional)» del formulario de nueva tarea viene desplegado?"""
+    import re
+
+    m = re.search(
+        r'<details class="tarjeta" ?(open)?>\s*<summary[^>]*>\s*<span class="cuerpo"><span class="fw-bold">Criterios', html
+    )
+    assert m, "no está el bloque plegable de criterios"
+    return bool(m.group(1))
+
+
+def test_los_criterios_son_opcionales_y_vienen_plegados(cliente_de, docente, modulo, clase):
+    c = cliente_de(docente)
+    html = c.get(reverse("tareas:nueva", args=[modulo.pk]) + f"?clase={clase.pk}").content.decode()
+    assert not criterios_abiertos(html)
+    assert 'name="criterio_texto[]"' in html and "de 20 puntos" in html  # siguen ahí, solo plegados
+    # Si el formulario vuelve con un error, no se pierde lo que ya había escrito en los criterios
+    r = crear_tarea(c, modulo, clase, titulo="", **{"criterio_texto[]": ["Foto clara"], "criterio_puntos[]": ["20"]})
+    html = c.get(r["Location"]).content.decode()
+    assert criterios_abiertos(html) and "Foto clara" in html

@@ -14,8 +14,14 @@
     <textarea class="form-control" id="instrucciones" name="instrucciones" rows="4" maxlength="5000" placeholder="Ej.: Toma una foto del corte terminado, de frente y de perfil.">{{ old.instrucciones }}</textarea>
   </div>
 
-  <fieldset class="criterios-editor" data-filas data-max="10">
-    <legend class="form-label">Criterios de evaluación <span class="fw-normal texto-2">(opcional)</span></legend>
+  {# Los criterios son opcionales: se muestran plegados para que lo básico (nombre, qué hacer, fecha) sea lo primero que se ve. #}
+  <details class="tarjeta" {% if tiene_criterios %}open{% endif %}>
+  <summary class="fila" style="cursor:pointer;min-height:56px">
+    <span class="cuerpo"><span class="fw-bold">Criterios de evaluación (opcional)</span><span class="detalle">Qué vas a revisar y cuántos puntos vale cada cosa</span></span>
+    <span class="flecha">{% icono 'derecha' %}</span>
+  </summary>
+  <fieldset class="criterios-editor p-3 border-top" data-filas data-max="10">
+    <legend class="visually-hidden">Criterios de evaluación (opcional)</legend>
     <p class="ayuda mt-0">Escribe qué vas a revisar y cuántos puntos vale cada cosa. Entre todos deben sumar 20. Tus alumnos lo verán al entregar.</p>
     <ol class="filas-lista" role="list" data-lista>
       {% for c in criterios_filas %}
@@ -36,6 +42,7 @@
     <button type="button" class="btn btn-borde mt-2" data-agregar hidden>{% icono 'mas' 20 %} Agregar criterio</button>
     <div class="criterios-total mt-2" aria-live="polite">Suman <b data-total>0</b> de 20 puntos<span data-resto></span></div>
   </fieldset>
+  </details>
 
   <div class="row g-2">
     <div class="col-7">

@@ -23,7 +23,7 @@
       <form method="post" action="{% url 'formularios:publicar' q.id %}">
         {% csrf_token %}
         <input type="hidden" name="publicar" value="{% if q.publicado %}0{% else %}1{% endif %}">
-        <button type="submit" class="btn {% if q.publicado %}btn-borde{% else %}btn-whatsapp{% endif %} btn-lg w-100">{% if q.publicado %}Ocultar{% else %}Publicar para mis alumnos{% endif %}</button>
+        <button type="submit" class="btn {% if q.publicado %}btn-borde{% else %}btn-whatsapp{% endif %} btn-lg w-100">{% if q.publicado %}Ocultar a mis alumnos{% else %}Publicar para mis alumnos{% endif %}</button>
       </form>
     </div>
   {% endif %}

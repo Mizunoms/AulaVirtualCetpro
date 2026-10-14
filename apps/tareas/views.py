@@ -215,6 +215,7 @@ def crear(request, id):
             "calif_sel": old.get("tipo_calificacion", "nota"),
             "tipo_sel": old.get("tipo", "individual"),
             "criterios_filas": _filas_criterios(request),
+            "tiene_criterios": any(t.strip() for t in old.get("criterio_texto[]") or []),  # si volvió con errores, sigue abierto
             "politicas": [("no_acepta", "No"), ("acepta", "Sí"), ("penalidad", "Sí, restando puntos")],
             "calificaciones": [("nota", "Nota de 0 a 20"), ("rubrica", "Rúbrica (0 a 20)"), ("aprobado", "Aprobó / No aprobó")],
             "tipos": [("individual", "Individual"), ("grupal", "En grupo")],

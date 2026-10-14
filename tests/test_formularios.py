@@ -1216,3 +1216,12 @@ def test_el_formulario_sabe_si_esta_abierto(clase):
     Formulario.objects.filter(pk=f.pk).update(fecha_limite=timezone.now() + timedelta(days=1), publicado=False)
     f.refresh_from_db()
     assert not f.abierto
+
+
+def test_el_boton_para_esconder_un_formulario_dice_a_quien_se_lo_esconde(cliente_de, docente, modulo, clase, examen):
+    c = cliente_de(docente)
+    html = c.get(reverse("formularios:ver", args=[examen.pk])).content.decode()
+    assert "Ocultar a mis alumnos" in html and "Publicar para mis alumnos" not in html
+    Formulario.objects.filter(pk=examen.pk).update(publicado=False)
+    html = c.get(reverse("formularios:ver", args=[examen.pk])).content.decode()
+    assert "Publicar para mis alumnos" in html and "Ocultar a mis alumnos" not in html

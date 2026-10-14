@@ -6,7 +6,12 @@
   <div class="ficha-guia d-flex flex-column gap-3">
     <section class="tarjeta p d-flex flex-column gap-2">
       <div class="d-flex flex-wrap gap-2">
-        <span class="chip {{ clase_fecha }}">{% icono 'reloj' 16 %} {{ tarea.fecha_limite|vencimiento_texto }} · {{ tarea.fecha_limite|tiempo_restante }}</span>
+        {% if entrega %}
+          {# Ya entregó: lo primero que ve es que está hecho (no el aviso rojo de «venció hace…») #}
+          <span class="chip chip-ok">{% icono 'check' 16 %} {% if calificada %}Entregada y calificada{% else %}Entregada{% endif %}{% if entrega.tardia %} · fuera de fecha{% endif %}</span>
+        {% else %}
+          <span class="chip {{ clase_fecha }}">{% icono 'reloj' 16 %} {{ tarea.fecha_limite|vencimiento_texto }} · {{ tarea.fecha_limite|tiempo_restante }}</span>
+        {% endif %}
         {% if tarea.tipo == 'grupal' %}<span class="chip chip-gris">En grupo</span>{% endif %}
       </div>
       <h2 class="h5 fw-bold mb-0">{% icono 'tarea' 20 %} Lo que pide tu profesor</h2>
@@ -30,8 +35,8 @@
         </ul>
       {% endif %}
       <ul class="lista-datos">
-        <li><b>Nota:</b> {{ tarea.get_tipo_calificacion_display }}{% if tarea.tipo_calificacion != 'aprobado' %} · apruebas con {{ minima|nota_fmt }}{% endif %}</li>
-        <li><b>Si entregas tarde:</b> {{ tarea.texto_tardia }}</li>
+        <li><b>Calificación:</b> {{ tarea.get_tipo_calificacion_display }}{% if tarea.tipo_calificacion != 'aprobado' %} · apruebas con {{ minima|nota_fmt }}{% endif %}</li>
+        <li>{{ tarea.texto_tardia }}</li>
         <li><b>Fecha límite:</b> {{ tarea.fecha_limite|fecha_larga }}, {{ tarea.fecha_limite|hora_texto }}</li>
       </ul>
     </section>
@@ -78,9 +83,17 @@
     {% endif %}
 
     {% if not calificada and puede_entregar %}
-      <form method="post" action="{% url 'tareas:entregar' tarea.id %}" enctype="multipart/form-data" class="tarjeta p d-flex flex-column gap-3" data-requiere-archivo>
+      {% if entrega %}
+        {# Ya entregó: el reenvío queda plegado para que no parezca que falta hacer algo ni se envíe dos veces sin querer #}
+        <details class="tarjeta">
+          <summary class="fila" style="cursor:pointer;min-height:56px">
+            <span class="cuerpo"><span class="fw-bold">¿Te equivocaste? Envíala otra vez</span><span class="detalle">Puedes cambiar tu entrega hasta que tenga nota</span></span>
+            <span class="flecha">{% icono 'derecha' %}</span>
+          </summary>
+      {% endif %}
+      <form method="post" action="{% url 'tareas:entregar' tarea.id %}" enctype="multipart/form-data" class="{% if entrega %}p-3 border-top{% else %}tarjeta p{% endif %} d-flex flex-column gap-3" data-requiere-archivo>
         {% csrf_token %}
-        <h2 class="h5 fw-bold mb-0">{% icono 'subir' 20 %} {% if entrega %}¿Te equivocaste? Envíala otra vez{% else %}Entrega tu trabajo{% endif %}</h2>
+        {% if not entrega %}<h2 class="h5 fw-bold mb-0">{% icono 'subir' 20 %} Entrega tu trabajo</h2>{% endif %}
 
         <label class="zona-carga position-relative" data-soltar="archivo">
           {% icono 'camara' 40 %}
@@ -102,6 +115,7 @@
         <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'enviar' 22 %} Confirmar y enviar tarea</button>
         <p class="ayuda mt-0 mb-0" data-aviso-archivo>Primero toma la foto o elige el archivo.</p>
       </form>
+      {% if entrega %}</details>{% endif %}
     {% elif not entrega and not puede_entregar %}
       <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>Esta tarea ya no acepta entregas (la fecha pasó o la clase se cerró). Si tuviste un problema, habla con tu profesor.</span></div>
     {% endif %}
