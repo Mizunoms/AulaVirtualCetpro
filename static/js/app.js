@@ -278,6 +278,32 @@
     });
   });
 
+  // Unidades didácticas: «Quitar» saca la unidad (las de abajo suben un lugar) y deja libre un lugar para «Agregar otra unidad».
+  // Siempre quedan visibles al menos 3 filas. Lo quitado se borra de verdad al guardar el módulo.
+  var listaUnidades = document.getElementById('lista-unidades');
+  if (listaUnidades) {
+    listaUnidades.addEventListener('click', function (ev) {
+      var quitar = ev.target.closest('[data-quitar-unidad]');
+      if (!quitar) { return; }
+      var visibles = Array.prototype.filter.call(listaUnidades.querySelectorAll('[data-fila]'), function (f) { return !f.hidden; });
+      var indice = visibles.indexOf(quitar.closest('[data-fila]'));
+      for (var k = indice; k < visibles.length - 1; k++) {
+        var desde = visibles[k + 1].querySelectorAll('input');
+        visibles[k].querySelectorAll('input').forEach(function (campo, j) { campo.value = desde[j].value; });
+      }
+      var ultima = visibles[visibles.length - 1];
+      ultima.querySelectorAll('input').forEach(function (campo) { campo.value = ''; });
+      var quedan = visibles.length;
+      if (quedan > 3) { ultima.hidden = true; quedan -= 1; }
+      var masUnidades = document.querySelector('[data-mas-filas="lista-unidades"]');
+      if (masUnidades) { masUnidades.hidden = false; }
+      var aviso = document.querySelector('[data-aviso-unidades]');
+      if (aviso) { aviso.textContent = 'Unidad quitada. Quedan ' + quedan + ' filas.'; }
+      var campoNombre = visibles[Math.min(indice, quedan - 1)].querySelector('input');
+      if (campoNombre) { campoNombre.focus(); }
+    });
+  }
+
   // Menús «Más» y «Opciones»: se cierran al tocar fuera o con Escape.
   document.addEventListener('click', function (ev) {
     document.querySelectorAll('details.menu-opciones[open]').forEach(function (menu) {

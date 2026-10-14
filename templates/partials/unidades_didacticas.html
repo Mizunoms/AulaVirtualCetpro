@@ -1,8 +1,9 @@
 {% load aula %}
-{# Unidades didácticas del módulo: filas para escribir nombre, créditos y horas. Las filas vacías se ignoran. Lo usan el formulario del administrador y el del docente. #}
+{# Unidades didácticas del módulo: filas para escribir nombre, créditos y horas, cada una con su botón «Quitar» (las de abajo suben). Las filas vacías se ignoran y lo quitado se borra al guardar el módulo. Lo usan el formulario del administrador y el del docente. #}
 <fieldset class="unidades-didacticas">
   <legend class="form-label">Unidades didácticas <span class="fw-normal texto-2">(opcional)</span></legend>
-  <div class="ayuda mb-2">Si tu módulo tiene varias unidades, como en el plan de estudios, escribe una por fila. Los créditos y las horas son opcionales.</div>
+  <div class="ayuda mb-2">Si tu módulo tiene varias unidades, como en el plan de estudios, escribe una por fila. Los créditos y las horas son opcionales. Para sacar una, toca «Quitar»; el cambio se guarda al tocar el botón de abajo.</div>
+  <div class="visually-hidden" role="status" data-aviso-unidades></div>
   <div id="lista-unidades" class="d-flex flex-column gap-2">
     {% for f in ud_filas %}
       <div class="fila-unidad" data-fila {% if f.oculta %}hidden{% endif %}>
@@ -18,10 +19,9 @@
           <label class="form-label" for="ud-h-{{ f.i }}">Horas</label>
           <input class="form-control" id="ud-h-{{ f.i }}" name="ud_horas[]" type="number" min="0" max="2000" inputmode="numeric" value="{{ f.h }}">
         </div>
+        <button type="button" class="btn btn-borde btn-quitar-unidad" data-quitar-unidad aria-label="Quitar la unidad {{ forloop.counter }}">{% icono 'basura' 20 %} Quitar</button>
       </div>
     {% endfor %}
   </div>
-  {% if ud_hay_mas %}
-    <button type="button" class="btn btn-borde mt-2" data-mas-filas="lista-unidades">{% icono 'mas' 20 %} Agregar otra unidad</button>
-  {% endif %}
+  <button type="button" class="btn btn-borde mt-2" data-mas-filas="lista-unidades" {% if not ud_hay_mas %}hidden{% endif %}>{% icono 'mas' 20 %} Agregar otra unidad</button>
 </fieldset>

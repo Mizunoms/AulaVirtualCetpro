@@ -1228,6 +1228,11 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .fila-unidad[hidden] { display: none; }
 .fila-unidad .flex-grow-1 { min-width: min(100%, 260px); }
 .fila-unidad .campo-num { width: 110px; }
+.fila-unidad .btn-quitar-unidad { flex: 0 0 auto; min-height: 52px; padding-inline: .875rem; } /* a la altura de los campos; aquí caben más botones o ajustes de cada unidad */
+@media (max-width: 420px) { /* en celular, créditos, horas y «Quitar» caben en una sola línea */
+  .fila-unidad .campo-num { width: 96px; }
+  .fila-unidad .btn-quitar-unidad { padding-inline: .625rem; }
+}
 .lista-did { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .lista-did li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .125rem .75rem; align-items: baseline; padding: .5rem 0; border-top: 1px solid var(--borde); }
 .lista-did li > :last-child { white-space: nowrap; }
