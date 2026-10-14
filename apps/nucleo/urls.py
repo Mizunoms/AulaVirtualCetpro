@@ -9,7 +9,6 @@ urlpatterns = [
     path("", views.inicio, name="inicio"),
     path("tema", views.tema, name="tema"),
     path("ayuda", views.ayuda_ver, name="ayuda"),
-    path("ayuda/tutorial/visto", views.tutorial_visto, name="tutorial_visto"),
     path("notificaciones", views.avisos, name="avisos"),
     path("marca/logo", views.marca_logo, name="marca_logo"),
     path("marca/fondo", views.marca_fondo, name="marca_fondo"),

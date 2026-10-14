@@ -3,8 +3,7 @@
   Tutorial: una ventana (dialog) que app.js abre la primera vez o con «Repetir tutorial». Un paso a la vez, con teclado,
   lector de pantalla y «Escuchar». Sin JavaScript no se ve nada: la pantalla «Ayuda» dice lo mismo, completo.
 {% endcomment %}
-<dialog id="tutorial" class="tutorial" aria-labelledby="tutorial-nombre" data-abrir="1"
-        data-visto-url="{% url 'nucleo:tutorial_visto' %}" data-csrf="{{ csrf_token }}">
+<dialog id="tutorial" class="tutorial" aria-labelledby="tutorial-nombre" data-abrir="1">
   <div class="tutorial-caja">
     <div class="tutorial-cabecera">
       <span id="tutorial-nombre">Tutorial del aula virtual</span>

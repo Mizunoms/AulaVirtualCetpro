@@ -55,17 +55,31 @@ def test_cada_rol_tiene_su_propio_tutorial():
     assert ayuda.pasos_de("rol-raro") == ayuda.PASOS[Rol.ALUMNO]
 
 
-def test_al_terminar_o_saltar_ya_no_se_abre_solo(cliente_de, alumno):
+def test_el_tutorial_se_abre_solo_una_vez_aunque_no_lo_termine(cliente_de, alumno):
     c = cliente_de(alumno)
-    assert 'id="tutorial"' in inicio(c)
-    r = c.post(reverse("nucleo:tutorial_visto"), HTTP_ACCEPT="application/json")
-    assert r.status_code == 200 and r.json() == {"ok": True}
+    assert alumno.tutorial_visto is None
+    assert 'id="tutorial"' in inicio(c)  # la primera vez que ve su Inicio
     alumno.refresh_from_db()
-    assert alumno.tutorial_visto is not None
-    html = inicio(c)
-    assert 'id="tutorial"' not in html and "data-slide" not in html
+    assert alumno.tutorial_visto is not None  # se marcó al mostrarlo, no al cerrarlo
+    for _ in range(3):  # recargar la página, volver al Inicio, salir y entrar…: ya no se abre solo
+        html = inicio(c)
+        assert 'id="tutorial"' not in html and "data-slide" not in html
     # Sí sigue el botón para verlo otra vez
     assert "¿Necesitas ayuda?" in html and "Repetir tutorial" in html and "?tutorial=1" in html
+
+
+def test_ver_otras_pantallas_antes_del_inicio_no_gasta_el_tutorial(cliente_de, alumno):
+    c = cliente_de(alumno)
+    c.get(reverse("cuentas:cuenta"))
+    c.get(reverse("nucleo:ayuda"))
+    alumno.refresh_from_db()
+    assert alumno.tutorial_visto is None and 'id="tutorial"' in inicio(c)
+
+
+def test_al_salir_y_volver_a_entrar_el_tutorial_no_vuelve(cliente_de, alumno, client):
+    assert 'id="tutorial"' in inicio(cliente_de(alumno))
+    client.post(reverse("cuentas:login"), {"usuario": alumno.dni, "clave": CLAVE, "tipo": "alumno"})
+    assert 'id="tutorial"' not in client.get(reverse("nucleo:inicio")).content.decode()
 
 
 def test_repetir_tutorial_lo_abre_aunque_ya_lo_haya_visto(cliente_de, docente):
@@ -74,23 +88,29 @@ def test_repetir_tutorial_lo_abre_aunque_ya_lo_haya_visto(cliente_de, docente):
     assert 'id="tutorial"' not in inicio(c)
     html = inicio(c, "?tutorial=1")
     assert 'id="tutorial"' in html and 'data-abrir="1"' in html and "Dejar una tarea" in html
+    assert 'id="tutorial"' not in inicio(c)  # y al volver al Inicio normal, otra vez cerrado
 
 
-def test_sin_javascript_el_formulario_de_visto_vuelve_al_inicio(cliente_de, alumno):
-    r = cliente_de(alumno).post(reverse("nucleo:tutorial_visto"))
-    assert r.status_code == 302 and r["Location"] == reverse("nucleo:inicio")
-
-
-def test_marcar_visto_pide_sesion_y_solo_acepta_post(client, cliente_de, alumno):
-    assert cliente_de(alumno).get(reverse("nucleo:tutorial_visto")).status_code == 405
-    r = client.post(reverse("nucleo:tutorial_visto"))
-    assert r.status_code == 302 and reverse("cuentas:login") in r["Location"]
+def test_pedir_el_tutorial_con_el_boton_la_primera_vez_tambien_cuenta_como_visto(cliente_de, alumno):
+    c = cliente_de(alumno)
+    assert 'id="tutorial"' in inicio(c, "?tutorial=1")
+    alumno.refresh_from_db()
+    assert alumno.tutorial_visto is not None and 'id="tutorial"' not in inicio(c)
 
 
 def test_cada_persona_tiene_su_propia_marca(cliente_de, alumno, docente):
-    cliente_de(alumno).post(reverse("nucleo:tutorial_visto"))
+    inicio(cliente_de(alumno))
     docente.refresh_from_db()
     assert docente.tutorial_visto is None and 'id="tutorial"' in inicio(cliente_de(docente))
+
+
+def test_ya_no_hay_aviso_al_servidor_al_cerrar_el_tutorial(cliente_de, alumno):
+    """Se marca al mostrarlo: no hace falta (ni existe) una dirección para avisar que lo cerró."""
+    from django.urls import NoReverseMatch
+
+    with pytest.raises(NoReverseMatch):
+        reverse("nucleo:tutorial_visto")
+    assert "data-visto-url" not in inicio(cliente_de(alumno))
 
 
 # ===================================================================== La pantalla «Ayuda»

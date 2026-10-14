@@ -3,7 +3,7 @@
 import re
 from math import ceil
 
-from django.http import Http404, JsonResponse
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -24,10 +24,15 @@ def inicio(request):
 
     plantilla, datos = inicio_de_rol(request)
     datos["ayuda_pie"] = True  # al final del Inicio: «¿Necesitas ayuda?»
-    # Tutorial: se abre solo la primera vez que la persona entra, o cuando toca «Repetir tutorial» (/?tutorial=1)
+    # Tutorial: se abre solo UNA vez, la primera que la persona ve su Inicio; después solo con «Repetir tutorial» (/?tutorial=1).
+    # Se marca como visto al mostrarlo (no al cerrarlo): si se va a la mitad o recarga la página, no se le vuelve a abrir solo.
+    u = request.user
     repetir = request.GET.get("tutorial") == "1"
-    if repetir or request.user.tutorial_visto is None:
-        datos["tutorial"] = {"pasos": ayuda.pasos_de(request.user.rol), "repetido": repetir}
+    if repetir or u.tutorial_visto is None:
+        datos["tutorial"] = {"pasos": ayuda.pasos_de(u.rol), "repetido": repetir}
+        if u.tutorial_visto is None:
+            u.tutorial_visto = timezone.now()
+            u.save(update_fields=["tutorial_visto"])
     return vista(request, plantilla, datos, titulo="Inicio", menu="inicio")
 
 
@@ -36,18 +41,6 @@ def ayuda_ver(request):
     """«Ayuda»: resumen del sistema para el rol de la persona, preguntas frecuentes y el botón «Repetir tutorial»."""
     datos = ayuda.resumen_de(request.user.rol)
     return vista(request, "nucleo/ayuda.html", datos, titulo="Ayuda", sub="Qué es y cómo se usa", menu="cuenta")
-
-
-@require_POST
-@exigir()
-def tutorial_visto(request):
-    """La persona terminó o saltó el tutorial: ya no se le abre solo (puede repetirlo cuando quiera)."""
-    u = request.user
-    u.tutorial_visto = timezone.now()
-    u.save(update_fields=["tutorial_visto"])
-    if "application/json" in request.headers.get("Accept", ""):
-        return JsonResponse({"ok": True})
-    return redirect("nucleo:inicio")
 
 
 @exigir()

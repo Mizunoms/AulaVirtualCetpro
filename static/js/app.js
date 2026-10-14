@@ -623,7 +623,6 @@
   });
 
   // Tutorial de primera vez («Repetir tutorial» lo vuelve a abrir): un paso a la vez. Funciona con teclado y lector de pantalla.
-  // Al terminar o saltarlo se avisa al aula (una vez) para que no se abra solo otra vez.
   var tutorial = document.getElementById('tutorial');
   if (tutorial) {
     var pasos = tutorial.querySelectorAll('[data-slide]');
@@ -653,14 +652,6 @@
     };
     var cerrarTutorial = function () {
       pararVoz();
-      if (tutorial.dataset.vistoUrl) {
-        try {
-          fetch(tutorial.dataset.vistoUrl, {
-            method: 'POST', credentials: 'same-origin', keepalive: true,
-            headers: { 'X-CSRFToken': tutorial.dataset.csrf, 'Accept': 'application/json' }
-          });
-        } catch (e) { /* si no se pudo avisar, se abrirá otra vez la próxima: no pasa nada */ }
-      }
       if (tutorial.close) { tutorial.close(); } else { tutorial.removeAttribute('open'); }
       if (antesDelTutorial && antesDelTutorial.focus) { antesDelTutorial.focus(); }
     };
