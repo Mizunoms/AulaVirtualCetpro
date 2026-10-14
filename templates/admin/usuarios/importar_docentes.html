@@ -1,0 +1,57 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Cargar una lista de docentes (Excel, CSV o pegada). #}
+{% block contenido %}
+{% if resultado %}
+  <div class="tarjeta p d-flex flex-column gap-2" role="status">
+    <div class="fs-5 fw-bold">{% icono 'check' %} Lista cargada</div>
+    <div>
+      {{ resultado.nuevos|plural:"docente nuevo,docentes nuevos" }}
+      {% if resultado.existentes %} · {{ resultado.existentes|plural:"ya estaba,ya estaban" }}{% endif %}
+    </div>
+    {% if resultado.claves %}
+      <div class="mensaje mensaje-ok">{% icono 'whatsapp' 24 %}<span>Creé <b>{{ resultado.claves|plural:"contraseña temporal,contraseñas temporales" }}</b>. Se muestran <b>una sola vez</b>: ábrelas ahora para enviarlas por WhatsApp. Cada docente la cambia por una propia al entrar.</span></div>
+      <a class="btn btn-whatsapp align-self-start" href="{% url 'cuentas:admin_claves' %}">{% icono 'whatsapp' 20 %} Ver contraseñas y enviar por WhatsApp</a>
+    {% elif not resultado.errores %}
+      <p class="texto-2 mb-0">No había docentes nuevos: todos ya estaban en el aula.</p>
+    {% endif %}
+    {% if resultado.errores %}
+      <div class="mensaje mensaje-error">{% icono 'alerta' 24 %}<span>Estas filas no se cargaron:</span></div>
+      <ul class="mb-0">{% for err in resultado.errores %}<li>{{ err }}</li>{% endfor %}{% if resultado.mas_errores %}<li>… y {{ resultado.mas_errores|plural:"fila más,filas más" }}.</li>{% endif %}</ul>
+    {% endif %}
+    <p class="texto-2 mb-0">Siguiente paso: crea sus módulos en <a href="{% url 'academico:admin_cursos' %}">Cursos</a> y elige a cada docente.</p>
+  </div>
+{% endif %}
+
+<div class="rejilla-ajustes">
+  <form method="post" action="{% url 'cuentas:admin_importar_docentes' %}" enctype="multipart/form-data" class="tarjeta p d-flex flex-column gap-3">
+    {% csrf_token %}
+    <h2 class="h5 mb-0">{% icono 'subir' %} Cargar la lista</h2>
+    <div>
+      <label class="form-label" for="archivo">Archivo de Excel (.xlsx) o CSV</label>
+      <input class="form-control" type="file" id="archivo" name="archivo" accept=".xlsx,.csv">
+    </div>
+    <div class="separador">o pega la lista</div>
+    <div>
+      <label class="form-label" for="lista">Lista (copiada de Excel)</label>
+      <textarea class="form-control" id="lista" name="lista" rows="6" placeholder="Rosa Elena	Paredes Huamán	rosa.paredes@{{ dominio }}	45678912	987654321">{{ old.lista }}</textarea>
+    </div>
+    <p class="ayuda mb-0">Cada docente nuevo recibe una <b>contraseña temporal</b>, que verás <b>una sola vez</b> para enviarla por WhatsApp. La cambia por una propia la primera vez que entra.</p>
+    <button type="submit" class="btn btn-cetpro btn-lg">{% icono 'subir' 22 %} Cargar docentes</button>
+  </form>
+
+  <div class="tarjeta p">
+    <h2 class="h5">Cómo debe ser la lista</h2>
+    <p class="mb-2">Una fila por docente. La primera fila puede tener los títulos.</p>
+    <a class="btn btn-borde mb-3" href="{% url 'cuentas:admin_modelo_docentes' %}">{% icono 'bajar' 20 %} Descargar modelo para Excel</a>
+    <div class="tabla-scroll">
+      <table class="tabla-notas">
+        <thead><tr>{% for titulo in encabezado %}<th>{{ titulo }}</th>{% endfor %}</tr></thead>
+        <tbody><tr><td>Rosa Elena</td><td>Paredes Huamán</td><td>rosa.paredes@{{ dominio }}</td><td>45678912</td><td>987654321</td></tr></tbody>
+      </table>
+    </div>
+    <p class="ayuda">Solo <b>nombres</b> y <b>apellidos</b> son obligatorios. Si no hay <b>correo</b>, el aula crea uno así: <b>nombre.apellido@{{ dominio }}</b> (con el que el docente entra). Si escribes solo la parte de antes de la @, se completa con <b>@{{ dominio }}</b>. El <b>DNI</b> es opcional. El <b>celular</b> sirve para enviarle sus accesos por WhatsApp.</p>
+    <p class="ayuda mb-0">Los <b>apellidos</b> pueden ir juntos o en dos columnas (paterno y materno). Si el docente ya está en el aula, no se cambia nada. Lo demás que traiga el Excel <b>no se guarda</b>.</p>
+  </div>
+</div>
+{% endblock %}

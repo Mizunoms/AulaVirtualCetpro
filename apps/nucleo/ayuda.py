@@ -115,7 +115,7 @@ PASOS = {
         Paso(
             "usuarios",
             "Personas",
-            "Crea docentes y alumnos, carga listas de alumnos, da contraseñas nuevas y desactiva cuentas.",
+            "Crea docentes y alumnos, carga listas de alumnos y de docentes desde Excel, da contraseñas nuevas y desactiva cuentas.",
         ),
         Paso(
             "cursos",
@@ -202,6 +202,11 @@ PREGUNTAS = {
         ),
     ],
     Rol.ADMIN: [
+        (
+            "Tengo una lista en Excel. ¿Cómo la cargo?",
+            "En «Personas» toca «Cargar lista de alumnos» o «Cargar lista de docentes». Sube el Excel o pega la lista; en cada "
+            "pantalla puedes descargar un modelo para llenar. Las contraseñas temporales se muestran una sola vez.",
+        ),
         (
             "¿Cómo creo una cuenta?",
             "En «Personas» toca «Nuevo docente» o «Nuevo alumno». El aula te muestra la contraseña temporal una sola vez: "

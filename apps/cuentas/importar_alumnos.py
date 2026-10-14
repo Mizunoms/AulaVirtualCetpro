@@ -105,26 +105,37 @@ def _etiqueta_corta(m):
     return f"{m.modulo or m.nombre}{propio} · {m.turno} · Prof. {m.docente.apellidos}"
 
 
+def leer_filas(request, volver):
+    """Las filas de lo que subió o pegó el administrador (Excel, CSV o lista pegada). Devuelve (filas, None) o, si algo falla,
+    (None, redirección con el mensaje de error). La usan la carga de alumnos y la de docentes."""
+    filas = []
+    archivo = request.FILES.get("archivo")
+    if archivo is not None and archivo.size > 0:
+        if archivo.size > settings.ARCHIVOS_MAX_MB * 1024 * 1024:
+            return None, volver_con_error(
+                request, volver, f"El archivo es muy pesado. El máximo es {settings.ARCHIVOS_MAX_MB} MB."
+            )
+        try:
+            filas = importador.filas_tabla(archivo, archivo.name, max_filas=MAX_FILAS)
+        except importador.ImportadorError as ex:
+            return None, volver_con_error(request, volver, str(ex))
+    else:
+        for linea in request.POST.get("lista", "").splitlines():
+            if linea.strip():
+                filas.append([x.strip() for x in re.split(r"	|;|,", linea)])
+    if not filas:
+        return None, volver_con_error(request, volver, "No se encontró ninguna fila. Sube un Excel o pega la lista.")
+    return filas, None
+
+
 @require_POST
 @exigir(Rol.ADMIN)
 def procesar(request):
     yo = request.user
     volver = reverse("cuentas:admin_importar")
-    filas = []
-    archivo = request.FILES.get("archivo")
-    if archivo is not None and archivo.size > 0:
-        if archivo.size > settings.ARCHIVOS_MAX_MB * 1024 * 1024:
-            return volver_con_error(request, volver, f"El archivo es muy pesado. El máximo es {settings.ARCHIVOS_MAX_MB} MB.")
-        try:
-            filas = importador.filas_tabla(archivo, archivo.name, max_filas=MAX_FILAS)
-        except importador.ImportadorError as ex:
-            return volver_con_error(request, volver, str(ex))
-    else:
-        for linea in request.POST.get("lista", "").splitlines():
-            if linea.strip():
-                filas.append([x.strip() for x in re.split(r"\t|;|,", linea)])
-    if not filas:
-        return volver_con_error(request, volver, "No se encontró ninguna fila. Sube un Excel o pega la lista.")
+    filas, falla = leer_filas(request, volver)
+    if falla:
+        return falla
 
     # Módulos en los que se inscribe a todos: los marcados en la pantalla (uno o dos)
     ids = [int(x) for x in request.POST.getlist("curso_id[]") + request.POST.getlist("curso_id") if x.isdigit()]

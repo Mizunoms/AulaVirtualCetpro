@@ -52,6 +52,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Personas: lista con pestañas, filtros y paginación; crear, editar, «Más», desactivar y **eliminar de verdad** (con «Entiendo» y borrado de archivos); acciones en lote
 - [x] Importar plan de estudios (Excel del Ministerio): leer, revisar y crear o completar módulos con sus unidades didácticas
 - [x] Cargar alumnos desde Excel, CSV o lista pegada (títulos de columna, módulos por 1, 2, «1 y 2» o código)
+- [x] Cargar docentes desde Excel, CSV o lista pegada (correo propio o armado por el aula, contraseña temporal por WhatsApp) y «Descargar modelo para Excel» en las dos listas
 - [x] Claves temporales y envío por WhatsApp (una sola vez)
 - [x] Respaldo: `manage.py respaldo [--archivos]` (como en el sistema anterior, que solo lo tenía por comando; sin botón en el panel)
 

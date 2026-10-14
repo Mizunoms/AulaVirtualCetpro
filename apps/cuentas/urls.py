@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import importar_alumnos, registro, views, views_admin
+from . import importar_alumnos, importar_docentes, registro, views, views_admin
 
 app_name = "cuentas"
 
@@ -26,4 +26,7 @@ urlpatterns = [
     path("admin/usuarios/<int:id>/estado", views_admin.estado, name="admin_estado_persona"),
     path("admin/usuarios/<int:id>/clave", views_admin.clave, name="admin_clave_persona"),
     path("admin/alumnos/importar", importar_alumnos.importar_o_procesar, name="admin_importar"),
+    path("admin/alumnos/modelo.csv", importar_docentes.modelo_alumnos, name="admin_modelo_alumnos"),
+    path("admin/docentes/importar", importar_docentes.importar_o_procesar, name="admin_importar_docentes"),
+    path("admin/docentes/modelo.csv", importar_docentes.modelo_docentes, name="admin_modelo_docentes"),
 ]
