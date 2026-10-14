@@ -314,7 +314,7 @@
       var campo = document.getElementById(btn.dataset.verClave);
       var ver = campo.type === 'password';
       campo.type = ver ? 'text' : 'password';
-      btn.textContent = ver ? 'Ocultar' : 'Ver';
+      (btn.querySelector('span') || btn).textContent = ver ? 'Ocultar' : 'Ver';
       btn.setAttribute('aria-pressed', ver ? 'true' : 'false');
     });
   });

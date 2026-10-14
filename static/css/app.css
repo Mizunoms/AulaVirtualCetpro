@@ -335,7 +335,7 @@ textarea.form-control { min-height: 96px; }
 .ayuda { font-size: .9375rem; color: var(--texto-2); margin-top: .25rem; }
 .paso { font-size: 1rem; font-weight: 800; color: var(--texto-2); margin-bottom: .5rem; }
 .campo-grande { font-size: 1.5rem !important; letter-spacing: .1em; font-weight: 800; text-align: center; }
-.campo-grande::placeholder { color: #A7B0C0; font-weight: 600; }
+.campo-grande::placeholder { color: #66718A; font-weight: 600; } /* 4.9:1 sobre blanco (antes 2.2:1) */
 
 /* Opciones tipo botón (radio) */
 .opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; background: #E6EAF2; padding: 4px; border-radius: 14px; }
@@ -1359,3 +1359,80 @@ body.sin-animacion *, body.sin-animacion *::before, body.sin-animacion *::after 
 body.sin-animacion dialog::backdrop { animation: none !important; }
 body.sin-animacion .confeti { display: none !important; }
 @media print { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ===== Pantalla de entrada (rediseño): más aire, tarjeta cómoda, marca con presencia =====
+   Los colores salen de los ajustes del aula (--navy, --azul…), así que si el administrador cambia los colores, esto los sigue. */
+.publica { background: radial-gradient(ellipse at 15% 0%, rgba(18, 73, 163, .07), transparent 45%), var(--fondo); }
+.publica-lado:not(.con-foto) {
+  background-image: linear-gradient(150deg, var(--navy) 0%, var(--navy) 18%, color-mix(in srgb, var(--navy) 55%, var(--azul)) 58%, var(--azul) 100%);
+}
+.publica-lado::before {
+  content: ''; position: absolute; top: -140px; right: -140px; width: 420px; height: 420px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .11), transparent 70%); pointer-events: none;
+}
+.publica-pie { display: none; margin: 0; font-size: .875rem; color: rgba(255, 255, 255, .78); }
+
+/* La tarjeta: esquinas más redondas, sombra suave en capas, letra de ayuda más cómoda de leer */
+.publica-caja > .tarjeta {
+  border-radius: 18px; border: 1px solid var(--borde);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 12px 24px -8px rgba(15, 23, 42, .08), 0 24px 48px -16px rgba(15, 23, 42, .1);
+}
+.publica-caja h1 { letter-spacing: -.02em; }
+.publica-caja .ayuda, .publica-caja p.texto-2 { font-size: 1rem; line-height: 1.45; }
+.publica-caja .form-label { font-size: 1rem; }
+
+/* Campos más altos y cómodos para el dedo, con un aro de enfoque suave */
+.publica-caja .form-control { min-height: 52px; border-radius: 12px; border-width: 1.5px; font-size: 1.0625rem; }
+.publica-caja .form-control:focus, .publica-caja .campo-correo:focus-within {
+  border-color: var(--azul); box-shadow: 0 0 0 .2rem rgba(18, 73, 163, .22); box-shadow: 0 0 0 .2rem color-mix(in srgb, var(--azul) 24%, transparent);
+}
+.publica-caja .campo-correo { border-width: 1.5px; border-radius: 12px; }
+.publica-caja .campo-correo .form-control { min-height: 49px; box-shadow: none; }
+.publica-caja .btn-lg { min-height: 54px; border-radius: 12px; font-size: 1.0625rem; }
+
+/* Selector «Soy alumno / Soy profesor» como pastilla */
+.publica-caja .opciones { background: #EEF1F6; background: color-mix(in srgb, var(--texto) 7%, var(--superficie)); padding: 5px; gap: 4px; border-radius: 14px; }
+.opcion-entrar { transition: background-color .2s ease, color .2s ease, box-shadow .2s ease; min-height: 52px; font-size: 1rem; }
+
+/* La contraseña: «Ver» adentro del campo, con su ícono (sigue siendo una palabra: más claro que un ícono solo) */
+.campo-clave { position: relative; }
+.campo-clave .form-control { padding-right: 6.25rem; }
+.ver-clave {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%); min-height: 44px; min-width: 44px; padding: 0 .75rem; border: 0; border-radius: 10px;
+  background: transparent; color: var(--azul); font-weight: 800; font-size: 1rem; display: inline-flex; align-items: center; gap: .375rem;
+}
+.ver-clave:hover { background: rgba(18, 73, 163, .08); }
+.ver-clave:active { transform: translateY(-50%) scale(.97); }
+.ver-clave[aria-pressed="true"] { background: rgba(18, 73, 163, .12); }
+:where(html[data-tema="oscuro"]) .ver-clave { color: var(--azul-texto); }
+:where(html[data-tema="oscuro"]) .ver-clave:hover, :where(html[data-tema="oscuro"]) .ver-clave[aria-pressed="true"] { background: rgba(255, 255, 255, .1); }
+
+/* Enlaces de abajo: claros y fáciles de tocar */
+.enlace-secundario { display: inline-flex; align-items: center; gap: .375rem; min-height: 44px; font-weight: 800; font-size: 1.0625rem; text-underline-offset: 3px; }
+
+@media (min-width: 992px) {
+  .publica-lado { padding: 3rem 3.5rem; }
+  .publica-centro { max-width: 34rem; }
+  .publica-lado .lema { font-size: clamp(2rem, 2.8vw, 2.75rem); line-height: 1.15; margin-bottom: 1.75rem; }
+  .publica-lado .puntos { gap: .875rem; font-size: 1.0625rem; margin-top: 0; }
+  .publica-lado .puntos li {
+    background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); border-radius: 14px; padding: .875rem 1.125rem; gap: .875rem;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .publica-lado .puntos .icono { width: 40px; height: 40px; padding: 8px; border-radius: 12px; flex-shrink: 0; background: rgba(255, 255, 255, .14); }
+  .publica-pie { display: block; }
+  .publica-caja { max-width: 540px; padding: 2.5rem; }
+  .publica-caja > .tarjeta { padding: 2.5rem; }
+}
+@media (max-width: 991.98px) {
+  .publica-caja > .tarjeta { padding: 1.5rem; }
+  /* Celular: el botón de modo claro/oscuro queda en su propia fila arriba, así el nombre del CETPRO se lee entero */
+  .publica-lado { padding-top: 4.25rem; }
+  .publica-marca { padding-right: 0; }
+}
+@media (max-width: 420px) {
+  .opcion-entrar { font-size: .9375rem; gap: .375rem; padding: .375rem .25rem; }
+}
+
+/* Alto contraste: las tarjetas translúcidas pasan a bordes fuertes */
+body.alto-contraste .publica-lado .puntos li { background: #000; border-color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }

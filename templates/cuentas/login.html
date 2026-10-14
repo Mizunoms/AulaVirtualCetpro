@@ -32,9 +32,9 @@
   {% endif %}
   <div class="mb-4">
     <label class="form-label" for="clave">Tu contraseña</label>
-    <div class="d-flex gap-2">
+    <div class="campo-clave">
       <input class="form-control" id="clave" name="clave" type="password" autocomplete="current-password" required>
-      <button type="button" class="btn btn-borde" data-ver-clave="clave" aria-pressed="false" aria-label="Ver u ocultar la contraseña">Ver</button>
+      <button type="button" class="ver-clave" data-ver-clave="clave" aria-pressed="false" aria-label="Ver u ocultar la contraseña">{% icono 'ojo' 18 %} <span>Ver</span></button>
     </div>
   </div>
   <button type="submit" class="btn btn-cetpro btn-lg w-100">Entrar</button>
@@ -44,6 +44,6 @@
   <p class="texto-2 mt-3 mb-0 text-center">¿Olvidaste tu contraseña? Pídele una nueva al administrador del aula.</p>
 {% else %}
   <p class="texto-2 mt-3 mb-1 text-center">¿Olvidaste tu contraseña? Pídele una nueva a tu profesor.</p>
-  <p class="mt-2 mb-0 text-center"><a class="fw-bold" href="{% url 'cuentas:registro' %}">¿Es tu primera vez? Crea tu contraseña aquí</a></p>
+  <p class="mt-2 mb-0 text-center"><a class="enlace-secundario" href="{% url 'cuentas:registro' %}">¿Es tu primera vez? Crea tu contraseña aquí {% icono 'derecha' 18 %}</a></p>
 {% endif %}
 {% endblock %}

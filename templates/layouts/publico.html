@@ -22,7 +22,7 @@
       <img src="{{ logo_url }}" alt="Logo {{ aj.centro_nombre }}">
       <div><b>{{ aj.centro_nombre }}</b><span>{{ aj.aula_nombre }}</span></div>
     </div>
-    <div>
+    <div class="publica-centro">
       <p class="lema">{{ aj.bienvenida }}</p>
       <ul class="puntos">
         <li>{% icono 'carpeta' %} Tus clases y materiales en un solo lugar</li>
@@ -30,6 +30,7 @@
         <li>{% icono 'notas' %} Mira tus notas y tu asistencia</li>
       </ul>
     </div>
+    <p class="publica-pie">© {% now "Y" %} {{ aj.centro_nombre }}. Todos los derechos reservados.</p>
   </div>
 
   <main class="publica-caja">
