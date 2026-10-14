@@ -622,6 +622,27 @@
     });
   });
 
+  // Formulario de personas: lo obligatorio cambia según el tipo de cuenta (alumno: su DNI; las demás: su correo).
+  document.querySelectorAll('form').forEach(function (form) {
+    var campos = form.querySelectorAll('[data-requerido-para], [data-destacar-para]');
+    var radios = form.querySelectorAll('input[type="radio"][name="rol"]');
+    if (!campos.length || !radios.length) { return; }
+    var aplicar = function () {
+      var marcado = form.querySelector('input[type="radio"][name="rol"]:checked');
+      var rol = marcado ? marcado.value : '';
+      campos.forEach(function (campo) {
+        var lista = (campo.dataset.requeridoPara || campo.dataset.destacarPara).split(' ');
+        var requerido = lista.indexOf(rol) !== -1;
+        if (campo.dataset.requeridoPara !== undefined) { campo.required = requerido; } // «requerido»: pide llenarlo; «destacar»: solo cambia el texto
+        campo.parentElement.querySelectorAll('[data-si-requerido]').forEach(function (el) { el.hidden = !requerido; });
+        campo.parentElement.querySelectorAll('[data-si-opcional]').forEach(function (el) { el.hidden = requerido; });
+      });
+      form.querySelectorAll('[data-solo-para]').forEach(function (el) { el.hidden = el.dataset.soloPara.split(' ').indexOf(rol) === -1; });
+    };
+    radios.forEach(function (r) { r.addEventListener('change', aplicar); });
+    aplicar();
+  });
+
   // ---------- Animaciones ----------
   // Todo se apaga con «Reducir animaciones» (Mi cuenta) o si el aparato pide menos movimiento.
   var sinMovimiento = function () {

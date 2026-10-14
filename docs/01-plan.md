@@ -49,6 +49,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Mensajes alumno ↔ docente (con foto o archivo, «mensaje a todos», solo los dos participantes ven el archivo)
 
 ## Fase 5 — Panel del CETPRO
+- [x] Personas: el alumno SIEMPRE lleva DNI (con él entra; el correo es opcional) y las demás cuentas llevan correo o DNI; el formulario marca lo obligatorio según el tipo de cuenta y la lista avisa «Sin DNI: no puede entrar»
 - [x] Personas: lista con pestañas, filtros y paginación; crear, editar, «Más», desactivar y **eliminar de verdad** (con «Entiendo» y borrado de archivos); acciones en lote
 - [x] Importar plan de estudios (Excel del Ministerio): leer, revisar y crear o completar módulos con sus unidades didácticas
 - [x] Cargar alumnos desde Excel, CSV o lista pegada (títulos de columna, módulos por 1, 2, «1 y 2» o código)

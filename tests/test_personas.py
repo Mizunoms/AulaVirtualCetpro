@@ -1,5 +1,6 @@
 """Panel de Personas del administrador: lista, crear, editar, contraseñas, activar o desactivar y eliminar de verdad."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -244,8 +245,8 @@ def test_los_modulos_solo_se_inscriben_a_alumnos_y_activos(cliente_de, admin, mo
 @pytest.mark.parametrize(
     ("cambio", "mensaje"),
     [
-        ({"correo": "", "dni": ""}, "Escribe el correo (docentes) o el DNI (alumnos) para que pueda entrar."),
-        ({"correo": "", "dni": "1234567"}, "El DNI debe tener 8 números."),
+        ({"correo": "", "dni": ""}, "o el DNI para que pueda entrar."),
+        ({"dni": "1234567"}, "El DNI debe tener 8 números."),
         ({"nombres": " "}, "Escribe los nombres y apellidos."),
         ({"apellidos": ""}, "Escribe los nombres y apellidos."),
         ({"correo": "no es correo@x"}, "El correo no es válido."),
@@ -262,7 +263,11 @@ def test_datos_incorrectos_al_crear(cliente_de, admin, cambio, mensaje):
 
 def test_no_se_repiten_ni_el_correo_ni_el_dni(cliente_de, admin, docente, alumno):
     c = cliente_de(admin)
-    for cambio in ({"correo": "maria@cetpro.com"}, {"correo": "MARIA@Cetpro.com"}, {"correo": "", "dni": "12345678"}):
+    for cambio in (
+        {"correo": "maria@cetpro.com"},
+        {"correo": "MARIA@Cetpro.com"},
+        {"rol": "alumno", "correo": "", "dni": "12345678"},
+    ):
         r = c.post(reverse(LISTA), datos(**cambio))
         assert "Ya existe una persona con ese correo o DNI." in c.get(r["Location"]).content.decode()
     assert Usuario.objects.count() == 3
@@ -694,3 +699,102 @@ def test_eliminar_sin_marcar_o_con_personas_que_no_existen(cliente_de, admin):
 def test_desde_la_ficha_se_puede_eliminar(cliente_de, admin, alumno):
     html = cliente_de(admin).get(reverse("cuentas:admin_editar_persona", args=[alumno.pk])).content.decode()
     assert f'name="ids[]" value="{alumno.pk}"' in html and reverse("cuentas:admin_eliminar") in html
+
+
+# ===================================================================== El alumno entra con su DNI; las demás cuentas, con correo o DNI
+
+
+def error_al_crear(c, **cambio):
+    r = c.post(reverse(LISTA), datos(**cambio))
+    assert r["Location"] == reverse("cuentas:admin_nueva_persona")
+    return c.get(r["Location"]).content.decode()
+
+
+def test_un_alumno_no_se_crea_sin_dni_aunque_tenga_correo(cliente_de, admin):
+    c = cliente_de(admin)
+    for correo in ("alumoises@cetpro.com", "alumoises", ""):
+        html = error_al_crear(c, rol="alumno", correo=correo, dni="", nombres="Moisés", apellidos="Palomino")
+        assert "El alumno entra con su DNI: escribe los 8 números." in html
+    assert not Usuario.objects.filter(nombres="Moisés").exists()
+    # Lo que escribió se conserva y el tipo de cuenta sigue siendo alumno
+    assert 'id="rol-alumno" value="alumno" checked' in html and 'value="Palomino"' in html
+
+
+def test_un_alumno_con_dni_se_crea_con_o_sin_correo(cliente_de, admin):
+    c = cliente_de(admin)
+    c.post(reverse(LISTA), datos(rol="alumno", correo="", dni="45678912", nombres="Rosa", apellidos="Paz"))
+    c.post(reverse(LISTA), datos(rol="alumno", correo="luis@gmail.com", dni="45678913", nombres="Luis", apellidos="Paz"))
+    rosa, luis = Usuario.objects.get(dni="45678912"), Usuario.objects.get(dni="45678913")
+    assert rosa.correo is None and luis.correo == "luis@gmail.com"  # el correo del alumno es opcional
+
+
+def test_las_demas_cuentas_necesitan_el_correo_o_el_dni(cliente_de, admin):
+    c = cliente_de(admin)
+    for rol in ("docente", "direccion", "admin"):
+        html = error_al_crear(c, rol=rol, correo="", dni="")
+        assert "Escribe el correo (por ejemplo profesorpeluqueria@cetpro.com) o el DNI para que pueda entrar." in html, rol
+    assert not Usuario.objects.filter(nombres="Pedro").exists()
+    # Con uno de los dos, sí (como siempre)
+    c.post(reverse(LISTA), datos(rol="docente", correo="", dni="40000001", nombres="Eva", apellidos="Paz"))
+    c.post(reverse(LISTA), datos(rol="direccion", correo="dir@cetpro.com", dni="", nombres="Dir", apellidos="Paz"))
+    assert (
+        Usuario.objects.filter(nombres="Eva", dni="40000001").exists()
+        and Usuario.objects.filter(correo="dir@cetpro.com").exists()
+    )
+
+
+def test_al_editar_tampoco_se_puede_quitar_el_dni_a_un_alumno(cliente_de, admin, docente, alumno):
+    c = cliente_de(admin)
+    url_alumno = reverse("cuentas:admin_actualizar_persona", args=[alumno.pk])
+    r = c.post(url_alumno, datos(rol="alumno", correo="rosa@gmail.com", dni=""))
+    assert "El alumno entra con su DNI" in c.get(r["Location"]).content.decode()
+    # Un docente sin correo ni DNI tampoco; y pasarlo a alumno sin DNI, menos
+    url_docente = reverse("cuentas:admin_actualizar_persona", args=[docente.pk])
+    r = c.post(url_docente, datos(rol="docente", correo="", dni=""))
+    assert "o el DNI para que pueda entrar" in c.get(r["Location"]).content.decode()
+    r = c.post(url_docente, datos(rol="alumno", correo="maria@cetpro.com", dni=""))
+    assert "El alumno entra con su DNI" in c.get(r["Location"]).content.decode()
+    alumno.refresh_from_db()
+    docente.refresh_from_db()
+    assert alumno.rol == Rol.ALUMNO and alumno.dni == "12345678" and docente.rol == Rol.DOCENTE and docente.correo
+    # Un alumno que ya tenía DNI se puede pasar a docente conservando ese DNI
+    assert c.post(url_alumno, datos(rol="docente", correo="", dni="12345678")).status_code == 302
+
+
+def test_el_formulario_marca_lo_obligatorio_segun_el_tipo_de_cuenta(cliente_de, admin, modulo):
+    c = cliente_de(admin)
+    docente_html = c.get(reverse("cuentas:admin_nueva_persona") + "?rol=docente").content.decode()
+    alumno_html = c.get(reverse("cuentas:admin_nueva_persona") + "?rol=alumno").content.decode()
+    # Docente: ni el DNI ni el correo se piden con «required» (basta uno de los dos); no se ofrece inscribir en módulos
+    assert not re.search(r'id="dni"[^>]*\brequired\b', docente_html) and not re.search(
+        r'id="correo"[^>]*\brequired\b', docente_html
+    )
+    assert "(docentes, dirección y administradores entran con este)" in docente_html
+    # Alumno: el DNI es obligatorio y el correo no
+    assert re.search(r'id="dni"[^>]*\brequired\b', alumno_html) and not re.search(r'id="correo"[^>]*\brequired\b', alumno_html)
+    assert "(obligatorio: los alumnos entran con este)" in alumno_html and "(opcional para alumnos)" in alumno_html
+    assert 'id="matricular" data-solo-para="alumno" hidden' in docente_html
+    assert 'id="matricular" data-solo-para="alumno" >' in alumno_html or 'id="matricular" data-solo-para="alumno">' in alumno_html
+
+
+def test_la_lista_avisa_de_los_alumnos_que_quedaron_sin_dni(cliente_de, admin, alumno, docente):
+    sin_dni = Usuario.objects.create_user(
+        correo="alumoises@cetpro.com", nombres="Moisés", apellidos="Palomino", password=CLAVE, rol=Rol.ALUMNO
+    )
+    html = cliente_de(admin).get(reverse(LISTA)).content.decode()
+    assert html.count("Sin DNI: no puede entrar") == 1  # solo él: los demás alumnos tienen DNI y los docentes entran con correo
+    assert "Palomino, Moisés" in html and sin_dni.dni is None
+
+
+def test_el_panel_tecnico_tambien_exige_dni_al_alumno_y_correo_o_dni_a_los_demas(db):
+    from django.core.exceptions import ValidationError
+
+    with pytest.raises(ValidationError) as e:
+        Usuario(nombres="Ana", rol=Rol.ALUMNO, correo="ana@gmail.com").clean()
+    assert "dni" in e.value.message_dict
+    with pytest.raises(ValidationError) as e:
+        Usuario(nombres="Pedro", rol=Rol.DOCENTE).clean()  # sin correo ni DNI
+    assert "correo" in e.value.message_dict
+    Usuario(nombres="Ana", rol=Rol.ALUMNO, dni="45678912").clean()  # no falla
+    Usuario(nombres="Pedro", rol=Rol.ADMIN, correo="pedro@cetpro.com").clean()  # no falla
+    Usuario(nombres="Eva", rol=Rol.DOCENTE, dni="45678912").clean()  # no falla (como siempre: correo o DNI)

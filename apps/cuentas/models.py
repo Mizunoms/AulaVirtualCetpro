@@ -7,6 +7,7 @@ Lo que antes estaba en `av_perfiles` (origen, fecha de nacimiento, cambio de cla
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -115,6 +116,14 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.nombre_completo or self.correo or self.dni or f"Usuario {self.pk}"
+
+    def clean(self):
+        """El alumno siempre entra con su DNI. Las demás cuentas necesitan al menos el correo o el DNI."""
+        super().clean()
+        if self.rol == Rol.ALUMNO and not self.dni:
+            raise ValidationError({"dni": "El alumno entra con su DNI: escríbelo."})
+        if not self.correo and not self.dni:
+            raise ValidationError({"correo": "Escribe el correo o el DNI para que pueda entrar."})
 
     @property
     def nombre_completo(self):

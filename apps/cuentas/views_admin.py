@@ -387,8 +387,15 @@ def _datos(request):
 
 def _validar(request, d, volver, excluir=None):
     """Revisa los datos de una persona. Devuelve una redirección con el error, o None si todo está bien."""
+    # El alumno SIEMPRE entra con su DNI (el correo es opcional). Las demás cuentas necesitan al menos el correo o el DNI.
+    if d["rol"] == Rol.ALUMNO and d["dni"] == "":
+        return volver_con_error(request, volver, "El alumno entra con su DNI: escribe los 8 números.")
     if d["correo"] == "" and d["dni"] == "":
-        return volver_con_error(request, volver, "Escribe el correo (docentes) o el DNI (alumnos) para que pueda entrar.")
+        return volver_con_error(
+            request,
+            volver,
+            f"Escribe el correo (por ejemplo profesorpeluqueria@{ajustes.ajuste('dominio_correo')}) o el DNI para que pueda entrar.",
+        )
     if d["dni"] != "" and len(d["dni"]) != 8:
         return volver_con_error(request, volver, "El DNI debe tener 8 números.")
     if d["nombres"] == "" or d["apellidos"] == "":

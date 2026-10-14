@@ -26,14 +26,20 @@
         </div>
       </div>
       <div>
-        <label class="form-label" for="correo">Correo <span class="fw-normal texto-2">(docentes y administradores entran con este)</span></label>
-        <input class="form-control" id="correo" name="correo" type="text" inputmode="email" maxlength="120" autocomplete="off" value="{{ v.correo }}" placeholder="profesorpeluqueria@{{ dominio }}">
+        <label class="form-label" for="correo">Correo
+          <span class="fw-normal texto-2" data-si-requerido {% if rol_actual == 'alumno' %}hidden{% endif %}>(docentes, dirección y administradores entran con este)</span>
+          <span class="fw-normal texto-2" data-si-opcional {% if rol_actual != 'alumno' %}hidden{% endif %}>(opcional para alumnos)</span>
+        </label>
+        <input class="form-control" id="correo" name="correo" type="text" inputmode="email" maxlength="120" autocomplete="off" value="{{ v.correo }}" placeholder="profesorpeluqueria@{{ dominio }}" data-destacar-para="docente admin direccion">
         <div class="ayuda">Puede ser inventado, solo para el aula. Si escribes solo el nombre (ej. profesortecnico) se completa con @{{ dominio }}.</div>
       </div>
       <div class="row g-2">
         <div class="col-12 col-sm-6">
-          <label class="form-label" for="dni">DNI <span class="fw-normal texto-2">(los alumnos entran con este)</span></label>
-          <input class="form-control" id="dni" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" value="{{ v.dni }}">
+          <label class="form-label" for="dni">DNI
+            <span class="fw-normal texto-2" data-si-requerido {% if rol_actual != 'alumno' %}hidden{% endif %}>(obligatorio: los alumnos entran con este)</span>
+            <span class="fw-normal texto-2" data-si-opcional {% if rol_actual == 'alumno' %}hidden{% endif %}>(opcional)</span>
+          </label>
+          <input class="form-control" id="dni" name="dni" inputmode="numeric" maxlength="8" pattern="[0-9]{8}" value="{{ v.dni }}" data-requerido-para="alumno" {% if rol_actual == 'alumno' %}required{% endif %}>
         </div>
         <div class="col-12 col-sm-6">
           <label class="form-label" for="telefono">Celular</label>
@@ -45,7 +51,7 @@
         <input class="form-control" id="fecha_nacimiento" name="fecha_nacimiento" type="date" value="{{ fecha_nacimiento }}">
       </div>
       {% if not persona and modulos_activos %}
-        <fieldset id="matricular">
+        <fieldset id="matricular" data-solo-para="alumno" {% if rol_actual != 'alumno' %}hidden{% endif %}>
           <legend class="form-label">Inscribir en módulos <span class="fw-normal texto-2">(alumnos; uno o los dos)</span></legend>
           <div class="d-flex flex-column gap-1">
             {% for m, etiqueta, marcado in modulos_activos %}

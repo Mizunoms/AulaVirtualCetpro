@@ -92,7 +92,7 @@
             <td data-titulo="Usuario">
               <a class="persona" href="{% url 'cuentas:admin_editar_persona' x.id %}">
                 <span class="avatar" aria-hidden="true" style="background:var(--azul);width:40px;height:40px;font-size:.875rem">{{ x.iniciales }}</span>
-                <span class="cuerpo"><span class="fw-bold">{{ x.apellidos }}, {{ x.nombres }}</span><span class="detalle">{% if x.dni %}DNI {{ x.dni }}{% else %}{{ x.identificador }}{% endif %}</span></span>
+                <span class="cuerpo"><span class="fw-bold">{{ x.apellidos }}, {{ x.nombres }}</span><span class="detalle">{% if x.dni %}DNI {{ x.dni }}{% else %}{{ x.identificador }}{% endif %}</span>{% if x.rol == 'alumno' and not x.dni %}<span class="chip chip-mal align-self-start mt-1">Sin DNI: no puede entrar</span>{% endif %}</span>
               </a>
               {% if x.telefono or x.correo %}
                 <div class="contacto-en-usuario small texto-2">
