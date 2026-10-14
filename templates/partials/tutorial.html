@@ -1,0 +1,32 @@
+{% load aula %}
+{% comment %}
+  Tutorial: una ventana (dialog) que app.js abre la primera vez o con «Repetir tutorial». Un paso a la vez, con teclado,
+  lector de pantalla y «Escuchar». Sin JavaScript no se ve nada: la pantalla «Ayuda» dice lo mismo, completo.
+{% endcomment %}
+<dialog id="tutorial" class="tutorial" aria-labelledby="tutorial-nombre" data-abrir="1"
+        data-visto-url="{% url 'nucleo:tutorial_visto' %}" data-csrf="{{ csrf_token }}">
+  <div class="tutorial-caja">
+    <div class="tutorial-cabecera">
+      <span id="tutorial-nombre">Tutorial del aula virtual</span>
+      <span>Paso <b data-paso>1</b> de {{ tutorial.pasos|length }}</span>
+    </div>
+    <div class="tutorial-puntos" aria-hidden="true">{% for p in tutorial.pasos %}<span data-punto></span>{% endfor %}</div>
+
+    {% for p in tutorial.pasos %}
+      <section class="tutorial-paso" data-slide {% if not forloop.first %}hidden{% endif %}>
+        <div class="tutorial-icono" aria-hidden="true">{% icono p.icono 40 %}</div>
+        <h2 tabindex="-1">{{ p.titulo }}</h2>
+        <p data-texto>{{ p.texto }}</p>
+      </section>
+    {% endfor %}
+
+    <div class="tutorial-botones">
+      <button type="button" class="btn btn-borde" data-anterior hidden>Anterior</button>
+      <button type="button" class="btn btn-cetpro" data-siguiente>Siguiente</button>
+    </div>
+    <div class="tutorial-pie">
+      <button type="button" class="btn btn-borde" data-escuchar aria-pressed="false">{% icono 'voz' 20 %} Escuchar</button>
+      <button type="button" class="btn-texto" data-saltar>Saltar tutorial</button>
+    </div>
+  </div>
+</dialog>

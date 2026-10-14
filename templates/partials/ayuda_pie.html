@@ -1,0 +1,9 @@
+{% load aula %}
+{# Al final del Inicio de todos los roles. #}
+<section class="tarjeta p ayuda-pie" aria-label="Ayuda">
+  <div class="ayuda-pie-texto"><b>¿Necesitas ayuda?</b> <span class="texto-2">Mira para qué sirve cada parte del aula, paso a paso.</span></div>
+  <div class="ayuda-pie-botones">
+    <a class="btn btn-borde" href="{% url 'nucleo:inicio' %}?tutorial=1">{% icono 'play' 20 %} Repetir tutorial</a>
+    <a class="btn btn-borde" href="{% url 'nucleo:ayuda' %}">{% icono 'ayuda' 20 %} Ver la ayuda</a>
+  </div>
+</section>

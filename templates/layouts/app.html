@@ -37,6 +37,7 @@
           <span class="avatar" aria-hidden="true">{{ user.iniciales }}</span>
           <span><span class="nombre d-block">{{ user.nombre_completo }}</span><span class="rol">{{ user.get_rol_display }}</span></span>
         </a>
+        <a class="salir" href="{% url 'nucleo:ayuda' %}">{% icono 'ayuda' %} Ayuda</a>
         {% boton_tema 'salir' %}
         <form method="post" action="{% url 'cuentas:salir' %}">
           {% csrf_token %}
@@ -95,6 +96,7 @@
       {% endif %}
 
       {% block contenido %}{% endblock %}
+      {% if ayuda_pie %}{% include "partials/ayuda_pie.html" %}{% endif %}
     </main>
   </div>
 </div>
@@ -109,6 +111,8 @@
     {% endfor %}
   </nav>
 {% endif %}
+
+{% if tutorial %}{% include "partials/tutorial.html" %}{% endif %}
 
 <script src="{% static 'js/app.js' %}"></script>
 </body>

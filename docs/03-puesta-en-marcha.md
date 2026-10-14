@@ -47,6 +47,15 @@ dónde dudan: eso vale más que cualquier lista.
 1. En **Por calificar** ve la foto, pone una nota y un comentario.
 2. El alumno entra a **Mis notas** y la ve.
 
+### El tutorial de primera vez
+
+La primera vez que alguien entra, el aula le muestra un **tutorial corto** (distinto para alumno, docente y administración) que
+explica para qué sirve cada parte. Se puede **saltar**, tiene botón **Escuchar** y no vuelve a salir solo. Para verlo otra vez:
+**Mi cuenta → Repetir tutorial**, o al final del Inicio. **Ayuda** (también en el menú lateral) trae el resumen del sistema y
+las preguntas frecuentes. Observa si la persona lo entiende sin ayuda y qué paso salta.
+
+Si cambias el nombre de un botón del aula, cámbialo también en `apps/nucleo/ayuda.py` (una prueba avisa si quedó mal).
+
 ### Lo que solo se puede comprobar con un celular de verdad
 
 - [ ] La foto sale de la **cámara** del celular y llega bien (no girada, no pesada de más).
@@ -55,6 +64,7 @@ dónde dudan: eso vale más que cualquier lista.
 - [ ] Con **TalkBack** (Android → Accesibilidad) se puede entrar, ver la tarea y entregarla, y los botones «suenan» con su nombre.
 - [ ] Con **letra «muy grande»** y **alto contraste** (Mi cuenta) todo se sigue leyendo y tocando (en el navegador de una PC ya se revisó; falta verlo en un celular).
 - [ ] El **modo oscuro** se ve bien.
+- [ ] El **tutorial** se lee bien, el botón **Escuchar** funciona y se puede cerrar con TalkBack.
 - [ ] Un alumno **no puede ver** los datos de otro (probar con dos cuentas).
 
 Apunta cada problema con: **quién**, **qué hizo**, **qué esperaba** y **qué pasó** (si puedes, una captura).

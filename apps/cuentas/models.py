@@ -96,6 +96,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         "debe elegir su contraseña al entrar", default=False, help_text="La que le dieron era temporal."
     )
     activado = models.DateTimeField("cuándo creó su contraseña", null=True, blank=True)
+    tutorial_visto = models.DateTimeField(
+        "cuándo vio el tutorial", null=True, blank=True, help_text="Vacío = el tutorial se le muestra la primera vez que entra."
+    )
     is_active = models.BooleanField("activo", default=True)
     is_staff = models.BooleanField("puede entrar al panel de Django", default=False)
     creado = models.DateTimeField(default=timezone.now)

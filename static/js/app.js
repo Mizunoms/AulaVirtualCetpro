@@ -597,4 +597,81 @@
       voz.speak(u);
     });
   });
+
+  // Tutorial de primera vez («Repetir tutorial» lo vuelve a abrir): un paso a la vez. Funciona con teclado y lector de pantalla.
+  // Al terminar o saltarlo se avisa al aula (una vez) para que no se abra solo otra vez.
+  var tutorial = document.getElementById('tutorial');
+  if (tutorial) {
+    var pasos = tutorial.querySelectorAll('[data-slide]');
+    var botonAnterior = tutorial.querySelector('[data-anterior]');
+    var botonSiguiente = tutorial.querySelector('[data-siguiente]');
+    var botonEscuchar = tutorial.querySelector('[data-escuchar]');
+    var puntosPaso = tutorial.querySelectorAll('[data-punto]');
+    var numeroPaso = tutorial.querySelector('[data-paso]');
+    var vozTutorial = window.speechSynthesis;
+    var pasoActual = 0;
+    var antesDelTutorial = document.activeElement;
+
+    var pararVoz = function () {
+      if (vozTutorial) { vozTutorial.cancel(); }
+      if (botonEscuchar) { botonEscuchar.setAttribute('aria-pressed', 'false'); }
+    };
+    var mostrarPaso = function (n) {
+      pararVoz();
+      pasoActual = Math.max(0, Math.min(pasos.length - 1, n));
+      pasos.forEach(function (p, i) { p.hidden = i !== pasoActual; });
+      puntosPaso.forEach(function (p, i) { p.classList.toggle('activo', i === pasoActual); });
+      numeroPaso.textContent = pasoActual + 1;
+      botonAnterior.hidden = pasoActual === 0;
+      botonSiguiente.textContent = pasoActual === pasos.length - 1 ? '¡Listo, empezar!' : 'Siguiente';
+      var titulo = pasos[pasoActual].querySelector('h2');
+      if (titulo) { titulo.focus(); } // el lector de pantalla lee el paso nuevo
+    };
+    var cerrarTutorial = function () {
+      pararVoz();
+      if (tutorial.dataset.vistoUrl) {
+        try {
+          fetch(tutorial.dataset.vistoUrl, {
+            method: 'POST', credentials: 'same-origin', keepalive: true,
+            headers: { 'X-CSRFToken': tutorial.dataset.csrf, 'Accept': 'application/json' }
+          });
+        } catch (e) { /* si no se pudo avisar, se abrirá otra vez la próxima: no pasa nada */ }
+      }
+      if (tutorial.close) { tutorial.close(); } else { tutorial.removeAttribute('open'); }
+      if (antesDelTutorial && antesDelTutorial.focus) { antesDelTutorial.focus(); }
+    };
+
+    botonSiguiente.addEventListener('click', function () {
+      if (pasoActual >= pasos.length - 1) { cerrarTutorial(); } else { mostrarPaso(pasoActual + 1); }
+    });
+    botonAnterior.addEventListener('click', function () { mostrarPaso(pasoActual - 1); });
+    tutorial.querySelector('[data-saltar]').addEventListener('click', cerrarTutorial);
+    tutorial.addEventListener('cancel', function (ev) { ev.preventDefault(); cerrarTutorial(); }); // tecla Esc
+    tutorial.addEventListener('keydown', function (ev) {
+      if (ev.key === 'ArrowRight') { botonSiguiente.click(); } else if (ev.key === 'ArrowLeft' && !botonAnterior.hidden) { botonAnterior.click(); }
+    });
+
+    if (botonEscuchar) {
+      if (!vozTutorial) { botonEscuchar.hidden = true; }
+      botonEscuchar.addEventListener('click', function () {
+        if (vozTutorial.speaking) { pararVoz(); return; }
+        var paso = pasos[pasoActual];
+        var texto = paso.querySelector('h2').textContent + '. ' + paso.querySelector('[data-texto]').textContent;
+        var u = new SpeechSynthesisUtterance(texto);
+        u.lang = 'es-PE';
+        u.rate = 0.95;
+        var voces = vozTutorial.getVoices().filter(function (v) { return v.lang && v.lang.indexOf('es') === 0; });
+        if (voces.length) { u.voice = voces.find(function (v) { return v.lang === 'es-PE'; }) || voces[0]; }
+        u.onend = function () { botonEscuchar.setAttribute('aria-pressed', 'false'); };
+        botonEscuchar.setAttribute('aria-pressed', 'true');
+        vozTutorial.speak(u);
+      });
+    }
+
+    if (tutorial.dataset.abrir === '1') {
+      mostrarPaso(0);
+      if (tutorial.showModal) { tutorial.showModal(); } else { tutorial.setAttribute('open', ''); }
+      mostrarPaso(0); // otra vez, ya abierto: así el foco queda en el título del primer paso
+    }
+  }
 })();

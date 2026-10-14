@@ -20,6 +20,13 @@
   </ul>
 {% endif %}
 
+<section class="tarjeta p d-flex flex-column gap-2" aria-label="Ayuda y tutorial">
+  <h2 class="h5 fw-bold mb-0">{% icono 'ayuda' 22 %} Ayuda y tutorial</h2>
+  <p class="texto-2 small mb-1">Un recorrido corto que explica para qué sirve cada parte del aula.</p>
+  <a class="btn btn-cetpro w-100" href="{% url 'nucleo:inicio' %}?tutorial=1">{% icono 'play' 20 %} Repetir tutorial</a>
+  <a class="btn btn-borde w-100" href="{% url 'nucleo:ayuda' %}">{% icono 'ayuda' 20 %} Ver el resumen del sistema</a>
+</section>
+
 <form method="post" action="{% url 'cuentas:salir' %}">
   {% csrf_token %}
   <button type="submit" class="btn btn-peligro btn-lg w-100">{% icono 'salir' %} Cerrar sesión</button>

@@ -1,0 +1,59 @@
+{% extends "layouts/app.html" %}
+{% load aula %}
+{# Resumen del sistema para el rol de la persona + preguntas frecuentes + «Repetir tutorial». Todo es texto: sirve con o sin JavaScript. #}
+{% block contenido %}
+<div class="ayuda-pagina d-flex flex-column gap-3">
+  <section class="tarjeta p d-flex flex-column gap-2">
+    <h2 class="h5 fw-bold mb-0">{% icono 'inicio' 22 %} ¿Qué es el aula virtual?</h2>
+    <p class="mb-0">{{ que_es }}</p>
+    <p class="mb-0">{{ puedes }}</p>
+    <div class="d-flex flex-wrap gap-2 mt-1">
+      <a class="btn btn-cetpro" href="{% url 'nucleo:inicio' %}?tutorial=1">{% icono 'play' 20 %} Repetir tutorial</a>
+    </div>
+  </section>
+
+  <section aria-labelledby="ayuda-partes">
+    <h2 class="seccion-titulo" id="ayuda-partes">Para qué sirve cada parte</h2>
+    <ul class="tarjeta lista-filas">
+      {% for p in pasos|slice:"1:-1" %}
+        <li>
+          <div class="fila">
+            <span class="ico-caja ico-azul" aria-hidden="true">{% icono p.icono 24 %}</span>
+            <span class="cuerpo"><span class="titulo">{{ p.titulo }}</span><span class="detalle">{{ p.texto }}</span></span>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% if preguntas %}
+    <section aria-labelledby="ayuda-preguntas">
+      <h2 class="seccion-titulo" id="ayuda-preguntas">Preguntas frecuentes</h2>
+      <div class="tarjeta">
+        {% for pregunta, respuesta in preguntas %}
+          <details {% if not forloop.first %}class="border-top"{% endif %}>
+            <summary class="fila" style="cursor:pointer;min-height:56px">
+              <span class="cuerpo"><span class="fw-bold">{{ pregunta }}</span></span>
+              <span class="flecha">{% icono 'derecha' %}</span>
+            </summary>
+            <p class="px-3 pb-3 mb-0">{{ respuesta }}</p>
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if aj.whatsapp or aj.telefono %}
+    <section class="tarjeta p d-flex flex-column gap-2">
+      <h2 class="h5 fw-bold mb-0">{% icono 'mensaje' 22 %} ¿Sigues con dudas?</h2>
+      <p class="texto-2 mb-0">Escríbele al CETPRO.{% if aj.horario_atencion %} Atención: {{ aj.horario_atencion }}.{% endif %}</p>
+      {% if aj.whatsapp %}
+        <a class="btn btn-whatsapp" href="{{ aj.whatsapp|whatsapp_url }}" target="_blank" rel="noopener">{% icono 'whatsapp' 20 %} Escribir por WhatsApp</a>
+      {% endif %}
+      {% if aj.telefono %}
+        <a class="btn btn-borde" href="tel:{{ aj.telefono }}">Llamar: {{ aj.telefono }}</a>
+      {% endif %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}
