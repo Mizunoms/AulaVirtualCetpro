@@ -7,4 +7,3 @@ whitenoise>=6.9,<7             # sirve css/js sin depender del servidor web
 filetype>=1.2,<2               # reconoce el tipo real de un archivo subido (por su contenido)
 waitress>=3.0,<4              # servidor de aplicación que funciona en Windows (IIS lo atiende por delante)
 defusedxml>=0.7,<1             # lee con seguridad el Excel y el Word que se suben (importar preguntas y listas)
-bcrypt>=4.2,<5                 # verifica las contraseñas bcrypt del sistema anterior (después se guardan con el hasher de Django)

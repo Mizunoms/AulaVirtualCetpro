@@ -86,14 +86,6 @@ DATABASES["default"]["CONN_MAX_AGE"] = 60
 AUTH_USER_MODEL = "cuentas.Usuario"
 AUTHENTICATION_BACKENDS = ["apps.cuentas.backends.DniOCorreoBackend"]
 
-# Las contraseñas nuevas se guardan con PBKDF2 (el primero). Las bcrypt del sistema anterior ($2y$…) siguen sirviendo
-# y se vuelven a guardar con PBKDF2 la primera vez que la persona entra.
-PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
-    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
-    "django.contrib.auth.hashers.BCryptPasswordHasher",
-]
-
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},

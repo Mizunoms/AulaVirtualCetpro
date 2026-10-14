@@ -49,7 +49,7 @@ resultado en `aceptacion/.tmp/salida-<guion>.txt`. Si una comprobación falla, l
 
 Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones):
 - Al darle una contraseña nueva a alguien, Django cierra sus sesiones abiertas (más seguro que antes).
-- No existen las cuentas del antiguo «modo prueba» (la migración de datos no las trae).
+- No existen las cuentas del antiguo «modo prueba» (el sistema nuevo empieza sin datos del piloto).
 - Los archivos subidos están en la carpeta temporal de la prueba, y el Excel no pone comillas a los textos con espacios.
 
 ## Documentación
@@ -57,6 +57,5 @@ Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones)
 - [CLAUDE.md](CLAUDE.md) — reglas del proyecto
 - [docs/00-decisiones.md](docs/00-decisiones.md) — por qué este stack
 - [docs/01-plan.md](docs/01-plan.md) — fases y avance
-- [docs/02-migracion-desde-php.md](docs/02-migracion-desde-php.md) — pasar los datos del piloto (PHP) a este sistema
-- [docs/03-servidor-windows.md](docs/03-servidor-windows.md) — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
+- [docs/02-servidor-windows.md](docs/02-servidor-windows.md) — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
 - [docs/heredados/](docs/heredados) — visión, requerimientos y análisis del sistema anterior

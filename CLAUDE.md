@@ -13,16 +13,15 @@ requisitos, no extras.**
 
 Este repositorio es la **versión nueva**. La versión anterior (PHP, usada en el piloto) está guardada en
 `AulaVirtualCetproMangomarca` (rama `feature/version-2`, etiqueta `php-prueba-2026-10-13`). Se rehace aquí con
-las mismas pantallas, textos y reglas; luego se migran los datos del piloto (MariaDB → PostgreSQL).
+las mismas pantallas, textos y reglas. El sistema nuevo empieza desde cero: no se traen datos del piloto.
 
 ## Documentación
 - `docs/00-decisiones.md` — por qué este stack y cómo se organiza
 - `docs/01-plan.md` — fases y checklist (marcar al terminar)
-- `docs/02-migracion-desde-php.md` — pasar los datos del piloto (PHP + MariaDB) a este sistema
-- `docs/03-servidor-windows.md` — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
+- `docs/02-servidor-windows.md` — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
 - `docs/heredados/` — documentos del sistema anterior que siguen valiendo: visión, requerimientos (RF/RNF),
   análisis de Blackboard, asistente IA, prototipo/colores, entrevistas, y el esquema SQL de la base vieja
-  (`schema-php.sql`, para el script de migración de datos).
+  (`schema-php.sql`, solo como referencia).
 
 Si un cambio contradice estos documentos, avisa antes de hacerlo. Si cambia una decisión, actualiza el doc.
 
@@ -43,7 +42,7 @@ apps/academico/    cursos, módulos, unidades didácticas, clases, matrículas, 
 templates/         base.html y plantillas por app (templates/<app>/…)
 static/            css, js, img
 storage/uploads    archivos subidos — fuera de static, se sirven con un controlador con permisos
-scripts/           utilidades (crear base PostgreSQL, respaldo, migración de datos)
+scripts/           utilidades (crear base PostgreSQL)
 tests/
 ```
 
@@ -110,6 +109,5 @@ tests/
 .venv\Scripts\ruff check . ; .venv\Scripts\ruff format .
 powershell -ExecutionPolicy Bypass -File scripts\crear-base-postgres.ps1   # primera vez: crea la base y .env
 .venv\Scripts\python aceptacion\correr.py     # pruebas de aceptación: guiones HTTP del sistema anterior (base propia, puerto 8090)
-.venv\Scripts\python manage.py migrar_desde_php --solo-revisar   # ensayo de la migración desde el sistema PHP
 .venv\Scripts\python manage.py respaldo [--archivos]   # respaldo de la base (y de los archivos subidos)
 ```

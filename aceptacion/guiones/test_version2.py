@@ -821,7 +821,7 @@ ok(
     "Eliminar cuentas…" in t and ">Desactivar</button>" not in t,
     "Personas: el lote ofrece eliminar y ya no hay un «Desactivar» rojo en cada fila",
 )
-# DIFERENCIA A PROPÓSITO: el sistema nuevo no tiene cuentas del antiguo «modo prueba» (la migración de datos no las trae).
+# DIFERENCIA A PROPÓSITO: el sistema nuevo no tiene cuentas del antiguo «modo prueba» (el sistema nuevo empieza sin datos del piloto).
 ok("Hay 1 cuenta de prueba" not in t, "Personas: no hay cuentas del antiguo modo prueba que avisar")
 c, t, *_ = doc.post("/admin/usuarios/eliminar", {"ids[]": ["1"], "volver": ""}, seguir=False)
 ok(c == 403, "un docente no puede eliminar cuentas")

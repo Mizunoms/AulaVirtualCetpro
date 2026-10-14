@@ -4,7 +4,7 @@
     python manage.py respaldo --archivos  → la base y las fotos/archivos en un .zip (una vez por semana)
 
 Guarda en la carpeta de respaldos (RESPALDOS_CARPETA, por defecto storage/respaldos) y deja los 14 más recientes de cada tipo.
-En Windows Server se programa con el Programador de tareas (ver docs/03-servidor-windows.md)."""
+En Windows Server se programa con el Programador de tareas (ver docs/02-servidor-windows.md)."""
 
 from django.core.management.base import BaseCommand, CommandError
 

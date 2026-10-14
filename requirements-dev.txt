@@ -3,4 +3,3 @@
 pytest>=8.3,<9
 pytest-django>=4.9,<5
 ruff>=0.8                      # revisa el estilo del código
-PyMySQL>=1.1,<2                # solo para `manage.py migrar_desde_php` (lee la base MariaDB del sistema anterior)

@@ -19,7 +19,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Ajustes del aula (administrador): identidad y colores (con control de contraste), periodo, contacto, logo y foto de entrada, fotos de talleres
 - [x] Permisos por rol (`@exigir`), registro de actividad (`/admin/registro`), páginas de error con el marco del aula
 - [x] Subida segura de archivos (extensión + tipo real, nombre al azar, fuera de `static/`)
-- [ ] Pestaña «Cursos» (especialidades) de Ajustes — se hace con los módulos, en la fase 2
+- [x] Pestaña «Cursos» (especialidades) de Ajustes — se hizo con los módulos, en la fase 2
 
 ## Fase 2 — Académico
 - [x] Cursos (programas) y módulos del administrador: catálogo con filtros, crear, editar, archivar, **eliminar de verdad**
@@ -59,7 +59,6 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [ ] API REST con permisos por rol
 - [ ] Asistente IA (escrito y voz) con lista cerrada de acciones y confirmación
 
-## Fase 7 — Datos del piloto y servidor
-- [x] Migración MariaDB → PostgreSQL: `manage.py migrar_desde_php` (guía en `docs/02-migracion-desde-php.md`)
+## Fase 7 — Pruebas y servidor
 - [x] Pruebas de aceptación con el cliente HTTP del sistema anterior (`aceptacion/`, 536 comprobaciones, ver README)
-- [x] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/03-servidor-windows.md` (IIS y NSSM sin probar en un servidor real)
+- [x] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/02-servidor-windows.md` (IIS y NSSM sin probar en un servidor real)

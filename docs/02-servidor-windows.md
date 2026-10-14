@@ -13,7 +13,7 @@ Python que corre el aula, solo visible dentro del servidor, en `127.0.0.1:8000`)
 **No avances a la siguiente parte hasta que la actual funcione.** Todos los comandos van en **PowerShell como
 Administrador** (clic derecho → «Ejecutar como administrador»).
 
-> **Qué está probado.** La aplicación, Waitress detrás de un proxy bajo `/aula`, el respaldo y la migración están
+> **Qué está probado.** La aplicación, Waitress detrás de un proxy bajo `/aula`, y el respaldo están
 > probados en una PC con Windows. Las partes de **IIS y del servicio de Windows (NSSM)** no se pudieron probar ahí (esa PC
 > no tiene IIS): sigue la guía con calma y usa la tabla «Si algo sale mal» del final.
 
@@ -95,12 +95,13 @@ cd C:\aula\AulaVirtualCetpro
 .venv\Scripts\python manage.py check
 ```
 
-Ahora elige **una** de estas dos:
+El aula empieza vacía. Crea el administrador:
 
-- **Aula nueva, sin datos:** crea el administrador:
-  `.venv\Scripts\python manage.py createsuperuser` (el correo es el que usará para entrar).
-- **Pasar los datos del piloto (PHP):** sigue [02-migracion-desde-php.md](02-migracion-desde-php.md). Hazlo **antes** de
-  crear ningún administrador: la migración trae el de antes.
+```powershell
+.venv\Scripts\python manage.py createsuperuser
+```
+
+(El correo es el que usará para entrar. Después, desde el aula, crea los cursos y módulos, los docentes, y carga a los alumnos con una lista.)
 
 > Revisión extra: `manage.py check --deploy` avisa de dos cosas (`SECURE_HSTS_SECONDS` y `SECURE_SSL_REDIRECT`).
 > Son a propósito: el aula comparte dirección con la página web del CETPRO y de HTTPS se encarga Tailscale/IIS;
