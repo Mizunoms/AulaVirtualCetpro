@@ -19,6 +19,7 @@ las mismas pantallas, textos y reglas. El sistema nuevo empieza desde cero: no s
 - `docs/00-decisiones.md` — por qué este stack y cómo se organiza
 - `docs/01-plan.md` — fases y checklist (marcar al terminar)
 - `docs/02-servidor-windows.md` — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
+- `docs/03-puesta-en-marcha.md` — orden para dejar el aula lista, guion de prueba con un profesor y un celular, y salida a todos
 - `docs/heredados/` — documentos del sistema anterior que siguen valiendo: visión, requerimientos (RF/RNF),
   análisis de Blackboard, asistente IA, prototipo/colores, entrevistas, y el esquema SQL de la base vieja
   (`schema-php.sql`, solo como referencia).

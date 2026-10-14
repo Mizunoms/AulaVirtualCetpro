@@ -58,4 +58,5 @@ Diferencias a propósito (marcadas con `DIFERENCIA A PROPÓSITO` en los guiones)
 - [docs/00-decisiones.md](docs/00-decisiones.md) — por qué este stack
 - [docs/01-plan.md](docs/01-plan.md) — fases y avance
 - [docs/02-servidor-windows.md](docs/02-servidor-windows.md) — instalar en el servidor del CETPRO (IIS + Waitress + PostgreSQL) y respaldos
+- [docs/03-puesta-en-marcha.md](docs/03-puesta-en-marcha.md) — dejar el aula lista, probarla con un profesor y un celular, y abrirla a todos
 - [docs/heredados/](docs/heredados) — visión, requerimientos y análisis del sistema anterior

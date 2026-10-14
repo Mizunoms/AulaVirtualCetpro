@@ -61,4 +61,6 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 
 ## Fase 7 — Pruebas y servidor
 - [x] Pruebas de aceptación con el cliente HTTP del sistema anterior (`aceptacion/`, 536 comprobaciones, ver README)
+- [x] Guía de puesta en marcha con guion de prueba con un profesor y un celular (`docs/03-puesta-en-marcha.md`)
+- [x] Revisión de accesibilidad en celular (375 px): 113 pantallas de alumno, docente y administrador; modo oscuro, letra muy grande y alto contraste
 - [x] Servidor Windows: Waitress como servicio + IIS (reverse proxy), guía en `docs/02-servidor-windows.md` (IIS y NSSM sin probar en un servidor real)
