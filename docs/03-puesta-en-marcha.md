@@ -15,7 +15,7 @@ un profesor y un celular de verdad, y cómo abrirla a todos. Primero se instala 
 | 3 | **Ajustes → Cursos**: la lista de cursos (programas de estudio) del CETPRO | Ajustes |
 | 4 | **Crear a los docentes** (primero ellos, porque cada módulo lleva un docente): **Nuevo docente**, o todos de una vez con **Cargar lista de docentes** (Excel, CSV o lista pegada). Al terminar, el aula muestra su contraseña temporal **una sola vez**: envíasela por el botón de WhatsApp o cópiala | Personas |
 | 5 | **Crear los módulos**: con el botón **Cargar plan de estudios (Excel)** (Excel del Ministerio) o uno por uno con **Nuevo módulo**; ahí se elige su docente | Cursos |
-| 6 | Avisar a cada docente por WhatsApp: entra con su correo y su contraseña temporal, y el aula le pide elegir una propia | — |
+| 6 | Avisar a cada docente por WhatsApp: entra con su correo y su contraseña temporal, y el aula le pide elegir una propia (puede tocar **Más tarde** y seguir: un aviso amarillo le recuerda crearla, y se la piden otra vez al volver a entrar) | — |
 | 7 | Apuntar el **código de inscripción** de cada módulo (ej. `SOP-4821`): los alumnos lo usan para crear su cuenta | Módulo (en la lista de Cursos) |
 | 8 | Programar el **respaldo** (ver la Parte 9 de la guía del servidor) | Servidor |
 

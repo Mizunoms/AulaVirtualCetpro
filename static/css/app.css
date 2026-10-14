@@ -1272,3 +1272,11 @@ button[disabled].btn-cetpro { opacity: .55; box-shadow: none; }
 .tutorial-pie { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
 .tutorial-pie .btn { min-height: 44px; font-size: .9375rem; }
 .tutorial-pie [aria-pressed="true"] { background: var(--azul-claro); }
+
+/* ===== Aviso «Tu contraseña es temporal» (después de tocar «Más tarde») ===== */
+.aviso-clave { background: var(--aviso-fondo); color: var(--aviso); padding: .625rem 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; font-weight: 700; }
+.aviso-clave .icono { flex-shrink: 0; }
+.aviso-clave > span { flex: 1 1 14rem; }
+.aviso-clave .btn { flex: 0 0 auto; }
+@media (min-width: 992px) { .aviso-clave { padding-inline: max(2rem, calc((100% - var(--ancho-max)) / 2 + 2rem)); } }
+@media print { .aviso-clave { display: none !important; } }

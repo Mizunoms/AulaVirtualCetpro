@@ -109,3 +109,84 @@ def test_menu_segun_el_rol(cliente_de, alumno, docente, admin):
     assert "Por calificar" in html and "Mis notas" not in html
     html = cliente_de(admin).get(reverse("nucleo:inicio")).content.decode()
     assert "Personas" in html and "Ajustes" in html
+
+
+# ===================================================================== «Más tarde»: seguir sin cerrar la sesión
+
+
+@pytest.fixture
+def con_clave_temporal(alumno):
+    alumno.debe_cambiar_clave = True
+    alumno.save()
+    return alumno
+
+
+def test_la_pantalla_de_clave_nueva_es_simple_y_tiene_mas_tarde(cliente_de, con_clave_temporal):
+    html = cliente_de(con_clave_temporal).get(reverse("cuentas:nueva_clave")).content.decode()
+    assert "Crea tu contraseña nueva" in html and "La contraseña que te dieron es temporal" in html
+    assert "3. Crear mi nueva contraseña" in html and "Más tarde" in html and "Mostrar lo que escribo" in html
+    assert "Tu sesión no se cierra" in html and "Salir y hacerlo después" not in html
+    assert "data-ver-claves" in html and "data-coinciden" in html
+
+
+def test_mas_tarde_deja_entrar_sin_cerrar_la_sesion(cliente_de, con_clave_temporal):
+    c = cliente_de(con_clave_temporal)
+    assert c.get(reverse("nucleo:inicio"))["Location"] == reverse("cuentas:nueva_clave")
+    r = c.post(reverse("cuentas:nueva_clave"), {"despues": "1"})
+    assert r["Location"] == reverse("nucleo:inicio")
+    html = c.get(reverse("nucleo:inicio")).content.decode()  # ya no la manda a elegir contraseña
+    assert "lo haces más tarde" in html and "Mis notas" in html
+    for ruta in (reverse("cuentas:cuenta"), reverse("academico:modulos"), reverse("nucleo:ayuda")):
+        assert c.get(ruta).status_code == 200
+    # La sesión sigue abierta y la contraseña temporal sigue pendiente de cambiar
+    con_clave_temporal.refresh_from_db()
+    assert con_clave_temporal.debe_cambiar_clave and con_clave_temporal.check_password(CLAVE)
+
+
+def test_despues_de_mas_tarde_queda_el_boton_para_crear_la_contrasena_en_todas_las_pantallas(cliente_de, con_clave_temporal):
+    c = cliente_de(con_clave_temporal)
+    c.post(reverse("cuentas:nueva_clave"), {"despues": "1"})
+    for ruta in (reverse("nucleo:inicio"), reverse("cuentas:cuenta"), reverse("academico:modulos")):
+        html = c.get(ruta).content.decode()
+        assert "Tu contraseña es <b>temporal</b>" in html and "Crear mi nueva contraseña" in html, ruta
+        assert f'href="{reverse("cuentas:nueva_clave")}"' in html, ruta
+    # En su propia pantalla no se repite el aviso
+    assert "Tu contraseña es <b>temporal</b>" not in c.get(reverse("cuentas:nueva_clave")).content.decode()
+
+
+def test_se_puede_crear_la_contrasena_despues_de_haber_tocado_mas_tarde(cliente_de, con_clave_temporal):
+    c = cliente_de(con_clave_temporal)
+    c.post(reverse("cuentas:nueva_clave"), {"despues": "1"})
+    r = c.post(reverse("cuentas:nueva_clave"), {"nueva": "mi-clave-propia", "repetir": "mi-clave-propia"})
+    assert r["Location"] == reverse("nucleo:inicio")
+    con_clave_temporal.refresh_from_db()
+    assert con_clave_temporal.check_password("mi-clave-propia") and not con_clave_temporal.debe_cambiar_clave
+    assert "Tu contraseña es <b>temporal</b>" not in c.get(reverse("nucleo:inicio")).content.decode()  # ya no hay aviso
+
+
+def test_el_aviso_no_sale_a_quien_ya_tiene_su_contrasena(cliente_de, alumno):
+    assert "Tu contraseña es <b>temporal</b>" not in cliente_de(alumno).get(reverse("nucleo:inicio")).content.decode()
+
+
+def test_mas_tarde_vale_solo_para_esta_sesion(cliente_de, con_clave_temporal, client):
+    cliente_de(con_clave_temporal).post(reverse("cuentas:nueva_clave"), {"despues": "1"})
+    # Cierra la sesión y vuelve a entrar con la misma contraseña temporal: otra vez se la piden
+    nuevo = client
+    nuevo.post(reverse("cuentas:login"), {"usuario": con_clave_temporal.dni, "clave": CLAVE, "tipo": "alumno"})
+    assert nuevo.get(reverse("nucleo:inicio"))["Location"] == reverse("cuentas:nueva_clave")
+
+
+def test_mas_tarde_sin_clave_temporal_no_hace_nada(cliente_de, alumno, client):
+    c = cliente_de(alumno)
+    r = c.post(reverse("cuentas:nueva_clave"), {"despues": "1"})
+    assert r["Location"] == reverse("cuentas:cuenta") and "_clave_despues" not in c.session
+    r = client.post(reverse("cuentas:nueva_clave"), {"despues": "1"})  # sin sesión
+    assert r.status_code == 302 and reverse("cuentas:login") in r["Location"]
+
+
+def test_las_contrasenas_vacias_no_se_aceptan_aunque_se_toque_crear(cliente_de, con_clave_temporal):
+    c = cliente_de(con_clave_temporal)
+    r = c.post(reverse("cuentas:nueva_clave"), {"nueva": "", "repetir": ""})
+    assert "al menos 6" in c.get(r["Location"]).content.decode()
+    con_clave_temporal.refresh_from_db()
+    assert con_clave_temporal.debe_cambiar_clave

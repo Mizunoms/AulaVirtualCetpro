@@ -89,6 +89,7 @@ def iniciar_y_volver(request, u, destino=None):
     """Inicia la sesión y vuelve a la página que la persona quería ver (o al inicio)."""
     volver = request.session.pop("_volver_a", None)
     login(request, u, backend="apps.cuentas.backends.DniOCorreoBackend")  # sesión nueva (cambia el identificador)
+    request.session.pop("_clave_despues", None)  # un «Más tarde» de antes no vale para esta entrada
     Registro.anotar(u, "acceso", f"{u.nombre_completo} ({u.get_rol_display()}) entró al aula.", request)
     if destino is None:
         return redirect(ruta_interna(request, volver, reverse("nucleo:inicio")))
@@ -173,6 +174,8 @@ def nueva_clave(request):
     """Primera vez con una contraseña temporal: elige la suya."""
     u = request.user
     if request.method == "POST":
+        if "despues" in request.POST:
+            return _dejar_para_despues(request, u)
         return _guardar_nueva_clave(request, u)
     if not u.debe_cambiar_clave:
         return redirect("cuentas:cuenta")
@@ -189,6 +192,16 @@ def nueva_clave(request):
         sub="Paso 3 de 3" if temporal else "Solo esta vez",
         menu="cuenta",
     )
+
+
+def _dejar_para_despues(request, u):
+    """«Más tarde»: sigue dentro del aula (no se cierra la sesión). La contraseña temporal sigue valiendo, así que arriba
+    queda el aviso con el botón «Crear mi nueva contraseña», y al volver a entrar se le pide otra vez."""
+    if not u.debe_cambiar_clave:
+        return redirect("cuentas:cuenta")
+    request.session["_clave_despues"] = True
+    ok(request, "Está bien, lo haces más tarde. Cuando quieras, toca «Crear mi nueva contraseña» (está arriba).")
+    return redirect("nucleo:inicio")
 
 
 def _guardar_nueva_clave(request, u):
@@ -210,5 +223,6 @@ def _guardar_nueva_clave(request, u):
     guardar_clave_propia(request, u, nueva)
     Registro.anotar(u, "clave", f"{u.nombre_completo} eligió su contraseña nueva al entrar.", request)
     request.session.pop("_registro_listo", None)
+    request.session.pop("_clave_despues", None)
     ok(request, "¡Listo! Ya puedes usar el aula. Esta es tu contraseña desde ahora.")
     return redirect("nucleo:inicio")

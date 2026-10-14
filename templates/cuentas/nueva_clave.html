@@ -19,26 +19,35 @@
   </div>
 {% endif %}
 <div class="tarjeta p d-flex flex-column gap-3" style="max-width:560px">
-  {% if not temporal %}
-    <div class="mensaje mensaje-ok" role="status">{% icono 'clave' 26 %}<span>Hola, {{ u.primer_nombre }}. La contraseña que te dieron es temporal.</span></div>
-  {% endif %}
-  <p class="mb-0">Por seguridad, elige <b>una contraseña propia</b>. Solo tú la sabrás. Después podrás usar el aula normalmente.</p>
-  <form method="post" action="{% url 'cuentas:nueva_clave' %}" class="d-flex flex-column gap-3">
+  <div class="d-flex align-items-center gap-3">
+    <span class="ico-caja ico-azul" aria-hidden="true">{% icono 'clave' 28 %}</span>
+    <div>
+      <h2 class="h4 mb-0">Crea tu contraseña nueva</h2>
+      {% if not temporal %}<p class="texto-2 mb-0">Hola, {{ u.primer_nombre }}. La contraseña que te dieron es temporal.</p>{% endif %}
+    </div>
+  </div>
+  <p class="mb-0">Elige una que <b>tú recuerdes</b>. Solo tú la sabrás.</p>
+  <form method="post" action="{% url 'cuentas:nueva_clave' %}" class="d-flex flex-column gap-3" data-clave-nueva>
     {% csrf_token %}
     <div>
-      <label class="form-label" for="nueva">Contraseña nueva</label>
-      <input class="form-control" type="password" id="nueva" name="nueva" autocomplete="new-password" minlength="6" required autofocus>
-      <div class="ayuda">Al menos 6 letras o números. Que sea fácil de recordar para ti, pero no tu DNI.</div>
+      <label class="form-label" for="nueva">1. Escribe tu contraseña nueva</label>
+      <input class="form-control" type="password" id="nueva" name="nueva" autocomplete="new-password" minlength="6" required autofocus aria-describedby="ayuda-nueva">
+      <div class="ayuda" id="ayuda-nueva">Al menos 6 letras o números. No uses tu DNI.</div>
     </div>
     <div>
-      <label class="form-label" for="repetir">Escríbela otra vez</label>
-      <input class="form-control" type="password" id="repetir" name="repetir" autocomplete="new-password" minlength="6" required>
+      <label class="form-label" for="repetir">2. Escríbela otra vez</label>
+      <input class="form-control" type="password" id="repetir" name="repetir" autocomplete="new-password" minlength="6" required aria-describedby="coinciden">
+      <div class="ayuda" id="coinciden" aria-live="polite" data-coinciden></div>
     </div>
-    <button type="submit" class="btn btn-cetpro btn-lg">Guardar mi contraseña</button>
-  </form>
-  <form method="post" action="{% url 'cuentas:salir' %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-borde w-100">Salir y hacerlo después</button>
+    <label class="interruptor-chico">
+      <input type="checkbox" data-ver-claves="nueva repetir">
+      Mostrar lo que escribo
+    </label>
+    <button type="submit" class="btn btn-cetpro btn-lg">3. Crear mi nueva contraseña</button>
+    <div>
+      <button type="submit" name="despues" value="1" formnovalidate class="btn btn-borde btn-lg w-100">Más tarde</button>
+      <div class="ayuda mt-1">Puedes usar el aula ahora y crearla después: te lo recordaremos arriba. Tu sesión no se cierra.</div>
+    </div>
   </form>
 </div>
 {% endblock %}

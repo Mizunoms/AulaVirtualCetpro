@@ -319,6 +319,30 @@
     });
   });
 
+  // «Mostrar lo que escribo»: muestra u oculta varias contraseñas a la vez (pantalla de contraseña nueva).
+  document.querySelectorAll('input[data-ver-claves]').forEach(function (casilla) {
+    casilla.addEventListener('change', function () {
+      casilla.dataset.verClaves.split(' ').forEach(function (id) {
+        var campo = document.getElementById(id);
+        if (campo) { campo.type = casilla.checked ? 'text' : 'password'; }
+      });
+    });
+  });
+
+  // Contraseña nueva: avisa si las dos veces que la escribió son iguales.
+  document.querySelectorAll('form[data-clave-nueva]').forEach(function (form) {
+    var nueva = form.querySelector('#nueva');
+    var repetir = form.querySelector('#repetir');
+    var aviso = form.querySelector('[data-coinciden]');
+    if (!nueva || !repetir || !aviso) { return; }
+    var revisar = function () {
+      if (repetir.value === '') { aviso.textContent = ''; return; }
+      aviso.textContent = nueva.value === repetir.value ? '✓ Las dos son iguales.' : 'Todavía no son iguales.';
+    };
+    nueva.addEventListener('input', revisar);
+    repetir.addEventListener('input', revisar);
+  });
+
   // Campo de puntos de penalidad: solo se muestra si se eligió "restando puntos".
   document.querySelectorAll('input[name="politica_tardia"]').forEach(function (r) {
     r.addEventListener('change', function () {

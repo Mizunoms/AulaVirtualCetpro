@@ -73,6 +73,8 @@ def aula(request):
         contexto["menu"] = menu_de(usuario)
         contexto["sin_leer"] = contar("avisos", usuario)
         contexto["url_avisos"] = url_o_numeral("nucleo:avisos")
+        # Contraseña temporal sin cambiar (tocó «Más tarde»): aviso con el botón para crearla, en todas las pantallas menos en la suya
+        contexto["clave_pendiente"] = usuario.debe_cambiar_clave and request.path.rstrip("/") != reverse("cuentas:nueva_clave")
         clave_otro = request.session.pop("_clave_otro", None)
         if isinstance(clave_otro, dict):
             texto = (

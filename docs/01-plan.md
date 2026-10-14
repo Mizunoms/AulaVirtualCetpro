@@ -15,7 +15,7 @@ Marcar `[x]` al terminar. Cada función lleva su prueba en `tests/`.
 - [x] Entrar: «Soy alumno» (DNI) / «Soy profesor» (correo o solo el nombre), cuenta pendiente → «Crear mi cuenta»
 - [x] Límite de intentos al entrar (por cuenta y por red)
 - [x] Mi cuenta: tamaño de letra, alto contraste, voz, modo claro/oscuro, cambiar contraseña
-- [x] Contraseña temporal: obliga a elegir una propia (`/cuenta/nueva-clave`)
+- [x] Contraseña temporal: pide elegir una propia (`/cuenta/nueva-clave`, pantalla corta con «Crear mi nueva contraseña»); «Más tarde» deja seguir sin cerrar la sesión y deja un aviso con el botón para crearla; se pide de nuevo al volver a entrar
 - [x] Ajustes del aula (administrador): identidad y colores (con control de contraste), periodo, contacto, logo y foto de entrada, fotos de talleres
 - [x] Permisos por rol (`@exigir`), registro de actividad (`/admin/registro`), páginas de error con el marco del aula
 - [x] Subida segura de archivos (extensión + tipo real, nombre al azar, fuera de `static/`)

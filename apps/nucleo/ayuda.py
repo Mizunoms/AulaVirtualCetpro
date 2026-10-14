@@ -182,6 +182,11 @@ PREGUNTAS = {
             "Entregué tarde, ¿qué pasa?",
             "Depende de cada tarea. En «Cómo te van a calificar» dice si se acepta tarde y cuántos puntos se restan.",
         ),
+        (
+            "Me piden crear una contraseña nueva",
+            "La que te dieron es temporal. Toca «Crear mi nueva contraseña» y elige una que recuerdes. Si no puedes ahora, toca "
+            "«Más tarde»: sigues dentro del aula y arriba te queda el botón para hacerlo después.",
+        ),
         ("¿Dónde veo mi nota?", "En «Mis notas». Además te llega un aviso en la campana."),
         ("La letra se ve muy chica", "En «Mi cuenta» elige la letra «Grande» o «Muy grande»."),
     ],
@@ -194,6 +199,11 @@ PREGUNTAS = {
         (
             "Un alumno olvidó su contraseña",
             "Entra a la lista de alumnos del módulo y toca «Nueva contraseña» junto a su nombre. Dásela por WhatsApp.",
+        ),
+        (
+            "Me piden crear una contraseña nueva",
+            "La que te dieron es temporal. Toca «Crear mi nueva contraseña» y elige una que recuerdes. Si no puedes ahora, toca "
+            "«Más tarde»: sigues dentro del aula y arriba te queda el botón para hacerlo después.",
         ),
         ("¿Cómo califico?", "Entra a «Por calificar», abre una entrega, escribe la nota y guarda."),
         (

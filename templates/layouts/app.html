@@ -72,6 +72,13 @@
       <div class="aviso-general" role="note">{% icono 'aviso' 20 %}<span>{{ aj.aviso_general }}</span></div>
     {% endif %}
 
+    {% if clave_pendiente %}
+      <div class="aviso-clave" role="note">
+        {% icono 'clave' 22 %}<span>Tu contraseña es <b>temporal</b>. Crea una nueva para cuidar tu cuenta.</span>
+        <a class="btn btn-cetpro" href="{% url 'cuentas:nueva_clave' %}">Crear mi nueva contraseña</a>
+      </div>
+    {% endif %}
+
     <main id="contenido" class="app-main" tabindex="-1">
       {% for mensaje in messages %}
         <div class="mensaje mensaje-{% if mensaje.tags == 'error' %}error{% else %}ok{% endif %}" role="{% if mensaje.tags == 'error' %}alert{% else %}status{% endif %}">

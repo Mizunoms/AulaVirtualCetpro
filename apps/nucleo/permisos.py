@@ -38,8 +38,13 @@ def exigir(*roles):
             if not u.is_authenticated:
                 request.session["_volver_a"] = request.get_full_path()
                 return redirect("cuentas:login")
-            # La contraseña que le dieron era temporal: antes de usar el aula debe elegir la suya.
-            if u.debe_cambiar_clave and request.path.rstrip("/") != reverse("cuentas:nueva_clave"):
+            # La contraseña que le dieron era temporal: antes de usar el aula debe elegir la suya, salvo que haya tocado
+            # «Más tarde» (vale solo para esta sesión; mientras tanto ve un aviso con el botón para crearla).
+            if (
+                u.debe_cambiar_clave
+                and not request.session.get("_clave_despues")
+                and request.path.rstrip("/") != reverse("cuentas:nueva_clave")
+            ):
                 return redirect("cuentas:nueva_clave")
             if roles and u.rol not in roles:
                 return prohibido(request)
